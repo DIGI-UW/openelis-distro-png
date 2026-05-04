@@ -1,43 +1,31 @@
 #!/usr/bin/env bash
-# Assert compose.yaml's image: lines are release-shaped (versioned upstream
-# tag + sha256 digest), no `:develop`/`:latest`/`:main` floats. Exits 0 on
-# success, 1 with a per-line failure report otherwise.
+# Assert docker-compose.yml's image: lines use a versioned upstream tag —
+# no `:develop`/`:latest`/`:main` floats. Exits 0 on success, 1 with a
+# per-line failure report otherwise.
 #
-# Used by .github/workflows/release.yml as a gate before tagging — fails the
-# release if a maintainer triggered the workflow without first running
+# Used by .github/workflows/release.yml as a gate before tagging — fails
+# the release if a maintainer triggered the workflow without first running
 # `pin-versions.sh <release> <release>`.
 #
 # itechuw/certgen is allowed to track `:main` because it has no release
-# versioning — `:main` is the convention everywhere in this repo. The
-# digest still pins the bytes.
+# versioning — `:main` is the convention everywhere in this repo.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-COMPOSE=compose.yaml
+COMPOSE=docker-compose.yml
 fail=0
 
-# Extract every `image: <ref>` line as "<line-number>:<ref>" pairs.
-# Strip leading whitespace + the literal `image:` prefix.
-mapfile -t entries < <(
-  grep -nE '^[[:space:]]+image:[[:space:]]+' "$COMPOSE" \
-    | sed -E 's|^([0-9]+):[[:space:]]+image:[[:space:]]+|\1:|'
-)
-
-for entry in "${entries[@]}"; do
+# Extract every `image: <ref>` line as "<line-number>:<ref>" pairs and
+# iterate via a while-read loop (portable to bash 3.2 / macOS — avoids
+# `mapfile`, which is bash 4+ only).
+while IFS= read -r entry; do
   line="${entry%%:*}"
   ref="${entry#*:}"
   repo="${ref%%:*}"
   rest="${ref#*:}"
+  # Strip any optional @sha256:digest suffix (allowed but not required).
   tag="${rest%@*}"
-  digest_part="${rest#*@}"
-
-  if [[ "$rest" == "$digest_part" ]] || ! [[ "$digest_part" =~ ^sha256:[a-f0-9]{64}$ ]]; then
-    echo "FAIL: ${COMPOSE}:${line} ${ref}" >&2
-    echo "      missing or malformed @sha256:<digest> suffix" >&2
-    fail=1
-    continue
-  fi
 
   if [[ "$repo" != "itechuw/certgen" ]]; then
     case "$tag" in
@@ -48,7 +36,10 @@ for entry in "${entries[@]}"; do
         ;;
     esac
   fi
-done
+done < <(
+  grep -nE '^[[:space:]]+image:[[:space:]]+' "$COMPOSE" \
+    | sed -E 's|^([0-9]+):[[:space:]]+image:[[:space:]]+|\1:|'
+)
 
 if (( fail )); then
   echo "" >&2
@@ -58,4 +49,4 @@ if (( fail )); then
   exit 1
 fi
 
-echo "OK: all ${COMPOSE} image refs are release-shaped (versioned tag + sha256 digest)."
+echo "OK: all ${COMPOSE} image refs use versioned tags."

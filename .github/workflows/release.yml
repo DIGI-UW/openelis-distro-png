@@ -2,10 +2,10 @@ name: Release
 
 # Releases are driven by manual workflow_dispatch — the maintainer supplies
 # the distro version, OE version, and bridge version up front. The workflow
-# refreshes image digests in compose.yaml, validates that pins are
+# refreshes image digests in docker-compose.yml, validates that pins are
 # release-shaped, then tags the result and publishes a GitHub Release.
 #
-# compose.yaml carries literal `repo:tag@sha256:digest` image references on
+# docker-compose.yml carries literal `repo:tag@sha256:digest` image references on
 # every commit (including main), so a release tag is just a tag of the
 # canonical-state tree — no env-var substitution, no rewriting required.
 #
@@ -124,7 +124,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add compose.yaml
+          git add docker-compose.yml
           if ! git diff --staged --quiet; then
             # Multi-line message uses bash variable expansion ($VAR), not
             # template interpolation — keeps interpolation out of run: blocks.
@@ -133,7 +133,7 @@ jobs:
             OpenELIS Global: ${OE_VERSION_INPUT}
             Analyzer Bridge:  ${BRIDGE_VERSION_INPUT}
 
-            Refreshed image digests in compose.yaml at release time. This
+            Refreshed image digests in docker-compose.yml at release time. This
             commit is reachable only via the ${DISTRO_VERSION} tag."
           else
             echo "No digest changes since ${BASE_REF}; tagging existing HEAD."

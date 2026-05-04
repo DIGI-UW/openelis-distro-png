@@ -81,7 +81,7 @@ analyzer  →  USB / shared drive  →  host  →  converter  →  watched folde
 ```
 
 The watched folder is whatever path is mounted into the bridge container as
-the per-analyzer input directory (declared in `compose.yaml`). The converter
+the per-analyzer input directory (declared in `docker-compose.yml`). The converter
 writes its output CSV directly there, and the bridge picks it up on its next
 scan.
 

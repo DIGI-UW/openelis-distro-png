@@ -23,14 +23,14 @@ Then open https://localhost/ in your browser:
 |---|---|
 | https://localhost/ | `admin` / `adminADMIN!` |
 
-`compose.yaml` ships sensible localhost-demo defaults (DB password, admin
+`docker-compose.yml` ships sensible localhost-demo defaults (DB password, admin
 password, TLS material paths) so the stack boots out of the box without a
 local `.env`. To override anything for production, copy `.env.example` to
 `.env` and edit. **`.env` is gitignored — never commit it.**
 
 ## Image pinning
 
-Every service in `compose.yaml` is pinned directly to a literal
+Every service in `docker-compose.yml` is pinned directly to a literal
 `repo:tag@sha256:<digest>` reference:
 
 ```yaml
@@ -51,8 +51,8 @@ release name or `develop`:
 ./scripts/pin-versions.sh 3.2.1.7 3.0.2         # bump both to release tags
 ./scripts/pin-versions.sh develop 3.0.1         # OE to current develop snapshot; bridge to release
 ./scripts/pin-versions.sh develop develop       # both at current develop snapshots
-git diff compose.yaml                            # review
-git commit compose.yaml -m "chore: bump pins to ..."
+git diff docker-compose.yml                            # review
+git commit docker-compose.yml -m "chore: bump pins to ..."
 ```
 
 Distro tags release independently of upstream OE versioning — distro
@@ -63,7 +63,7 @@ or any mix.
 
 Releases are produced by the `Release` GitHub Actions workflow
 (`workflow_dispatch`). The workflow collects all version inputs up front,
-refreshes image digests in `compose.yaml`, validates the result is
+refreshes image digests in `docker-compose.yml`, validates the result is
 release-shaped, then tags and publishes — no local `git tag`/`git push`
 step.
 
@@ -83,14 +83,14 @@ To cut a release:
 The workflow then:
 
 1. Validates `distro_version` shape, captures the previous tag, and confirms the new tag doesn't already exist.
-2. Runs `scripts/pin-versions.sh <oe> <bridge>` to refresh digests in `compose.yaml`.
+2. Runs `scripts/pin-versions.sh <oe> <bridge>` to refresh digests in `docker-compose.yml`.
 3. Runs `scripts/check-release-pins.sh` to assert every pin is release-shaped.
 4. If digests changed, commits the diff (a release commit reachable **only via the new tag**); otherwise tags the existing `base_ref` HEAD.
 5. Builds the release tarball via `scripts/build-tarball.sh`.
 6. Publishes a GitHub Release with notes assembled from the upstream OE and Analyzer Bridge release bodies plus the distro-side commit log since the previous distro tag, with the tarball attached.
 
 Review the draft Release in the GitHub UI, then publish when satisfied.
-At any commit (`main` or a release tag), `compose.yaml` carries fully
+At any commit (`main` or a release tag), `docker-compose.yml` carries fully
 resolved literal image references; consumers cloning at the tag (or
 downloading the auto-archive or the Release tarball) get a self-contained,
 byte-reproducible package.

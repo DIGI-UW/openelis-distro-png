@@ -1,6 +1,6 @@
 # Let's Encrypt overlay for the reverse proxy.
 # Usage:
-#   docker compose -f compose.yaml -f compose.letsencrypt.yaml up -d
+#   docker compose -f docker-compose.yml -f compose.letsencrypt.yaml up -d
 #   # (add other overlays as needed, e.g. -f compose.validate.yaml)
 #
 # Certificates: run ./scripts/generate-letsencrypt-certs.sh from repo root after proxy is up.

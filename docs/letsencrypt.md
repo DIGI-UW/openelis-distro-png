@@ -9,9 +9,9 @@ compose env vars.
 
 - DNS `A` (or equivalent) for each requested hostname → this host’s public IP.
 - **TCP 80** reachable from the internet (Let’s Encrypt validation).
-- Base stack already mounts `./configs/nginx/certbot` for the ACME webroot (`compose.yaml`).
+- Base stack already mounts `./configs/nginx/certbot` for the ACME webroot (`docker-compose.yml`).
 - If you added the certbot mount after the proxy was first created, **recreate** the proxy so the mount appears inside the container:  
-  `docker compose -f compose.yaml up -d --force-recreate proxy`  
+  `docker compose -f docker-compose.yml up -d --force-recreate proxy`  
   (Otherwise `/var/www/certbot` is missing in the container and validation returns 404 or redirects.)
 
 ## Bring-up
@@ -19,7 +19,7 @@ compose env vars.
 1. Start the stack (proxy must be running):
 
    ```bash
-   docker compose -f compose.yaml up -d
+   docker compose -f docker-compose.yml up -d
    ```
 
 2. **Quota-safe check** (recommended before real issuance):
@@ -43,7 +43,7 @@ compose env vars.
    `LETSENCRYPT_PRIMARY_DOMAIN` then the legacy `LETSENCRYPT_DOMAIN`):
 
    ```bash
-   docker compose -f compose.yaml -f compose.letsencrypt.yaml up -d --force-recreate proxy
+   docker compose -f docker-compose.yml -f compose.letsencrypt.yaml up -d --force-recreate proxy
    ```
 
    Set the env vars below in Compose or your shell before running the script.

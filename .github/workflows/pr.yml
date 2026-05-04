@@ -13,5 +13,5 @@ jobs:
 
       - name: Validate compose syntax + path resolution
         run: |
-          docker compose -f compose.yaml config > /dev/null
-          docker compose -f compose.yaml -f compose.letsencrypt.yaml config > /dev/null
+          docker compose -f docker-compose.yml config > /dev/null
+          docker compose -f docker-compose.yml -f compose.letsencrypt.yaml config > /dev/null
