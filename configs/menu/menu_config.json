@@ -279,13 +279,8 @@
       "childMenus": []
     },
     {
-      "elementId": "menu_generic_sample",
-      "childMenus": [
-        {
-          "elementId": "menu_sample_management",
-          "childMenus": []
-        }
-      ]
+      "elementId": "menu_aliquot",
+      "childMenus": []
     },
     {
       "elementId": "menu_help",
