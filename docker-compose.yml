@@ -244,7 +244,7 @@ services:
             # Point the bridge at the named volume mount. Must match the
             # volume mount path above. Spring Boot maps this env var to the
             # bridge.file.state-store-path config property.
-            BRIDGE_FILE_STATE_STORE_PATH: /data/openelis-analyzer-bridge/state.db
+           # BRIDGE_FILE_STATE_STORE_PATH: /data/openelis-analyzer-bridge/state.db
             LOGGING_LEVEL_ORG_ITECH: TRACE
             # Align with CI harness: HttpForwardingRouter appends /astm, /hl7, /csv
             ORG_ITECH_AHB_FORWARD_HTTP_SERVER_URI: https://openelisglobal-webapp:8443/OpenELIS-Global/analyzer
