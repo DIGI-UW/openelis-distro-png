@@ -5,7 +5,7 @@
 .env.*.local
 
 # Locally-built release tarballs (scripts/build-tarball.sh output).
-openelis-madagascar-distro-*.tar.gz
+openelis-png-distro-*.tar.gz
 
 # Local compose files. The canonical tracked compose lives at
 # docker-compose.yml; compose.yaml + the override files are local
@@ -18,6 +18,9 @@ docker-compose.override.yml
 
 # Bridge FileStateStore bind mount (SQLite runtime state, owned by UID 9257)
 configs/bridge-state/
+
+# scripts/backup.sh output — database dumps and a copy of .env
+backups/
 
 # Database bind mounts and local OE config overrides
 configs/logs/

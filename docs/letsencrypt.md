@@ -25,8 +25,15 @@ compose env vars.
 2. **Quota-safe check** (recommended before real issuance):
 
    ```bash
-   export LETSENCRYPT_EMAIL='you@example.com'
    ./scripts/generate-letsencrypt-certs.sh --dry-run
+   ```
+
+   The script reads the `LETSENCRYPT_*` block from `.env` — the same place
+   `.env.example` tells you to fill it in — so nothing needs exporting. A
+   value already exported in your shell still wins, for ad-hoc overrides:
+
+   ```bash
+   LETSENCRYPT_EMAIL='you@example.com' ./scripts/generate-letsencrypt-certs.sh --dry-run
    ```
 
    `--dry-run` exercises ACME without consuming Let’s Encrypt **production** issuance quota.
@@ -46,25 +53,38 @@ compose env vars.
    docker compose -f docker-compose.yml -f compose.letsencrypt.yaml up -d --force-recreate proxy
    ```
 
-   Set the env vars below in Compose or your shell before running the script.
+   Set the variables below in `.env` before running the script; both the
+   overlay and the script read them from there.
 
 ## Environment variables
+
+All of these are read from `.env` (or the environment, which takes
+precedence).
 
 | Variable | Required | Default | Purpose |
 |----------|----------|---------|---------|
 | `LETSENCRYPT_EMAIL` | Yes (for `certbot`) | — | ACME account / notices |
-| `LETSENCRYPT_DOMAINS` | No | `mgtest.openelis-global.org` | Comma- or space-separated SAN list |
+| `LETSENCRYPT_DOMAINS` | Yes | — | Comma- or space-separated SAN list |
 | `LETSENCRYPT_PRIMARY_DOMAIN` | No | first entry in `LETSENCRYPT_DOMAINS` | Default cert lineage / primary hostname |
 | `LETSENCRYPT_CERT_NAME` | No | `LETSENCRYPT_PRIMARY_DOMAIN` | Explicit lineage name under `configs/letsencrypt/live/` |
 | `LETSENCRYPT_DOMAIN` | Legacy | — | Backward-compatible single-domain fallback |
 | `LETSENCRYPT_STAGING` | No | `false` | First-time `certonly` only: use `--staging` (untrusted chain) |
 
-Example for two names on one certificate:
+There is no built-in hostname default. It used to be
+`mgtest.openelis-global.org`, a Madagascar test host, so an unconfigured run
+requested a certificate for another country's site and spent this host's ACME
+quota doing it. The script now stops with an error instead.
+
+Example for two names on one certificate, in `.env`:
+
+```dotenv
+LETSENCRYPT_EMAIL=ops@health.gov.pg
+LETSENCRYPT_DOMAINS=lab.health.gov.pg,lab-test.health.gov.pg
+LETSENCRYPT_PRIMARY_DOMAIN=lab.health.gov.pg
+LETSENCRYPT_CERT_NAME=lab.health.gov.pg
+```
 
 ```bash
-export LETSENCRYPT_DOMAINS="madagascar.openelis-global.org,mgtest.openelis-global.org"
-export LETSENCRYPT_PRIMARY_DOMAIN="madagascar.openelis-global.org"
-export LETSENCRYPT_CERT_NAME="madagascar.openelis-global.org"
 ./scripts/generate-letsencrypt-certs.sh
 ```
 
@@ -76,7 +96,7 @@ Use `./scripts/generate-letsencrypt-certs.sh --dry-run` to test renewal without 
 
 ## Wildcard DNS
 
-A DNS wildcard (e.g. `*.madagascar.openelis-global.org`) does **not** replace a public certificate for
+A DNS wildcard (e.g. `*.health.gov.pg`) does **not** replace a public certificate for
 that name; wildcard issuance requires DNS-01 and is out of scope for this HTTP-01 flow.
 
 ## Verification checklist
@@ -84,14 +104,19 @@ that name; wildcard issuance requires DNS-01 and is out of scope for this HTTP-0
 After issuance and `docker compose ... --force-recreate proxy` with `compose.letsencrypt.yaml`:
 
 ```bash
-curl -I "http://madagascar.openelis-global.org"
-curl -I "http://mgtest.openelis-global.org"
-curl -v "https://madagascar.openelis-global.org/"
-curl -v "https://mgtest.openelis-global.org/"
+curl -I "http://lab.health.gov.pg"
+curl -I "http://lab-test.health.gov.pg"
+curl -v "https://lab.health.gov.pg/"
+curl -v "https://lab-test.health.gov.pg/"
 curl -sSf -X POST \
-  'https://madagascar.openelis-global.org/api/OpenELIS-Global/ValidateLogin?apiCall=true' \
-  -d 'loginName=admin&password=adminADMIN!'
+  'https://lab.health.gov.pg/api/OpenELIS-Global/ValidateLogin?apiCall=true' \
+  --data-urlencode 'loginName=admin' \
+  --data-urlencode "password=${OE_ADMIN_PASSWORD}"
 ```
+
+Use the site's own `OE_ADMIN_PASSWORD`, not `adminADMIN!` — on a correctly
+deployed site `./scripts/set-admin-password.sh` has already made the default
+invalid.
 
 Expect HTTP→HTTPS redirect, a trusted certificate chain in the browser (no `-k`), and a successful login
 response. On the same machine without public DNS, continue using `https://localhost/` with `-k`.

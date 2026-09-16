@@ -41,21 +41,27 @@ check confirms they contain no Madagascar, LA2M, or site-specific notes:
 - `configs/analyzer-profiles/hl7/mindray-bs360e.json`
 - `configs/analyzer-profiles/file/dtprime.json`
 
-## Madagascar Payload
+## Country Payload
 
-These files are Madagascar production configuration and should stay in generated
-country repos, not in the base template:
+These files are country production configuration and should stay in generated
+country repos, not in the base template.
 
-- `configs/configuration/backend/address-hierarchy/madagascar-levels.csv`
-- `configs/configuration/backend/address-hierarchy/madagascar-values.csv`
-- `configs/configuration/backend/dictionaries/madagascar-dictionary-entries.csv`
-- `configs/configuration/backend/locales/madagascar-locales.csv`
-- `configs/configuration/backend/roles/madagascar-lab-roles.csv`
-- `configs/configuration/backend/sample-types/madagascar-sample-types.csv`
-- `configs/configuration/backend/site-information/madagascar-site-information.csv`
-- `configs/configuration/backend/test-results/madagascar-test-results.csv`
-- `configs/configuration/backend/test-sections/madagascar-test-sections.csv`
-- `configs/configuration/backend/tests/madagascar-tests.csv`
+The catalog CSVs below carry the `png-` prefix because this is the Papua New
+Guinea distro, but their **contents are still the Madagascar payload** this
+repo was branched from — Malagasy address hierarchy, `+261` phone validation
+and French localization. They are placeholders awaiting the PNG catalog; see
+"Catalog configuration" in the README.
+
+- `configs/configuration/backend/address-hierarchy/png-levels.csv`
+- `configs/configuration/backend/address-hierarchy/png-values.csv`
+- `configs/configuration/backend/dictionaries/png-dictionary-entries.csv`
+- `configs/configuration/backend/locales/png-locales.csv`
+- `configs/configuration/backend/roles/png-lab-roles.csv`
+- `configs/configuration/backend/sample-types/png-sample-types.csv`
+- `configs/configuration/backend/site-information/png-site-information.csv`
+- `configs/configuration/backend/test-results/png-test-results.csv`
+- `configs/configuration/backend/test-sections/png-test-sections.csv`
+- `configs/configuration/backend/tests/png-tests.csv`
 - `configs/analyzer/analyzer-test-map.csv`
 - `configs/menu/menu_config.json`
 - `configs/odoo/odoo-test-product-mapping.csv`
