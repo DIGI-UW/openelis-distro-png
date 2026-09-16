@@ -235,17 +235,17 @@ services:
             - ${ANALYZER_HOST_MOUNT:-./configs/analyzer-drops}:/data/analyzer-drops:ro
             # Durable state store for the bridge's FileStateStore (SQLite, WAL mode).
             # Bind-mounted from the host (instead of a named volume) so ownership
-            # can be controlled. The bridge process runs as UID 1000 (`astm`)
-            # inside the container; named volumes inherit ownership from the
-            # image's mountpoint, which is root-owned, and SQLite then fails
-            # with "Permission denied" trying to create state.db.
-            # The host directory must exist and be owned by UID:GID 1000:1000.
+            # can be controlled. The bridge process runs as UID 9257 (`astm`)
+            # inside the container; a bind-mount target that Docker has to
+            # create itself is owned by root, and SQLite then fails with
+            # "Permission denied" trying to create state.db.
+            # The host directory must exist and be owned by UID:GID 9257:9257.
             # See scripts/init-bridge-state.sh.
             - ${BRIDGE_STATE_HOST_DIR:-./configs/bridge-state}:/data/openelis-analyzer-bridge
         environment:
             SPRING_PROFILES_ACTIVE: dev
             BRIDGE_FILE_ENABLED: "true"
-            # Point the bridge at the named volume mount. Must match the
+            # Point the bridge at the bind mount. Must match the
             # volume mount path above. Spring Boot maps this env var to the
             # bridge.file.state-store-path config property.
             BRIDGE_FILE_STATE_STORE_PATH: /data/openelis-analyzer-bridge/state.db
