@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Prepare the bridge state-store host directory before first `docker compose up`.
 #
-# The analyzer bridge runs as UID 1000 (`astm`) inside the container and writes
+# The analyzer bridge runs as UID 9257 (`astm`) inside the container and writes
 # its SQLite state to /data/openelis-analyzer-bridge/state.db. We bind-mount a
 # host directory there so the OS perms are under our control; without this the
 # bridge fails to boot with:

@@ -16,6 +16,9 @@ compose.override.yaml
 compose.override.yml
 docker-compose.override.yml
 
+# Bridge FileStateStore bind mount (SQLite runtime state, owned by UID 9257)
+configs/bridge-state/
+
 # Database bind mounts and local OE config overrides
 configs/logs/
 configs/logs/*
