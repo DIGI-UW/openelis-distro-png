@@ -40,7 +40,7 @@ fetch_upstream_body() {
 }
 
 cat <<EOF
-# OpenELIS Madagascar Distro ${DISTRO_VERSION}
+# OpenELIS Papua New Guinea Distro ${DISTRO_VERSION}
 
 Packaged components:
 

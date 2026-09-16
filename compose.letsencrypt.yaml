@@ -5,6 +5,8 @@
 #
 # Certificates: run ./scripts/generate-letsencrypt-certs.sh from repo root after proxy is up.
 # Env: LETSENCRYPT_EMAIL (required), LETSENCRYPT_DOMAINS / LETSENCRYPT_PRIMARY_DOMAIN / LETSENCRYPT_CERT_NAME
+# Set them in .env (see the LETSENCRYPT_* block in .env.example); both this
+# overlay and the script read them from there.
 #
 # Compose replaces service volumes on override; this file lists the full proxy volume set.
 
@@ -18,7 +20,12 @@ services:
             - ./configs/letsencrypt:/etc/letsencrypt:ro
             - ./configs/nginx/docker-entrypoint.sh:/docker-entrypoint.sh:ro
         environment:
-            - LETSENCRYPT_DOMAINS=${LETSENCRYPT_DOMAINS:-mgtest.openelis-global.org}
-            - LETSENCRYPT_PRIMARY_DOMAIN=${LETSENCRYPT_PRIMARY_DOMAIN:-mgtest.openelis-global.org}
-            - LETSENCRYPT_CERT_NAME=${LETSENCRYPT_CERT_NAME:-mgtest.openelis-global.org}
+            # Neutral placeholders only. These used to default to
+            # mgtest.openelis-global.org — a Madagascar test host — so an
+            # unconfigured PNG deployment looked for a certificate lineage
+            # belonging to a different country's site. Override every one of
+            # them in .env before using this overlay.
+            - LETSENCRYPT_DOMAINS=${LETSENCRYPT_DOMAINS:-example.com}
+            - LETSENCRYPT_PRIMARY_DOMAIN=${LETSENCRYPT_PRIMARY_DOMAIN:-example.com}
+            - LETSENCRYPT_CERT_NAME=${LETSENCRYPT_CERT_NAME:-example.com}
         entrypoint: ["/bin/sh", "/docker-entrypoint.sh"]

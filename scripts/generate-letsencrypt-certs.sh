@@ -3,12 +3,20 @@
 # Prerequisites: openelisglobal-proxy running with ./configs/nginx/certbot mounted and
 # nginx serving /.well-known/acme-challenge/ (see configs/nginx/nginx.conf).
 #
+# Configuration is read from ./.env (the LETSENCRYPT_* block in
+# .env.example), which is what .env.example tells you to fill in. A value
+# already exported in the environment wins over the .env entry.
+#
 # Usage:
-#   export LETSENCRYPT_EMAIL='you@example.com'
+#   # either fill in the LETSENCRYPT_* block in .env ...
 #   ./scripts/generate-letsencrypt-certs.sh --dry-run    # quota-safe validation (no production issuance)
 #   ./scripts/generate-letsencrypt-certs.sh              # new cert or renew if due
 #
-# Optional env:
+#   # ... or override ad hoc from the shell:
+#   LETSENCRYPT_EMAIL='you@example.com' ./scripts/generate-letsencrypt-certs.sh
+#
+# Settings (from .env or the environment):
+#   LETSENCRYPT_EMAIL         required: ACME account / expiry notices
 #   LETSENCRYPT_DOMAINS       comma- or space-separated SAN list
 #   LETSENCRYPT_DOMAIN        legacy single-domain fallback
 #   LETSENCRYPT_PRIMARY_DOMAIN primary domain / default cert name
@@ -20,13 +28,34 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+# Read the LETSENCRYPT_* block from .env. Only these keys are consulted and
+# .env is never executed, so a stray line in it cannot run anything here.
+# An exported value takes precedence, so ad-hoc overrides still work.
+env_file_value() {
+    [ -f .env ] || return 0
+    sed -n "s/^[[:space:]]*$1[[:space:]]*=[[:space:]]*//p" .env | tail -n 1 | tr -d '\r'
+}
+
+for _le_key in LETSENCRYPT_EMAIL LETSENCRYPT_DOMAINS LETSENCRYPT_DOMAIN \
+               LETSENCRYPT_PRIMARY_DOMAIN LETSENCRYPT_CERT_NAME LETSENCRYPT_STAGING; do
+    eval "_le_current=\${${_le_key}:-}"
+    if [ -z "$_le_current" ]; then
+        _le_value="$(env_file_value "$_le_key")"
+        # tolerate quoted values in .env
+        _le_value="${_le_value%\"}"; _le_value="${_le_value#\"}"
+        _le_value="${_le_value%\'}"; _le_value="${_le_value#\'}"
+        [ -z "$_le_value" ] || export "$_le_key=$_le_value"
+    fi
+done
+unset _le_key _le_current _le_value
+
 EMAIL="${LETSENCRYPT_EMAIL:-}"
 STAGING="${LETSENCRYPT_STAGING:-false}"
 DRY_RUN=false
 FORCE_RENEW=false
 
 usage() {
-    sed -n '1,22p' "$0" | tail -n +2
+    sed -n '2,31p' "$0" | sed 's/^# \{0,1\}//'
 }
 
 while [ $# -gt 0 ]; do
@@ -54,11 +83,15 @@ done
 
 mkdir -p ./configs/letsencrypt ./configs/nginx/certbot
 
-DOMAINS_INPUT="${LETSENCRYPT_DOMAINS:-${LETSENCRYPT_DOMAIN:-mgtest.openelis-global.org}}"
+# No built-in hostname default: this used to fall back to a Madagascar test
+# host, so an unconfigured run would request a certificate for somebody
+# else's name (and burn this host's ACME quota doing it).
+DOMAINS_INPUT="${LETSENCRYPT_DOMAINS:-${LETSENCRYPT_DOMAIN:-}}"
 DOMAINS_INPUT="${DOMAINS_INPUT//,/ }"
 read -r -a RAW_DOMAINS <<<"$DOMAINS_INPUT"
 if [ "${#RAW_DOMAINS[@]}" -eq 0 ]; then
-    echo "ERROR: At least one hostname is required via LETSENCRYPT_DOMAINS or LETSENCRYPT_DOMAIN" >&2
+    echo "ERROR: At least one hostname is required via LETSENCRYPT_DOMAINS (or the legacy LETSENCRYPT_DOMAIN)." >&2
+    echo "       Set it in .env — see the LETSENCRYPT_* block in .env.example." >&2
     exit 1
 fi
 
@@ -80,7 +113,8 @@ CERT_NAME="${LETSENCRYPT_CERT_NAME:-$PRIMARY_DOMAIN}"
 
 if [ -z "$EMAIL" ]; then
     echo "ERROR: LETSENCRYPT_EMAIL is required" >&2
-    echo "Example: export LETSENCRYPT_EMAIL='you@example.com' && $0" >&2
+    echo "       Set it in .env — see the LETSENCRYPT_* block in .env.example —" >&2
+    echo "       or pass it inline: LETSENCRYPT_EMAIL='you@example.com' $0" >&2
     exit 1
 fi
 

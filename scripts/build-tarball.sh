@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Build a release tarball of this distro.
 #
-# Output: openelis-madagascar-distro-<ref>.tar.gz at the repo root, with
-# a top-level openelis-madagascar-distro-<ref>/ wrap dir — byte-shape
+# Output: openelis-png-distro-<ref>.tar.gz at the repo root, with
+# a top-level openelis-png-distro-<ref>/ wrap dir — byte-shape
 # identical to a GitHub auto-archive at the same ref.
 #
 # Uses `git archive`, which reads from the git tree (not the working
@@ -20,7 +20,7 @@ cd "$ROOT"
 
 REF="${1:-HEAD}"
 REF_NAME="${REF_NAME:-$(git describe --tags --always "$REF" 2>/dev/null || echo "local")}"
-WRAP_DIR="openelis-madagascar-distro-${REF_NAME}"
+WRAP_DIR="openelis-png-distro-${REF_NAME}"
 TARBALL="${WRAP_DIR}.tar.gz"
 
 echo "[build] ref:     $REF ($REF_NAME)"

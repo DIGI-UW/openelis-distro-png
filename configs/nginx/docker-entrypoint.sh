@@ -4,7 +4,12 @@ set -e
 # Symlink Let's Encrypt material into the paths nginx expects, or wait for certgen self-signed.
 # Mirrors OpenELIS-Global-2 nginx-proxy/docker-entrypoint.sh
 
-CERT_NAME="${LETSENCRYPT_CERT_NAME:-${LETSENCRYPT_PRIMARY_DOMAIN:-${LETSENCRYPT_DOMAIN:-madagascar.openelis-global.org}}}"
+# Neutral placeholder only — this used to fall back to a Madagascar host, so
+# an unconfigured deployment looked for another country's cert lineage. Set
+# LETSENCRYPT_CERT_NAME (or LETSENCRYPT_PRIMARY_DOMAIN) in .env; with the
+# placeholder left in place no lineage matches and the self-signed cert from
+# the certs service is used, which is the correct fallback.
+CERT_NAME="${LETSENCRYPT_CERT_NAME:-${LETSENCRYPT_PRIMARY_DOMAIN:-${LETSENCRYPT_DOMAIN:-example.com}}}"
 
 LETSENCRYPT_CERT="/etc/letsencrypt/live/${CERT_NAME}/fullchain.pem"
 LETSENCRYPT_KEY="/etc/letsencrypt/live/${CERT_NAME}/privkey.pem"

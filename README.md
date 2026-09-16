@@ -14,6 +14,10 @@ consumers and direct implementers all use the same versioned tag.
 ```bash
 git clone https://github.com/DIGI-UW/openelis-distro-png
 cd openelis-distro-png
+
+./scripts/fix-config-permissions.sh   # before first start — see note below
+./scripts/init-bridge-state.sh
+
 docker compose up -d
 ```
 
@@ -23,10 +27,55 @@ Then open https://localhost/ in your browser:
 |---|---|
 | https://localhost/ | `admin` / `adminADMIN!` |
 
-`docker-compose.yml` ships sensible localhost-demo defaults (DB password, admin
-password, TLS material paths) so the stack boots out of the box without a
-local `.env`. To override anything for production, copy `.env.example` to
-`.env` and edit. **`.env` is gitignored — never commit it.**
+`scripts/fix-config-permissions.sh` hands `configs/configuration` to UID 8443
+(the webapp's `tomcat_admin`) with group write for you. Skip it and every
+boot logs `Failed to save checksums file ...` for all 15 catalog domains and
+re-imports the whole catalog each time. Run it before the first
+`docker compose up -d`; it is idempotent.
+
+`docker-compose.yml` ships sensible localhost-demo defaults (DB password, TLS
+material paths) so the stack boots out of the box without a local `.env`. To
+override anything for production, copy `.env.example` to `.env` and edit.
+**`.env` is gitignored — never commit it.**
+
+## Deploying a real site
+
+Everything in Quickstart, plus:
+
+```bash
+cp .env.example .env
+# set OE_DB_PASSWORD, ADMIN_PASSWORD and OE_ADMIN_PASSWORD to site values.
+# OE_ADMIN_PASSWORD must satisfy the OpenELIS password policy — .env.example
+# spells it out; a hyphen will be rejected.
+
+./scripts/fix-config-permissions.sh
+./scripts/init-bridge-state.sh
+docker compose up -d
+
+docker compose ps                    # wait for oe.openelis.org -> healthy
+./scripts/set-admin-password.sh      # MANDATORY — see below
+```
+
+### The admin password step is not optional
+
+`OE_ADMIN_PASSWORD` in `.env` does **not** by itself change the login
+password. OpenELIS creates the `admin` account on first boot from a bcrypt
+hash baked into the webapp image at *build* time (upstream `ARG DEFAULT_PW`
+→ `adminPassword.txt` on the WAR classpath). A distro that ships pinned
+upstream images cannot change a build argument, so a fresh site accepts the
+published default `admin` / `adminADMIN!` until you run:
+
+```bash
+./scripts/set-admin-password.sh
+```
+
+It applies `OE_ADMIN_PASSWORD`, then verifies through OpenELIS's own login
+endpoint that the configured password is accepted and `adminADMIN!` is
+rejected. Re-check at any time with `./scripts/set-admin-password.sh --check`.
+
+Earlier revisions of this distro carried `DEFAULT_PW=${OE_ADMIN_PASSWORD}` in
+`docker-compose.yml`; it was read at build time only and had no effect at
+runtime, so sites went live on the public default.
 
 ## Image pinning
 
@@ -99,13 +148,22 @@ byte-reproducible package.
 
 | Topic | Pointer |
 |---|---|
+| Setting the in-app admin password (mandatory) | `./scripts/set-admin-password.sh` |
+| Backup and restore | [docs/backup-restore.md](docs/backup-restore.md) |
 | Let's Encrypt TLS for a public hostname | [docs/letsencrypt.md](docs/letsencrypt.md) |
-| Permission errors on `configs/` | `./scripts/fix-config-permissions.sh` |
+| `Failed to save checksums` / permission errors on `configs/` | `./scripts/fix-config-permissions.sh` |
+| Bridge state store fails to open | `./scripts/init-bridge-state.sh` |
 | Template extraction source classification | [docs/template-source-inventory.md](docs/template-source-inventory.md) |
 
-The Let's Encrypt overlay reads `LETSENCRYPT_*` vars from `.env`. Start
-from `.env.example` (uncomment the LE block) and follow
+Both the Let's Encrypt overlay and
+`scripts/generate-letsencrypt-certs.sh` read `LETSENCRYPT_*` from `.env`.
+Start from `.env.example` (uncomment the LE block) and follow
 `docs/letsencrypt.md` for the full walkthrough.
+
+Back up with `sudo ./scripts/backup.sh` — it must run as root, or the
+archive silently omits `configs/bridge-state`. Read
+[docs/backup-restore.md](docs/backup-restore.md) before restoring: restoring
+the dump as `-U postgres` takes the site down.
 
 ## Lab-data utilities
 
@@ -118,19 +176,50 @@ placement.
 
 ## Catalog configuration
 
-`configs/configuration/backend/<domain>/png-*.csv` are
-Papua New Guinea's production catalog data — lab roles, tests, sample types,
-test sections, test results, dictionary entries, and address hierarchy
-levels/values. OE auto-imports them at startup via
-`ConfigurationInitializationService`, with SHA-256 checksum tracking
-that skips re-import on subsequent boots if file content is unchanged.
-Imports are idempotent (upsert by domain key), so renaming or
+`configs/configuration/backend/<domain>/png-*.csv` are this distro's catalog
+data — lab roles, tests, sample types, test sections, test results,
+dictionary entries, and address hierarchy levels/values. OE auto-imports them
+at startup via `ConfigurationInitializationService`, with SHA-256 checksum
+tracking that skips re-import on subsequent boots if file content is
+unchanged. Imports are idempotent (upsert by domain key), so renaming or
 re-running is safe.
 
-The `png-` prefix marks these as Papua New Guinea-specific data, not
-generic samples (the prior `example-` prefix was misleading: the
-loader doesn't filter by filename prefix — any `*.csv` in each domain
-subdirectory is processed).
+The `png-` prefix marks these as this deployment's catalog slot, not generic
+samples (the prior `example-` prefix was misleading: the loader doesn't filter
+by filename prefix — any `*.csv` in each domain subdirectory is processed).
+
+> **The contents are not yet Papua New Guinea's data.** These files still hold
+> the Madagascar payload this repo was branched from, and nothing in them has
+> been localized for PNG:
+>
+> | File | Still contains |
+> |---|---|
+> | `address-hierarchy/png-values.csv` | 110 Malagasy provinces / regions / districts (Toamasina, Alaotra-Mangoro, …) |
+> | `address-hierarchy/png-levels.csv` | `Fokontany`, a Malagasy administrative unit |
+> | `site-information/png-site-information.csv` | phone validation for `+261` (Madagascar; PNG is `+675`) |
+> | `tests/png-tests.csv`, `sample-types/`, `dictionaries/` | French localization columns, no Tok Pisin |
+> | `roles/png-lab-roles.csv`, `test-sections/png-test-sections.csv` | header only — empty |
+>
+> Replacing this content with the PNG catalog is outstanding work. Until then
+> a deployed site carries Madagascar reference data under PNG filenames.
+
+### Upgrading a site across the `madagascar-*` → `png-*` rename
+
+`ConfigurationInitializationService` keys its checksums by **file basename**
+(`resource.getFilename()`), so on a site that already ran the old filenames
+the first boot after this change re-imports all ten renamed files once, then
+settles:
+
+```
+png-tests.csv ... Successfully loaded tests configuration      # first boot
+png-tests.csv ... unchanged (checksum matches). Skipping.      # every boot after
+```
+
+That re-import is safe — the handlers upsert by domain key, and the file
+contents did not change with the rename. The stale `madagascar-*.csv` entries
+left behind in each `<domain>-checksums.properties` are inert; delete the
+checksum files if you want them tidied, and OE will regenerate them on the
+next start. Fresh installs have no checksum files and are unaffected.
 
 If this distro is ever reused as a template by other deployments, OE
 also supports `OPENELIS_CONFIGURATION_INSTANCE_ID` for instance-scoped
