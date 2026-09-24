@@ -359,6 +359,7 @@ workbook:
 | `test-results/png-test-results.csv` | 1,856 result definitions |
 | `dictionaries/png-dictionary-entries.csv` | 734 result options, plus analyzer result options and demographic settings |
 | `panels/png-panels.csv` | 71 panels |
+| `eqa-programs/png-eqa-programs.csv` | 6 national EQA schemes run by CPHL (HIV serology, HIV viral load, EID, HIV recency, COVID-19 molecular, TB microscopy) |
 
 > **Pending CPHL review.** This catalog has not yet been signed off by CPHL
 > and must be reviewed before go-live. In particular:
