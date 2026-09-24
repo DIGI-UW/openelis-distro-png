@@ -47,14 +47,15 @@ These files are country production configuration and should stay in generated
 country repos, not in the base template.
 
 The catalog CSVs below carry the `png-` prefix because this is the Papua New
-Guinea distro. The address hierarchy and phone validation are PNG; the test
-catalog is still a placeholder awaiting the PNG catalog (see "Test catalog"
-in the README).
+Guinea distro. The address hierarchy, phone validation and the CPHL test
+catalog (pending CPHL review; see "Loading the PNG test catalog" in the
+README) are PNG-specific.
 
 - `configs/configuration/backend/address-hierarchy/png-levels.csv`
 - `configs/configuration/backend/address-hierarchy/png-values.csv`
 - `configs/configuration/backend/dictionaries/png-dictionary-entries.csv`
 - `configs/configuration/backend/locales/png-locales.csv`
+- `configs/configuration/backend/panels/png-panels.csv`
 - `configs/configuration/backend/roles/png-lab-roles.csv`
 - `configs/configuration/backend/sample-types/png-sample-types.csv`
 - `configs/configuration/backend/site-information/png-site-information.csv`

@@ -1,19 +1,755 @@
-category,dictEntry,localAbbreviation,isActive,sortOrder,loincCode,localization:en,localization:fr,localization:es,localization:id
-Xpert Results,Positive,POS,Y,1,,Positive,Positif,,
-Xpert Results,Negative,NEG,Y,2,,Negative,Négatif,,
-Xpert Results,POS,XPOS,Y,3,,POS,POS,,
-Xpert Results,NEG,XNEG,Y,4,,NEG,NEG,,
-Xpert Results,Detected,DET,Y,5,,Detected,Détecté,,
-Xpert Results,Not Detected,ND,Y,6,,Not Detected,Non Détecté,,
-Xpert Results,MTB Detected,MTBD,Y,7,,MTB Detected,MTB Détecté,,
-Xpert Results,Invalid,INV,Y,8,,Invalid,Invalide,,
-Xpert Results,Error,ERR,Y,9,,Error,Erreur,,
-Xpert Results,No Result,NR,Y,10,,No Result,Pas de Résultat,,
-Xpert Results,Indeterminate,INDET,Y,11,,Indeterminate,Indéterminé,,
-Xpert Results,Presumptive,PRES,Y,12,,Presumptive,Présomptif,,
-Xpert Results,High,HIGH,Y,13,,High,Élevé,,
-Xpert Results,Medium,MED,Y,14,,Medium,Moyen,,
-Xpert Results,Low,LOW,Y,15,,Low,Faible,,
-Xpert Results,Very Low,VLOW,Y,16,,Very Low,Très Faible,,
-Marital Status Demographic Information,DNA,,N,,,,,,
-Marital Status Demographic Information,livingWith,,N,,,,,,
+category,dictEntry,localAbbreviation,isActive,sortOrder,loincCode,localization:en
+# Categories are GENERATED from distinct option sets; entries reused across categories share dictEntry text.
+Dengue IgG + IgM Ab Results,IgG Positive,,Y,1,,IgG Positive
+Dengue IgG + IgM Ab Results,IgM and IgG Positive,,Y,2,,IgM and IgG Positive
+Dengue IgG + IgM Ab Results,IgM Positive,,Y,3,,IgM Positive
+Dengue IgG + IgM Ab Results,Invalid,,Y,4,,Invalid
+Dengue IgG + IgM Ab Results,Negative,,Y,5,,Negative
+Invalid/Negative/NS1 Ag Positive,Invalid,,Y,1,,Invalid
+Invalid/Negative/NS1 Ag Positive,Negative,,Y,2,,Negative
+Invalid/Negative/NS1 Ag Positive,NS1 Ag Positive,,Y,3,,NS1 Ag Positive
+Dengue Serology Results Interpretation Results,Acute Dengue infection,,Y,1,,Acute Dengue infection
+Dengue Serology Results Interpretation Results,Dengue not confirmed,,Y,2,,Dengue not confirmed
+Dengue Serology Results Interpretation Results,Indicative of a late primary or early secondary Dengue infection,,Y,3,,Indicative of a late primary or early secondary Dengue infection
+Dengue Serology Results Interpretation Results,Indicative of reinfection,,Y,4,,Indicative of reinfection
+Dengue Serology Results Interpretation Results,Indicative of secondary or past Dengue infection,,Y,5,,Indicative of secondary or past Dengue infection
+Dengue Serology Results Interpretation Results,No active infection,,Y,6,,No active infection
+Dengue Serology Results Interpretation Results,Primary or probable recent Dengue infection,,Y,7,,Primary or probable recent Dengue infection
+Malaria Parasite Detection Results,Negative for malaria parasites,,Y,1,,Negative for malaria parasites
+Malaria Parasite Detection Results,Positive for malaria parasites,,Y,2,,Positive for malaria parasites
+Malaria Species Identification Results,Mixed infection,,Y,1,,Mixed infection
+Malaria Species Identification Results,Positive for P. falciparum,,Y,2,,Positive for P. falciparum
+Malaria Species Identification Results,Positive for P. falciparum gametocytes,,Y,3,,Positive for P. falciparum gametocytes
+Malaria Species Identification Results,Positive for P. malariae,,Y,4,,Positive for P. malariae
+Malaria Species Identification Results,Positive for P. ovale,,Y,5,,Positive for P. ovale
+Malaria Species Identification Results,Positive for P. vivax,,Y,6,,Positive for P. vivax
+Mixed Malaria Species Results,Positive for P. falciparum,,Y,1,,Positive for P. falciparum
+Mixed Malaria Species Results,Positive for P. malariae,,Y,2,,Positive for P. malariae
+Mixed Malaria Species Results,Positive for P. ovale,,Y,3,,Positive for P. ovale
+Mixed Malaria Species Results,Positive for P. vivax,,Y,4,,Positive for P. vivax
+Not present/Present,Not present,,Y,1,,Not present
+Not present/Present,Present,,Y,2,,Present
+Detected/Invalid/Not Detected,Detected,,Y,1,,Detected
+Detected/Invalid/Not Detected,Invalid,,Y,2,,Invalid
+Detected/Invalid/Not Detected,Not Detected,,Y,3,,Not Detected
+Invalid/Negative/Positive,Invalid,,Y,1,,Invalid
+Invalid/Negative/Positive,Negative,,Y,2,,Negative
+Invalid/Negative/Positive,Positive,,Y,3,,Positive
+I/R/S,I,,Y,1,,I
+I/R/S,R,,Y,2,,R
+I/R/S,S,,Y,3,,S
+Amikacin Results,I,,Y,1,,I
+Amikacin Results,Non-Susceptible,,Y,2,,Non-Susceptible
+Amikacin Results,Not applicable,,Y,3,,Not applicable
+Amikacin Results,R,,Y,4,,R
+Amikacin Results,S,,Y,5,,S
+Amikacin Results,Susceptible-Dose Dependent,,Y,6,,Susceptible-Dose Dependent
+I/Not performed/Not reported/Pending/R/S,I,,Y,1,,I
+I/Not performed/Not reported/Pending/R/S,Not performed,,Y,2,,Not performed
+I/Not performed/Not reported/Pending/R/S,Not reported,,Y,3,,Not reported
+I/Not performed/Not reported/Pending/R/S,Pending,,Y,4,,Pending
+I/Not performed/Not reported/Pending/R/S,R,,Y,5,,R
+I/Not performed/Not reported/Pending/R/S,S,,Y,6,,S
+Microbiology Culture Identification Results,Achromobacter xylosoxidans,,Y,1,,Achromobacter xylosoxidans
+Microbiology Culture Identification Results,Acinetobacter baumannii complex,,Y,2,,Acinetobacter baumannii complex
+Microbiology Culture Identification Results,Acinetobacter haemolyticus,,Y,3,,Acinetobacter haemolyticus
+Microbiology Culture Identification Results,Acinetobacter lwoffii,,Y,4,,Acinetobacter lwoffii
+Microbiology Culture Identification Results,Acinetobacter nosocomialis,,Y,5,,Acinetobacter nosocomialis
+Microbiology Culture Identification Results,Acinetobacter pittii,,Y,6,,Acinetobacter pittii
+Microbiology Culture Identification Results,Acinetobacter species,,Y,7,,Acinetobacter species
+Microbiology Culture Identification Results,Aeromonas caviae,,Y,8,,Aeromonas caviae
+Microbiology Culture Identification Results,Aeromonas hydrophila,,Y,9,,Aeromonas hydrophila
+Microbiology Culture Identification Results,Aeromonas species,,Y,10,,Aeromonas species
+Microbiology Culture Identification Results,Aeromonas veronii,,Y,11,,Aeromonas veronii
+Microbiology Culture Identification Results,Bacillus anthracis,,Y,12,,Bacillus anthracis
+Microbiology Culture Identification Results,Bacillus cereus group,,Y,13,,Bacillus cereus group
+Microbiology Culture Identification Results,Bacillus species,,Y,14,,Bacillus species
+Microbiology Culture Identification Results,Bacteroides fragilis,,Y,15,,Bacteroides fragilis
+Microbiology Culture Identification Results,Bacteroides species,,Y,16,,Bacteroides species
+Microbiology Culture Identification Results,Bacteroides thetaiotaomicron,,Y,17,,Bacteroides thetaiotaomicron
+Microbiology Culture Identification Results,Bordetella bronchiseptica,,Y,18,,Bordetella bronchiseptica
+Microbiology Culture Identification Results,Bordetella pertussis,,Y,19,,Bordetella pertussis
+Microbiology Culture Identification Results,Brucella melitensis,,Y,20,,Brucella melitensis
+Microbiology Culture Identification Results,Burkholderia cepacia complex,,Y,21,,Burkholderia cepacia complex
+Microbiology Culture Identification Results,Burkholderia pseudomallei,,Y,22,,Burkholderia pseudomallei
+Microbiology Culture Identification Results,Campylobacter spp,,Y,23,,Campylobacter spp
+Microbiology Culture Identification Results,Candida albicans,,Y,24,,Candida albicans
+Microbiology Culture Identification Results,Candida auris,,Y,25,,Candida auris
+Microbiology Culture Identification Results,Candida dubliniensis,,Y,26,,Candida dubliniensis
+Microbiology Culture Identification Results,Candida glabrata,,Y,27,,Candida glabrata
+Microbiology Culture Identification Results,Candida guilliermondii,,Y,28,,Candida guilliermondii
+Microbiology Culture Identification Results,Candida haemulonii,,Y,29,,Candida haemulonii
+Microbiology Culture Identification Results,Candida krusei,,Y,30,,Candida krusei
+Microbiology Culture Identification Results,Candida lusitaniae,,Y,31,,Candida lusitaniae
+Microbiology Culture Identification Results,Candida metapsilosis,,Y,32,,Candida metapsilosis
+Microbiology Culture Identification Results,Candida orthopsilosis,,Y,33,,Candida orthopsilosis
+Microbiology Culture Identification Results,Candida parapsilosis,,Y,34,,Candida parapsilosis
+Microbiology Culture Identification Results,Candida parapsilosis complex,,Y,35,,Candida parapsilosis complex
+Microbiology Culture Identification Results,Candida species,,Y,36,,Candida species
+Microbiology Culture Identification Results,Candida tropicalis,,Y,37,,Candida tropicalis
+Microbiology Culture Identification Results,Carbapenem-resistant Enterobacterales,,Y,38,,Carbapenem-resistant Enterobacterales
+Microbiology Culture Identification Results,Chryseobacterium indologenes,,Y,39,,Chryseobacterium indologenes
+Microbiology Culture Identification Results,Citrobacter braakii,,Y,40,,Citrobacter braakii
+Microbiology Culture Identification Results,Citrobacter freundii complex,,Y,41,,Citrobacter freundii complex
+Microbiology Culture Identification Results,Citrobacter koseri,,Y,42,,Citrobacter koseri
+Microbiology Culture Identification Results,Citrobacter species,,Y,43,,Citrobacter species
+Microbiology Culture Identification Results,Clavispora lusitaniae,,Y,44,,Clavispora lusitaniae
+Microbiology Culture Identification Results,Clostridioides difficile,,Y,45,,Clostridioides difficile
+Microbiology Culture Identification Results,Clostridium botulinum,,Y,46,,Clostridium botulinum
+Microbiology Culture Identification Results,Clostridium perfringens,,Y,47,,Clostridium perfringens
+Microbiology Culture Identification Results,Clostridium species,,Y,48,,Clostridium species
+Microbiology Culture Identification Results,Clostridium tetani,,Y,49,,Clostridium tetani
+Microbiology Culture Identification Results,Contaminant,,Y,50,,Contaminant
+Microbiology Culture Identification Results,Corynebacterium amycolatum,,Y,51,,Corynebacterium amycolatum
+Microbiology Culture Identification Results,Corynebacterium diphtheriae,,Y,52,,Corynebacterium diphtheriae
+Microbiology Culture Identification Results,Corynebacterium jeikeium,,Y,53,,Corynebacterium jeikeium
+Microbiology Culture Identification Results,Corynebacterium species,,Y,54,,Corynebacterium species
+Microbiology Culture Identification Results,Corynebacterium striatum,,Y,55,,Corynebacterium striatum
+Microbiology Culture Identification Results,Corynebacterium urealyticum,,Y,56,,Corynebacterium urealyticum
+Microbiology Culture Identification Results,Cronobacter sakazakii,,Y,57,,Cronobacter sakazakii
+Microbiology Culture Identification Results,Cryptococcus gattii,,Y,58,,Cryptococcus gattii
+Microbiology Culture Identification Results,Cryptococcus neoformans,,Y,59,,Cryptococcus neoformans
+Microbiology Culture Identification Results,Cryptococcus species,,Y,60,,Cryptococcus species
+Microbiology Culture Identification Results,Elizabethkingia anophelis,,Y,61,,Elizabethkingia anophelis
+Microbiology Culture Identification Results,Elizabethkingia meningoseptica,,Y,62,,Elizabethkingia meningoseptica
+Microbiology Culture Identification Results,Enterobacter asburiae,,Y,63,,Enterobacter asburiae
+Microbiology Culture Identification Results,Enterobacter cloacae complex,,Y,64,,Enterobacter cloacae complex
+Microbiology Culture Identification Results,Enterobacter hormaechei,,Y,65,,Enterobacter hormaechei
+Microbiology Culture Identification Results,Enterobacter kobei,,Y,66,,Enterobacter kobei
+Microbiology Culture Identification Results,Enterobacter ludwigii,,Y,67,,Enterobacter ludwigii
+Microbiology Culture Identification Results,Enterobacter species,,Y,68,,Enterobacter species
+Microbiology Culture Identification Results,Enterococcus faecalis,,Y,69,,Enterococcus faecalis
+Microbiology Culture Identification Results,Enterococcus faecium,,Y,70,,Enterococcus faecium
+Microbiology Culture Identification Results,Enterococcus species,,Y,71,,Enterococcus species
+Microbiology Culture Identification Results,Erysipelothrix rhusiopathiae,,Y,72,,Erysipelothrix rhusiopathiae
+Microbiology Culture Identification Results,Escherichia coli,,Y,73,,Escherichia coli
+Microbiology Culture Identification Results,Escherichia fergusonii,,Y,74,,Escherichia fergusonii
+Microbiology Culture Identification Results,Fusobacterium necrophorum,,Y,75,,Fusobacterium necrophorum
+Microbiology Culture Identification Results,Fusobacterium nucleatum,,Y,76,,Fusobacterium nucleatum
+Microbiology Culture Identification Results,Geotrichum species,,Y,77,,Geotrichum species
+Microbiology Culture Identification Results,Haemophilus influenzae,,Y,78,,Haemophilus influenzae
+Microbiology Culture Identification Results,Haemophilus parainfluenzae,,Y,79,,Haemophilus parainfluenzae
+Microbiology Culture Identification Results,Hafnia alvei,,Y,80,,Hafnia alvei
+Microbiology Culture Identification Results,Klebsiella aerogenes,,Y,81,,Klebsiella aerogenes
+Microbiology Culture Identification Results,Klebsiella michiganensis,,Y,82,,Klebsiella michiganensis
+Microbiology Culture Identification Results,Klebsiella oxytoca,,Y,83,,Klebsiella oxytoca
+Microbiology Culture Identification Results,Klebsiella pneumoniae,,Y,84,,Klebsiella pneumoniae
+Microbiology Culture Identification Results,Klebsiella quasipneumoniae,,Y,85,,Klebsiella quasipneumoniae
+Microbiology Culture Identification Results,Klebsiella species,,Y,86,,Klebsiella species
+Microbiology Culture Identification Results,Klebsiella variicola,,Y,87,,Klebsiella variicola
+Microbiology Culture Identification Results,Lactobacillus species,,Y,88,,Lactobacillus species
+Microbiology Culture Identification Results,Legionella pneumophila,,Y,89,,Legionella pneumophila
+Microbiology Culture Identification Results,Listeria monocytogenes,,Y,90,,Listeria monocytogenes
+Microbiology Culture Identification Results,Listeria species,,Y,91,,Listeria species
+Microbiology Culture Identification Results,Malassezia species,,Y,92,,Malassezia species
+Microbiology Culture Identification Results,Mixed flora,,Y,93,,Mixed flora
+Microbiology Culture Identification Results,Moraxella catarrhalis,,Y,94,,Moraxella catarrhalis
+Microbiology Culture Identification Results,Morganella morganii,,Y,95,,Morganella morganii
+Microbiology Culture Identification Results,Nakaseomyces glabrata,,Y,96,,Nakaseomyces glabrata
+Microbiology Culture Identification Results,Neisseria gonorrhoeae,,Y,97,,Neisseria gonorrhoeae
+Microbiology Culture Identification Results,Neisseria lactamica,,Y,98,,Neisseria lactamica
+Microbiology Culture Identification Results,Neisseria meningitidis,,Y,99,,Neisseria meningitidis
+Microbiology Culture Identification Results,Nocardia species,,Y,100,,Nocardia species
+Microbiology Culture Identification Results,No growth,,Y,101,,No growth
+Microbiology Culture Identification Results,No growth after 5 days,,Y,102,,No growth after 5 days
+Microbiology Culture Identification Results,Organism not identified,,Y,103,,Organism not identified
+Microbiology Culture Identification Results,Pasteurella multocida,,Y,104,,Pasteurella multocida
+Microbiology Culture Identification Results,Peptostreptococcus species,,Y,105,,Peptostreptococcus species
+Microbiology Culture Identification Results,Pichia guilliermondii,,Y,106,,Pichia guilliermondii
+Microbiology Culture Identification Results,Pichia kudriavzevii,,Y,107,,Pichia kudriavzevii
+Microbiology Culture Identification Results,Prevotella bivia,,Y,108,,Prevotella bivia
+Microbiology Culture Identification Results,Prevotella melaninogenica,,Y,109,,Prevotella melaninogenica
+Microbiology Culture Identification Results,Prevotella species,,Y,110,,Prevotella species
+Microbiology Culture Identification Results,Propionibacterium acnes,,Y,111,,Propionibacterium acnes
+Microbiology Culture Identification Results,Proteus mirabilis,,Y,112,,Proteus mirabilis
+Microbiology Culture Identification Results,Proteus penneri,,Y,113,,Proteus penneri
+Microbiology Culture Identification Results,Proteus vulgaris,,Y,114,,Proteus vulgaris
+Microbiology Culture Identification Results,Providencia rettgeri,,Y,115,,Providencia rettgeri
+Microbiology Culture Identification Results,Providencia stuartii,,Y,116,,Providencia stuartii
+Microbiology Culture Identification Results,Pseudomonas aeruginosa,,Y,117,,Pseudomonas aeruginosa
+Microbiology Culture Identification Results,Pseudomonas fluorescens,,Y,118,,Pseudomonas fluorescens
+Microbiology Culture Identification Results,Pseudomonas putida,,Y,119,,Pseudomonas putida
+Microbiology Culture Identification Results,Pseudomonas spp,,Y,120,,Pseudomonas spp
+Microbiology Culture Identification Results,Pseudomonas stutzeri,,Y,121,,Pseudomonas stutzeri
+Microbiology Culture Identification Results,Ralstonia pickettii,,Y,122,,Ralstonia pickettii
+Microbiology Culture Identification Results,Raoultella ornithinolytica,,Y,123,,Raoultella ornithinolytica
+Microbiology Culture Identification Results,Raoultella planticola,,Y,124,,Raoultella planticola
+Microbiology Culture Identification Results,Refer to reference laboratory,,Y,125,,Refer to reference laboratory
+Microbiology Culture Identification Results,Rhodotorula mucilaginosa,,Y,126,,Rhodotorula mucilaginosa
+Microbiology Culture Identification Results,Rothia mucilaginosa,,Y,127,,Rothia mucilaginosa
+Microbiology Culture Identification Results,Saccharomyces cerevisiae,,Y,128,,Saccharomyces cerevisiae
+Microbiology Culture Identification Results,Salmonella enterica,,Y,129,,Salmonella enterica
+Microbiology Culture Identification Results,Salmonella Paratyphi A,,Y,130,,Salmonella Paratyphi A
+Microbiology Culture Identification Results,Salmonella Paratyphi B,,Y,131,,Salmonella Paratyphi B
+Microbiology Culture Identification Results,Salmonella spp,,Y,132,,Salmonella spp
+Microbiology Culture Identification Results,Salmonella Typhi,,Y,133,,Salmonella Typhi
+Microbiology Culture Identification Results,Serratia liquefaciens,,Y,134,,Serratia liquefaciens
+Microbiology Culture Identification Results,Serratia marcescens,,Y,135,,Serratia marcescens
+Microbiology Culture Identification Results,Serratia species,,Y,136,,Serratia species
+Microbiology Culture Identification Results,Shigella boydii,,Y,137,,Shigella boydii
+Microbiology Culture Identification Results,Shigella dysenteriae,,Y,138,,Shigella dysenteriae
+Microbiology Culture Identification Results,Shigella flexneri,,Y,139,,Shigella flexneri
+Microbiology Culture Identification Results,Shigella sonnei,,Y,140,,Shigella sonnei
+Microbiology Culture Identification Results,Shigella spp,,Y,141,,Shigella spp
+Microbiology Culture Identification Results,Staphylococcus aureus,,Y,142,,Staphylococcus aureus
+Microbiology Culture Identification Results,Staphylococcus capitis,,Y,143,,Staphylococcus capitis
+Microbiology Culture Identification Results,Staphylococcus caprae,,Y,144,,Staphylococcus caprae
+Microbiology Culture Identification Results,Staphylococcus epidermidis,,Y,145,,Staphylococcus epidermidis
+Microbiology Culture Identification Results,Staphylococcus haemolyticus,,Y,146,,Staphylococcus haemolyticus
+Microbiology Culture Identification Results,Staphylococcus hominis,,Y,147,,Staphylococcus hominis
+Microbiology Culture Identification Results,Staphylococcus lugdunensis,,Y,148,,Staphylococcus lugdunensis
+Microbiology Culture Identification Results,Staphylococcus saprophyticus,,Y,149,,Staphylococcus saprophyticus
+Microbiology Culture Identification Results,Staphylococcus simulans,,Y,150,,Staphylococcus simulans
+Microbiology Culture Identification Results,Staphylococcus species (CoNS),,Y,151,,Staphylococcus species (CoNS)
+Microbiology Culture Identification Results,Staphylococcus warneri,,Y,152,,Staphylococcus warneri
+Microbiology Culture Identification Results,Stenotrophomonas maltophilia,,Y,153,,Stenotrophomonas maltophilia
+Microbiology Culture Identification Results,Streptococcus agalactiae,,Y,154,,Streptococcus agalactiae
+Microbiology Culture Identification Results,Streptococcus anginosus,,Y,155,,Streptococcus anginosus
+Microbiology Culture Identification Results,Streptococcus anginosus group,,Y,156,,Streptococcus anginosus group
+Microbiology Culture Identification Results,Streptococcus bovis group,,Y,157,,Streptococcus bovis group
+Microbiology Culture Identification Results,Streptococcus constellatus,,Y,158,,Streptococcus constellatus
+Microbiology Culture Identification Results,Streptococcus dysgalactiae,,Y,159,,Streptococcus dysgalactiae
+Microbiology Culture Identification Results,Streptococcus gallolyticus,,Y,160,,Streptococcus gallolyticus
+Microbiology Culture Identification Results,Streptococcus intermedius,,Y,161,,Streptococcus intermedius
+Microbiology Culture Identification Results,Streptococcus mitis,,Y,162,,Streptococcus mitis
+Microbiology Culture Identification Results,Streptococcus mutans,,Y,163,,Streptococcus mutans
+Microbiology Culture Identification Results,Streptococcus oralis,,Y,164,,Streptococcus oralis
+Microbiology Culture Identification Results,Streptococcus parasanguinis,,Y,165,,Streptococcus parasanguinis
+Microbiology Culture Identification Results,Streptococcus pneumoniae,,Y,166,,Streptococcus pneumoniae
+Microbiology Culture Identification Results,Streptococcus pyogenes,,Y,167,,Streptococcus pyogenes
+Microbiology Culture Identification Results,Streptococcus salivarius,,Y,168,,Streptococcus salivarius
+Microbiology Culture Identification Results,Streptococcus sanguinis,,Y,169,,Streptococcus sanguinis
+Microbiology Culture Identification Results,Streptococcus Viridans group,,Y,170,,Streptococcus Viridans group
+Microbiology Culture Identification Results,Trichosporon asahii,,Y,171,,Trichosporon asahii
+Microbiology Culture Identification Results,Trichosporon species,,Y,172,,Trichosporon species
+Microbiology Culture Identification Results,Vibrio cholerae,,Y,173,,Vibrio cholerae
+Microbiology Culture Identification Results,Vibrio parahaemolyticus,,Y,174,,Vibrio parahaemolyticus
+Microbiology Culture Identification Results,Vibrio species,,Y,175,,Vibrio species
+Microbiology Culture Identification Results,Vibrio vulnificus,,Y,176,,Vibrio vulnificus
+Microbiology Culture Identification Results,Yersinia enterocolitica,,Y,177,,Yersinia enterocolitica
+Microbiology Culture Identification Results,Yersinia pseudotuberculosis,,Y,178,,Yersinia pseudotuberculosis
+Microbiology Culture Result Results,Enteropathogens isolated,,Y,1,,Enteropathogens isolated
+Microbiology Culture Result Results,Insufficient sample,,Y,2,,Insufficient sample
+Microbiology Culture Result Results,Mixed growth 1+,,Y,3,,Mixed growth 1+
+Microbiology Culture Result Results,Mixed growth 2+,,Y,4,,Mixed growth 2+
+Microbiology Culture Result Results,Mixed growth 3+,,Y,5,,Mixed growth 3+
+Microbiology Culture Result Results,Mixed growth Nil,,Y,6,,Mixed growth Nil
+Microbiology Culture Result Results,Mixed growth Scanty,,Y,7,,Mixed growth Scanty
+Microbiology Culture Result Results,No enteropathogens isolated,,Y,8,,No enteropathogens isolated
+Microbiology Culture Result Results,No growth,,Y,9,,No growth
+Microbiology Culture Result Results,No growth after 5 days,,Y,10,,No growth after 5 days
+Microbiology Culture Result Results,Normal flora 1+,,Y,11,,Normal flora 1+
+Microbiology Culture Result Results,Normal flora 2+,,Y,12,,Normal flora 2+
+Microbiology Culture Result Results,Normal flora 3+,,Y,13,,Normal flora 3+
+Microbiology Culture Result Results,Normal flora Nil,,Y,14,,Normal flora Nil
+Microbiology Culture Result Results,Normal flora Scanty,,Y,15,,Normal flora Scanty
+Microbiology Culture Result Results,"No Salmonella, Shigella or Vibrio species isolated",,Y,16,,"No Salmonella, Shigella or Vibrio species isolated"
+Microbiology Culture Result Results,No Significant Growth,,Y,17,,No Significant Growth
+Microbiology Culture Result Results,Sample unsuitable for culture,,Y,18,,Sample unsuitable for culture
+Microbiology Macroscopic Appearance Results,Bloody,,Y,1,,Bloody
+Microbiology Macroscopic Appearance Results,Clear,,Y,2,,Clear
+Microbiology Macroscopic Appearance Results,Cloudy,,Y,3,,Cloudy
+Microbiology Macroscopic Appearance Results,Haemorrhagic,,Y,4,,Haemorrhagic
+Microbiology Macroscopic Appearance Results,Mucoid,,Y,5,,Mucoid
+Microbiology Macroscopic Appearance Results,Not applicable,,Y,6,,Not applicable
+Microbiology Macroscopic Appearance Results,Purulent,,Y,7,,Purulent
+Microbiology Macroscopic Appearance Results,Turbid,,Y,8,,Turbid
+Blood stained/Formed/Loose/Soft/Watery,Blood stained,,Y,1,,Blood stained
+Blood stained/Formed/Loose/Soft/Watery,Formed,,Y,2,,Formed
+Blood stained/Formed/Loose/Soft/Watery,Loose,,Y,3,,Loose
+Blood stained/Formed/Loose/Soft/Watery,Soft,,Y,4,,Soft
+Blood stained/Formed/Loose/Soft/Watery,Watery,,Y,5,,Watery
+Microbiology Microscopy Gram Stain Results,Budding yeast cells 1+,,Y,1,,Budding yeast cells 1+
+Microbiology Microscopy Gram Stain Results,Budding yeast cells 2+,,Y,2,,Budding yeast cells 2+
+Microbiology Microscopy Gram Stain Results,Budding yeast cells 3+,,Y,3,,Budding yeast cells 3+
+Microbiology Microscopy Gram Stain Results,Budding yeast cells Nil,,Y,4,,Budding yeast cells Nil
+Microbiology Microscopy Gram Stain Results,Budding yeast cells Scanty,,Y,5,,Budding yeast cells Scanty
+Microbiology Microscopy Gram Stain Results,Epithelial cells 1+,,Y,6,,Epithelial cells 1+
+Microbiology Microscopy Gram Stain Results,Epithelial cells 2+,,Y,7,,Epithelial cells 2+
+Microbiology Microscopy Gram Stain Results,Epithelial cells 3+,,Y,8,,Epithelial cells 3+
+Microbiology Microscopy Gram Stain Results,Epithelial cells Nil,,Y,9,,Epithelial cells Nil
+Microbiology Microscopy Gram Stain Results,Epithelial cells Scanty,,Y,10,,Epithelial cells Scanty
+Microbiology Microscopy Gram Stain Results,Fungal hyphae 1+,,Y,11,,Fungal hyphae 1+
+Microbiology Microscopy Gram Stain Results,Fungal hyphae 2+,,Y,12,,Fungal hyphae 2+
+Microbiology Microscopy Gram Stain Results,Fungal hyphae 3+,,Y,13,,Fungal hyphae 3+
+Microbiology Microscopy Gram Stain Results,Fungal hyphae Nil,,Y,14,,Fungal hyphae Nil
+Microbiology Microscopy Gram Stain Results,Fungal hyphae Scanty,,Y,15,,Fungal hyphae Scanty
+Microbiology Microscopy Gram Stain Results,Gram negative bacilli 1+,,Y,16,,Gram negative bacilli 1+
+Microbiology Microscopy Gram Stain Results,Gram negative bacilli 2+,,Y,17,,Gram negative bacilli 2+
+Microbiology Microscopy Gram Stain Results,Gram negative bacilli 3+,,Y,18,,Gram negative bacilli 3+
+Microbiology Microscopy Gram Stain Results,Gram negative bacilli Nil,,Y,19,,Gram negative bacilli Nil
+Microbiology Microscopy Gram Stain Results,Gram negative bacilli Scanty,,Y,20,,Gram negative bacilli Scanty
+Microbiology Microscopy Gram Stain Results,Gram negative cocci 1+,,Y,21,,Gram negative cocci 1+
+Microbiology Microscopy Gram Stain Results,Gram negative cocci 2+,,Y,22,,Gram negative cocci 2+
+Microbiology Microscopy Gram Stain Results,Gram negative cocci 3+,,Y,23,,Gram negative cocci 3+
+Microbiology Microscopy Gram Stain Results,Gram negative cocci Nil,,Y,24,,Gram negative cocci Nil
+Microbiology Microscopy Gram Stain Results,Gram negative cocci Scanty,,Y,25,,Gram negative cocci Scanty
+Microbiology Microscopy Gram Stain Results,Gram negative coccobacilli 1+,,Y,26,,Gram negative coccobacilli 1+
+Microbiology Microscopy Gram Stain Results,Gram negative coccobacilli 2+,,Y,27,,Gram negative coccobacilli 2+
+Microbiology Microscopy Gram Stain Results,Gram negative coccobacilli 3+,,Y,28,,Gram negative coccobacilli 3+
+Microbiology Microscopy Gram Stain Results,Gram negative coccobacilli Nil,,Y,29,,Gram negative coccobacilli Nil
+Microbiology Microscopy Gram Stain Results,Gram negative coccobacilli Scanty,,Y,30,,Gram negative coccobacilli Scanty
+Microbiology Microscopy Gram Stain Results,Gram negative diplococci 1+,,Y,31,,Gram negative diplococci 1+
+Microbiology Microscopy Gram Stain Results,Gram negative diplococci 2+,,Y,32,,Gram negative diplococci 2+
+Microbiology Microscopy Gram Stain Results,Gram negative diplococci 3+,,Y,33,,Gram negative diplococci 3+
+Microbiology Microscopy Gram Stain Results,Gram negative diplococci (Intracellular) 1+,,Y,34,,Gram negative diplococci (Intracellular) 1+
+Microbiology Microscopy Gram Stain Results,Gram negative diplococci (Intracellular) 2+,,Y,35,,Gram negative diplococci (Intracellular) 2+
+Microbiology Microscopy Gram Stain Results,Gram negative diplococci (Intracellular) 3+,,Y,36,,Gram negative diplococci (Intracellular) 3+
+Microbiology Microscopy Gram Stain Results,Gram negative diplococci (Intracellular) Nil,,Y,37,,Gram negative diplococci (Intracellular) Nil
+Microbiology Microscopy Gram Stain Results,Gram negative diplococci (Intracellular) Scanty,,Y,38,,Gram negative diplococci (Intracellular) Scanty
+Microbiology Microscopy Gram Stain Results,Gram negative diplococci Nil,,Y,39,,Gram negative diplococci Nil
+Microbiology Microscopy Gram Stain Results,Gram negative diplococci Scanty,,Y,40,,Gram negative diplococci Scanty
+Microbiology Microscopy Gram Stain Results,Gram positive bacilli 1+,,Y,41,,Gram positive bacilli 1+
+Microbiology Microscopy Gram Stain Results,Gram positive bacilli 2+,,Y,42,,Gram positive bacilli 2+
+Microbiology Microscopy Gram Stain Results,Gram positive bacilli 3+,,Y,43,,Gram positive bacilli 3+
+Microbiology Microscopy Gram Stain Results,Gram positive bacilli Nil,,Y,44,,Gram positive bacilli Nil
+Microbiology Microscopy Gram Stain Results,Gram positive bacilli Scanty,,Y,45,,Gram positive bacilli Scanty
+Microbiology Microscopy Gram Stain Results,Gram positive cocci 1+,,Y,46,,Gram positive cocci 1+
+Microbiology Microscopy Gram Stain Results,Gram positive cocci 2+,,Y,47,,Gram positive cocci 2+
+Microbiology Microscopy Gram Stain Results,Gram positive cocci 3+,,Y,48,,Gram positive cocci 3+
+Microbiology Microscopy Gram Stain Results,Gram positive cocci in chains 1+,,Y,49,,Gram positive cocci in chains 1+
+Microbiology Microscopy Gram Stain Results,Gram positive cocci in chains 2+,,Y,50,,Gram positive cocci in chains 2+
+Microbiology Microscopy Gram Stain Results,Gram positive cocci in chains 3+,,Y,51,,Gram positive cocci in chains 3+
+Microbiology Microscopy Gram Stain Results,Gram positive cocci in chains Nil,,Y,52,,Gram positive cocci in chains Nil
+Microbiology Microscopy Gram Stain Results,Gram positive cocci in chains Scanty,,Y,53,,Gram positive cocci in chains Scanty
+Microbiology Microscopy Gram Stain Results,Gram positive cocci in clusters 1+,,Y,54,,Gram positive cocci in clusters 1+
+Microbiology Microscopy Gram Stain Results,Gram positive cocci in clusters 2+,,Y,55,,Gram positive cocci in clusters 2+
+Microbiology Microscopy Gram Stain Results,Gram positive cocci in clusters 3+,,Y,56,,Gram positive cocci in clusters 3+
+Microbiology Microscopy Gram Stain Results,Gram positive cocci in clusters Nil,,Y,57,,Gram positive cocci in clusters Nil
+Microbiology Microscopy Gram Stain Results,Gram positive cocci in clusters Scanty,,Y,58,,Gram positive cocci in clusters Scanty
+Microbiology Microscopy Gram Stain Results,Gram positive cocci Nil,,Y,59,,Gram positive cocci Nil
+Microbiology Microscopy Gram Stain Results,Gram positive cocci Scanty,,Y,60,,Gram positive cocci Scanty
+Microbiology Microscopy Gram Stain Results,Gram positive diplococci 1+,,Y,61,,Gram positive diplococci 1+
+Microbiology Microscopy Gram Stain Results,Gram positive diplococci 2+,,Y,62,,Gram positive diplococci 2+
+Microbiology Microscopy Gram Stain Results,Gram positive diplococci 3+,,Y,63,,Gram positive diplococci 3+
+Microbiology Microscopy Gram Stain Results,Gram positive diplococci Nil,,Y,64,,Gram positive diplococci Nil
+Microbiology Microscopy Gram Stain Results,Gram positive diplococci Scanty,,Y,65,,Gram positive diplococci Scanty
+Microbiology Microscopy Gram Stain Results,Gram variable organisms 1+,,Y,66,,Gram variable organisms 1+
+Microbiology Microscopy Gram Stain Results,Gram variable organisms 2+,,Y,67,,Gram variable organisms 2+
+Microbiology Microscopy Gram Stain Results,Gram variable organisms 3+,,Y,68,,Gram variable organisms 3+
+Microbiology Microscopy Gram Stain Results,Gram variable organisms Nil,,Y,69,,Gram variable organisms Nil
+Microbiology Microscopy Gram Stain Results,Gram variable organisms Scanty,,Y,70,,Gram variable organisms Scanty
+Microbiology Microscopy Gram Stain Results,Leucocytes 1+,,Y,71,,Leucocytes 1+
+Microbiology Microscopy Gram Stain Results,Leucocytes 2+,,Y,72,,Leucocytes 2+
+Microbiology Microscopy Gram Stain Results,Leucocytes 3+,,Y,73,,Leucocytes 3+
+Microbiology Microscopy Gram Stain Results,Leucocytes Nil,,Y,74,,Leucocytes Nil
+Microbiology Microscopy Gram Stain Results,Leucocytes Scanty,,Y,75,,Leucocytes Scanty
+Microbiology Microscopy Gram Stain Results,Mixed flora 1+,,Y,76,,Mixed flora 1+
+Microbiology Microscopy Gram Stain Results,Mixed flora 2+,,Y,77,,Mixed flora 2+
+Microbiology Microscopy Gram Stain Results,Mixed flora 3+,,Y,78,,Mixed flora 3+
+Microbiology Microscopy Gram Stain Results,Mixed flora Nil,,Y,79,,Mixed flora Nil
+Microbiology Microscopy Gram Stain Results,Mixed flora Scanty,,Y,80,,Mixed flora Scanty
+Microbiology Microscopy Gram Stain Results,Mixed Gram negative organisms 1+,,Y,81,,Mixed Gram negative organisms 1+
+Microbiology Microscopy Gram Stain Results,Mixed Gram negative organisms 2+,,Y,82,,Mixed Gram negative organisms 2+
+Microbiology Microscopy Gram Stain Results,Mixed Gram negative organisms 3+,,Y,83,,Mixed Gram negative organisms 3+
+Microbiology Microscopy Gram Stain Results,Mixed Gram negative organisms Nil,,Y,84,,Mixed Gram negative organisms Nil
+Microbiology Microscopy Gram Stain Results,Mixed Gram negative organisms Scanty,,Y,85,,Mixed Gram negative organisms Scanty
+Microbiology Microscopy Gram Stain Results,Mixed Gram positive organisms 1+,,Y,86,,Mixed Gram positive organisms 1+
+Microbiology Microscopy Gram Stain Results,Mixed Gram positive organisms 2+,,Y,87,,Mixed Gram positive organisms 2+
+Microbiology Microscopy Gram Stain Results,Mixed Gram positive organisms 3+,,Y,88,,Mixed Gram positive organisms 3+
+Microbiology Microscopy Gram Stain Results,Mixed Gram positive organisms Nil,,Y,89,,Mixed Gram positive organisms Nil
+Microbiology Microscopy Gram Stain Results,Mixed Gram positive organisms Scanty,,Y,90,,Mixed Gram positive organisms Scanty
+Microbiology Microscopy Gram Stain Results,No organisms seen,,Y,91,,No organisms seen
+Microbiology Microscopy Gram Stain Results,Normal flora 1+,,Y,92,,Normal flora 1+
+Microbiology Microscopy Gram Stain Results,Normal flora 2+,,Y,93,,Normal flora 2+
+Microbiology Microscopy Gram Stain Results,Normal flora 3+,,Y,94,,Normal flora 3+
+Microbiology Microscopy Gram Stain Results,Normal flora Nil,,Y,95,,Normal flora Nil
+Microbiology Microscopy Gram Stain Results,Normal flora Scanty,,Y,96,,Normal flora Scanty
+Microbiology Microscopy Gram Stain Results,Not performed,,Y,97,,Not performed
+Microbiology Microscopy Gram Stain Results,Red blood cells 1+,,Y,98,,Red blood cells 1+
+Microbiology Microscopy Gram Stain Results,Red Blood Cells 2+,,Y,99,,Red Blood Cells 2+
+Microbiology Microscopy Gram Stain Results,Red blood cells 3+,,Y,100,,Red blood cells 3+
+Microbiology Microscopy Gram Stain Results,Red blood cells Nil,,Y,101,,Red blood cells Nil
+Microbiology Microscopy Gram Stain Results,Red blood cells Scanty,,Y,102,,Red blood cells Scanty
+Microbiology Microscopy Gram Stain Results,Trichomonas vaginalis seen,,Y,103,,Trichomonas vaginalis seen
+Microbiology Microscopy Gram Stain Results,Yeast with pseudohyphae 1+,,Y,104,,Yeast with pseudohyphae 1+
+Microbiology Microscopy Gram Stain Results,Yeast with pseudohyphae 2+,,Y,105,,Yeast with pseudohyphae 2+
+Microbiology Microscopy Gram Stain Results,Yeast with pseudohyphae 3+,,Y,106,,Yeast with pseudohyphae 3+
+Microbiology Microscopy Gram Stain Results,Yeast with pseudohyphae Nil,,Y,107,,Yeast with pseudohyphae Nil
+Microbiology Microscopy Gram Stain Results,Yeast with pseudohyphae Scanty,,Y,108,,Yeast with pseudohyphae Scanty
+Microbiology Microscopy Wet Preparation Results,Casts 1+,,Y,1,,Casts 1+
+Microbiology Microscopy Wet Preparation Results,Casts 2+,,Y,2,,Casts 2+
+Microbiology Microscopy Wet Preparation Results,Casts 3+,,Y,3,,Casts 3+
+Microbiology Microscopy Wet Preparation Results,Casts Nil,,Y,4,,Casts Nil
+Microbiology Microscopy Wet Preparation Results,Casts Scanty,,Y,5,,Casts Scanty
+Microbiology Microscopy Wet Preparation Results,Crystals 1+,,Y,6,,Crystals 1+
+Microbiology Microscopy Wet Preparation Results,Crystals 2+,,Y,7,,Crystals 2+
+Microbiology Microscopy Wet Preparation Results,Crystals 3+,,Y,8,,Crystals 3+
+Microbiology Microscopy Wet Preparation Results,Crystals Nil,,Y,9,,Crystals Nil
+Microbiology Microscopy Wet Preparation Results,Crystals Scanty,,Y,10,,Crystals Scanty
+Microbiology Microscopy Wet Preparation Results,Epithelial cells 1+,,Y,11,,Epithelial cells 1+
+Microbiology Microscopy Wet Preparation Results,Epithelial cells 2+,,Y,12,,Epithelial cells 2+
+Microbiology Microscopy Wet Preparation Results,Epithelial cells 3+,,Y,13,,Epithelial cells 3+
+Microbiology Microscopy Wet Preparation Results,Epithelial cells Nil,,Y,14,,Epithelial cells Nil
+Microbiology Microscopy Wet Preparation Results,Epithelial cells Scanty,,Y,15,,Epithelial cells Scanty
+Microbiology Microscopy Wet Preparation Results,Fungal Hyphae 1+,,Y,16,,Fungal Hyphae 1+
+Microbiology Microscopy Wet Preparation Results,Fungal Hyphae 2+,,Y,17,,Fungal Hyphae 2+
+Microbiology Microscopy Wet Preparation Results,Fungal Hyphae 3+,,Y,18,,Fungal Hyphae 3+
+Microbiology Microscopy Wet Preparation Results,Fungal Hyphae Nil,,Y,19,,Fungal Hyphae Nil
+Microbiology Microscopy Wet Preparation Results,Fungal Hyphae Scanty,,Y,20,,Fungal Hyphae Scanty
+Microbiology Microscopy Wet Preparation Results,Leucocytes 1+,,Y,21,,Leucocytes 1+
+Microbiology Microscopy Wet Preparation Results,Leucocytes 2+,,Y,22,,Leucocytes 2+
+Microbiology Microscopy Wet Preparation Results,Leucocytes 3+,,Y,23,,Leucocytes 3+
+Microbiology Microscopy Wet Preparation Results,Leucocytes Nil,,Y,24,,Leucocytes Nil
+Microbiology Microscopy Wet Preparation Results,Leucocytes Scanty,,Y,25,,Leucocytes Scanty
+Microbiology Microscopy Wet Preparation Results,Red blood cells 1+,,Y,26,,Red blood cells 1+
+Microbiology Microscopy Wet Preparation Results,Red Blood Cells 2+,,Y,27,,Red Blood Cells 2+
+Microbiology Microscopy Wet Preparation Results,Red blood cells 3+,,Y,28,,Red blood cells 3+
+Microbiology Microscopy Wet Preparation Results,Red blood cells Nil,,Y,29,,Red blood cells Nil
+Microbiology Microscopy Wet Preparation Results,Red blood cells Scanty,,Y,30,,Red blood cells Scanty
+Microbiology Microscopy Wet Preparation Results,Trichomonas vaginalis seen,,Y,31,,Trichomonas vaginalis seen
+Microbiology Microscopy Wet Preparation Results,Yeast 1+,,Y,32,,Yeast 1+
+Microbiology Microscopy Wet Preparation Results,Yeast 2+,,Y,33,,Yeast 2+
+Microbiology Microscopy Wet Preparation Results,Yeast 3+,,Y,34,,Yeast 3+
+Microbiology Microscopy Wet Preparation Results,Yeast Nil,,Y,35,,Yeast Nil
+Microbiology Microscopy Wet Preparation Results,Yeast Scanty,,Y,36,,Yeast Scanty
+"Microbiology Ova, Cysts & Parasites Results",Ancylostoma duodenale,,Y,1,,Ancylostoma duodenale
+"Microbiology Ova, Cysts & Parasites Results",Ascaris lumbricoides,,Y,2,,Ascaris lumbricoides
+"Microbiology Ova, Cysts & Parasites Results",Balantidium coli,,Y,3,,Balantidium coli
+"Microbiology Ova, Cysts & Parasites Results",Blastocystis hominis,,Y,4,,Blastocystis hominis
+"Microbiology Ova, Cysts & Parasites Results",Capillaria philippinensis,,Y,5,,Capillaria philippinensis
+"Microbiology Ova, Cysts & Parasites Results",Chilomastix mesnili,,Y,6,,Chilomastix mesnili
+"Microbiology Ova, Cysts & Parasites Results",Cryptosporidium species,,Y,7,,Cryptosporidium species
+"Microbiology Ova, Cysts & Parasites Results",Cyclospora cayetanensis,,Y,8,,Cyclospora cayetanensis
+"Microbiology Ova, Cysts & Parasites Results",Dientamoeba Fragilis,,Y,9,,Dientamoeba Fragilis
+"Microbiology Ova, Cysts & Parasites Results",Entamoeba Coli,,Y,10,,Entamoeba Coli
+"Microbiology Ova, Cysts & Parasites Results",Entamoeba dispar,,Y,11,,Entamoeba dispar
+"Microbiology Ova, Cysts & Parasites Results",Entamoeba hartmanni,,Y,12,,Entamoeba hartmanni
+"Microbiology Ova, Cysts & Parasites Results",Entamoeba Histolitica,,Y,13,,Entamoeba Histolitica
+"Microbiology Ova, Cysts & Parasites Results",Entamoeba histolytica cysts,,Y,14,,Entamoeba histolytica cysts
+"Microbiology Ova, Cysts & Parasites Results",Entamoeba polecki,,Y,15,,Entamoeba polecki
+"Microbiology Ova, Cysts & Parasites Results",Enterobius vermicularis,,Y,16,,Enterobius vermicularis
+"Microbiology Ova, Cysts & Parasites Results",Fasciolopsis buski,,Y,17,,Fasciolopsis buski
+"Microbiology Ova, Cysts & Parasites Results",Giardia lamblia cysts,,Y,18,,Giardia lamblia cysts
+"Microbiology Ova, Cysts & Parasites Results",Giardia lamblia trophozoites,,Y,19,,Giardia lamblia trophozoites
+"Microbiology Ova, Cysts & Parasites Results",Hookworm species,,Y,20,,Hookworm species
+"Microbiology Ova, Cysts & Parasites Results",Hymenolepis diminuta,,Y,21,,Hymenolepis diminuta
+"Microbiology Ova, Cysts & Parasites Results",Hymenolepis nana,,Y,22,,Hymenolepis nana
+"Microbiology Ova, Cysts & Parasites Results",Iodamoeba butschlii,,Y,23,,Iodamoeba butschlii
+"Microbiology Ova, Cysts & Parasites Results",Isospora belli,,Y,24,,Isospora belli
+"Microbiology Ova, Cysts & Parasites Results",Mixed parasites,,Y,25,,Mixed parasites
+"Microbiology Ova, Cysts & Parasites Results",Necator americanus,,Y,26,,Necator americanus
+"Microbiology Ova, Cysts & Parasites Results","No Ova, Cysts, Parasites seen",,Y,27,,"No Ova, Cysts, Parasites seen"
+"Microbiology Ova, Cysts & Parasites Results",Paragonimus species,,Y,28,,Paragonimus species
+"Microbiology Ova, Cysts & Parasites Results",Parasite not identified,,Y,29,,Parasite not identified
+"Microbiology Ova, Cysts & Parasites Results",Schistosoma japonicum,,Y,30,,Schistosoma japonicum
+"Microbiology Ova, Cysts & Parasites Results",Schistosoma species,,Y,31,,Schistosoma species
+"Microbiology Ova, Cysts & Parasites Results",Strongyloides stercoralis,,Y,32,,Strongyloides stercoralis
+"Microbiology Ova, Cysts & Parasites Results",Taenia saginata,,Y,33,,Taenia saginata
+"Microbiology Ova, Cysts & Parasites Results",Taenia solium,,Y,34,,Taenia solium
+"Microbiology Ova, Cysts & Parasites Results",Taenia species,,Y,35,,Taenia species
+"Microbiology Ova, Cysts & Parasites Results",Trichuris trichiura,,Y,36,,Trichuris trichiura
+"Microbiology Ova, Cysts & Parasites Multi Results",2719,,Y,1,,2719
+"Microbiology Ova, Cysts & Parasites Multi Results",2720,,Y,2,,2720
+"Microbiology Ova, Cysts & Parasites Multi Results",2721,,Y,3,,2721
+"Microbiology Ova, Cysts & Parasites Multi Results",2722,,Y,4,,2722
+"Microbiology Ova, Cysts & Parasites Multi Results",2723,,Y,5,,2723
+"Microbiology Ova, Cysts & Parasites Multi Results",2724,,Y,6,,2724
+"Microbiology Ova, Cysts & Parasites Multi Results",2725,,Y,7,,2725
+"Microbiology Ova, Cysts & Parasites Multi Results",2726,,Y,8,,2726
+"Microbiology Ova, Cysts & Parasites Multi Results",2727,,Y,9,,2727
+"Microbiology Ova, Cysts & Parasites Multi Results",2728,,Y,10,,2728
+"Microbiology Ova, Cysts & Parasites Multi Results",2729,,Y,11,,2729
+"Microbiology Ova, Cysts & Parasites Multi Results",2730,,Y,12,,2730
+"Microbiology Ova, Cysts & Parasites Multi Results",2731,,Y,13,,2731
+"Microbiology Ova, Cysts & Parasites Multi Results",2732,,Y,14,,2732
+"Microbiology Ova, Cysts & Parasites Multi Results",2733,,Y,15,,2733
+"Microbiology Ova, Cysts & Parasites Multi Results",2734,,Y,16,,2734
+"Microbiology Ova, Cysts & Parasites Multi Results",2735,,Y,17,,2735
+"Microbiology Ova, Cysts & Parasites Multi Results",2736,,Y,18,,2736
+"Microbiology Ova, Cysts & Parasites Multi Results",2737,,Y,19,,2737
+"Microbiology Ova, Cysts & Parasites Multi Results",2738,,Y,20,,2738
+"Microbiology Ova, Cysts & Parasites Multi Results",2739,,Y,21,,2739
+"Microbiology Ova, Cysts & Parasites Multi Results",2740,,Y,22,,2740
+"Microbiology Ova, Cysts & Parasites Multi Results",2741,,Y,23,,2741
+"Microbiology Ova, Cysts & Parasites Multi Results",2742,,Y,24,,2742
+"Microbiology Ova, Cysts & Parasites Multi Results",2743,,Y,25,,2743
+"Microbiology Ova, Cysts & Parasites Multi Results",2744,,Y,26,,2744
+"Microbiology Ova, Cysts & Parasites Multi Results",2745,,Y,27,,2745
+"Microbiology Ova, Cysts & Parasites Multi Results",2746,,Y,28,,2746
+"Microbiology Ova, Cysts & Parasites Multi Results",2747,,Y,29,,2747
+"Microbiology Ova, Cysts & Parasites Multi Results","No Ova, Cysts, Parasites seen",,Y,30,,"No Ova, Cysts, Parasites seen"
+"Microbiology Ova, Cysts & Parasites Multi Results",Northern,,Y,31,,Northern
+"Microbiology Ova, Cysts & Parasites Multi Results",Southern Highlands,,Y,32,,Southern Highlands
+"Microbiology Ova, Cysts & Parasites Multi Results",Western,,Y,33,,Western
+"Microbiology Ova, Cysts & Parasites Multi Results",Western Highlands,,Y,34,,Western Highlands
+"Microbiology Ova, Cysts & Parasites Multi Results",West New Britain,,Y,35,,West New Britain
+"Microbiology Ova, Cysts & Parasites Multi Results",West Sepik,,Y,36,,West Sepik
+Negative/Positive,Negative,,Y,1,,Negative
+Negative/Positive,Positive,,Y,2,,Positive
+Allplex Interpretation of Results Results,"Influenza A RNA and Influenza B RNA and RSV RNA, Detected",,Y,1,,"Influenza A RNA and Influenza B RNA and RSV RNA, Detected"
+Allplex Interpretation of Results Results,"Influenza A RNA and Influenza B RNA, Detected",,Y,2,,"Influenza A RNA and Influenza B RNA, Detected"
+Allplex Interpretation of Results Results,"Influenza A RNA and RSV RNA, Detected",,Y,3,,"Influenza A RNA and RSV RNA, Detected"
+Allplex Interpretation of Results Results,"Influenza A RNA, Detected",,Y,4,,"Influenza A RNA, Detected"
+Allplex Interpretation of Results Results,"Influenza B RNA and RSV RNA, Detected",,Y,5,,"Influenza B RNA and RSV RNA, Detected"
+Allplex Interpretation of Results Results,"Influenza B RNA, Detected",,Y,6,,"Influenza B RNA, Detected"
+Allplex Interpretation of Results Results,"RSV RNA, Detected",,Y,7,,"RSV RNA, Detected"
+Allplex Interpretation of Results Results,"SARS-CoV-2 RNA and Influenza A RNA and Influenza B RNA and RSV RNA, Detected",,Y,8,,"SARS-CoV-2 RNA and Influenza A RNA and Influenza B RNA and RSV RNA, Detected"
+Allplex Interpretation of Results Results,"SARS-CoV-2 RNA and Influenza A RNA and Influenza B RNA, Detected",,Y,9,,"SARS-CoV-2 RNA and Influenza A RNA and Influenza B RNA, Detected"
+Allplex Interpretation of Results Results,"SARS-CoV-2 RNA and Influenza A RNA and RSV RNA, Detected",,Y,10,,"SARS-CoV-2 RNA and Influenza A RNA and RSV RNA, Detected"
+Allplex Interpretation of Results Results,"SARS-CoV-2 RNA and Influenza A RNA, Detected",,Y,11,,"SARS-CoV-2 RNA and Influenza A RNA, Detected"
+Allplex Interpretation of Results Results,"SARS-CoV-2 RNA and Influenza B RNA and RSV RNA, Detected",,Y,12,,"SARS-CoV-2 RNA and Influenza B RNA and RSV RNA, Detected"
+Allplex Interpretation of Results Results,"SARS-CoV-2 RNA and Influenza B RNA, Detected",,Y,13,,"SARS-CoV-2 RNA and Influenza B RNA, Detected"
+Allplex Interpretation of Results Results,"SARS-CoV-2 RNA and RSV RNA, Detected",,Y,14,,"SARS-CoV-2 RNA and RSV RNA, Detected"
+Allplex Interpretation of Results Results,"SARS-CoV-2 RNA, Detected",,Y,15,,"SARS-CoV-2 RNA, Detected"
+Allplex Interpretation of Results Results,"Target RNA, Not detected",,Y,16,,"Target RNA, Not detected"
+Indeterminate/Negative/Positive,Indeterminate,,Y,1,,Indeterminate
+Indeterminate/Negative/Positive,Negative,,Y,2,,Negative
+Indeterminate/Negative/Positive,Positive,,Y,3,,Positive
+Dengue PCR Results Interpretation Results,Inconclusive,,Y,1,,Inconclusive
+Dengue PCR Results Interpretation Results,"Negative for DENV, result does not preclude infection",,Y,2,,"Negative for DENV, result does not preclude infection"
+Dengue PCR Results Interpretation Results,Positive DENV-1 detection,,Y,3,,Positive DENV-1 detection
+Dengue PCR Results Interpretation Results,Positive DENV-2 detection,,Y,4,,Positive DENV-2 detection
+Dengue PCR Results Interpretation Results,Positive DENV-3 detection,,Y,5,,Positive DENV-3 detection
+Dengue PCR Results Interpretation Results,Positive DENV-4 detection,,Y,6,,Positive DENV-4 detection
+MPOX CLADE Results,Mpox clade Ia,,Y,1,,Mpox clade Ia
+MPOX CLADE Results,Mpox clade Ib,,Y,2,,Mpox clade Ib
+MPOX CLADE Results,Mpox clade II,,Y,3,,Mpox clade II
+Inconclusive/Invalid/Negative/Positive,Inconclusive,,Y,1,,Inconclusive
+Inconclusive/Invalid/Negative/Positive,Invalid,,Y,2,,Invalid
+Inconclusive/Invalid/Negative/Positive,Negative,,Y,3,,Negative
+Inconclusive/Invalid/Negative/Positive,Positive,,Y,4,,Positive
+Inconclusive/Negative/Positive,Inconclusive,,Y,1,,Inconclusive
+Inconclusive/Negative/Positive,Negative,,Y,2,,Negative
+Inconclusive/Negative/Positive,Positive,,Y,3,,Positive
+Acid-Fast Microscopy Results,1+,,Y,1,,1+
+Acid-Fast Microscopy Results,1 - 9,,Y,2,,1 - 9
+Acid-Fast Microscopy Results,2+,,Y,3,,2+
+Acid-Fast Microscopy Results,3+,,Y,4,,3+
+Acid-Fast Microscopy Results,No acid-fast bacilli were seen,,Y,5,,No acid-fast bacilli were seen
+Amikacin - WHO Interpretation Results,Marker of Resistance,,Y,1,,Marker of Resistance
+Amikacin - WHO Interpretation Results,Not graded,,Y,2,,Not graded
+Amikacin - WHO Interpretation Results,Susceptible,,Y,3,,Susceptible
+Amikacin - WHO Interpretation Results,Uncertain significance,,Y,4,,Uncertain significance
+Amikacin 1.0 Results,Not Available,,Y,1,,Not Available
+Amikacin 1.0 Results,Not performed,,Y,2,,Not performed
+Amikacin 1.0 Results,Pending,,Y,3,,Pending
+Amikacin 1.0 Results,Resistant,,Y,4,,Resistant
+Amikacin 1.0 Results,Susceptible,,Y,5,,Susceptible
+0/1+/2+/3+/4+/5+/6+,0,,Y,1,,0
+0/1+/2+/3+/4+/5+/6+,1+,,Y,2,,1+
+0/1+/2+/3+/4+/5+/6+,2+,,Y,3,,2+
+0/1+/2+/3+/4+/5+/6+,3+,,Y,4,,3+
+0/1+/2+/3+/4+/5+/6+,4+,,Y,5,,4+
+0/1+/2+/3+/4+/5+/6+,5+,,Y,6,,5+
+0/1+/2+/3+/4+/5+/6+,6+,,Y,7,,6+
+Invalid/Negative/Positive/Retest,Invalid,,Y,1,,Invalid
+Invalid/Negative/Positive/Retest,Negative,,Y,2,,Negative
+Invalid/Negative/Positive/Retest,Positive,,Y,3,,Positive
+Invalid/Negative/Positive/Retest,Retest,,Y,4,,Retest
+GenoType Mycobacterium CM Results,M. abscessus complex,,Y,1,,M. abscessus complex
+GenoType Mycobacterium CM Results,M. avium,,Y,2,,M. avium
+GenoType Mycobacterium CM Results,M. chelonae,,Y,3,,M. chelonae
+GenoType Mycobacterium CM Results,M. chimaera,,Y,4,,M. chimaera
+GenoType Mycobacterium CM Results,M. fortuitum group,,Y,5,,M. fortuitum group
+GenoType Mycobacterium CM Results,M. gordonae,,Y,6,,M. gordonae
+GenoType Mycobacterium CM Results,M. haemophilum,,Y,7,,M. haemophilum
+GenoType Mycobacterium CM Results,M. immunogenum,,Y,8,,M. immunogenum
+GenoType Mycobacterium CM Results,M. interjectum,,Y,9,,M. interjectum
+GenoType Mycobacterium CM Results,M. intracellulare,,Y,10,,M. intracellulare
+GenoType Mycobacterium CM Results,M. kansasii,,Y,11,,M. kansasii
+GenoType Mycobacterium CM Results,M. mageritense,,Y,12,,M. mageritense
+GenoType Mycobacterium CM Results,M. malmoense,,Y,13,,M. malmoense
+GenoType Mycobacterium CM Results,M. marinum,,Y,14,,M. marinum
+GenoType Mycobacterium CM Results,M. marseillense,,Y,15,,M. marseillense
+GenoType Mycobacterium CM Results,M. nebraskense,,Y,16,,M. nebraskense
+GenoType Mycobacterium CM Results,M. palustre,,Y,17,,M. palustre
+GenoType Mycobacterium CM Results,M. paraffinicum,,Y,18,,M. paraffinicum
+GenoType Mycobacterium CM Results,M. parascrofulaceum,,Y,19,,M. parascrofulaceum
+GenoType Mycobacterium CM Results,M. scrofulaceum,,Y,20,,M. scrofulaceum
+GenoType Mycobacterium CM Results,M. szulgai,,Y,21,,M. szulgai
+GenoType Mycobacterium CM Results,M. tuberculosis complex,,Y,22,,M. tuberculosis complex
+GenoType Mycobacterium CM Results,M. ulcerans,,Y,23,,M. ulcerans
+GenoType Mycobacterium CM Results,M. xenopi,,Y,24,,M. xenopi
+M. ulcerans PCR Results,Detected,,Y,1,,Detected
+M. ulcerans PCR Results,Equivocal,,Y,2,,Equivocal
+M. ulcerans PCR Results,ERROR,,Y,3,,ERROR
+M. ulcerans PCR Results,Indeterminate,,Y,4,,Indeterminate
+M. ulcerans PCR Results,Invalid,,Y,5,,Invalid
+M. ulcerans PCR Results,NO RESULT,,Y,6,,NO RESULT
+M. ulcerans PCR Results,Not Detected,,Y,7,,Not Detected
+M. ulcerans PCR Interpretation Results,Low amount of target (M. ulcerans) detected in sample,,Y,1,,Low amount of target (M. ulcerans) detected in sample
+M. ulcerans PCR Interpretation Results,Result invalid,,Y,2,,Result invalid
+M. ulcerans PCR Interpretation Results,Target (M. ulcerans) detected in sample,,Y,3,,Target (M. ulcerans) detected in sample
+M. ulcerans PCR Interpretation Results,Target (M. ulcerans) not detected in sample,,Y,4,,Target (M. ulcerans) not detected in sample
+M. ulcerans PCR Interpretation Results,The presence or absence of target (M. ulcerans) cannot be determined,,Y,5,,The presence or absence of target (M. ulcerans) cannot be determined
+Mycobacterial Culture Result Results,Contaminated,,Y,1,,Contaminated
+Mycobacterial Culture Result Results,Mycobacterium not suggestive of M tuberculosis,,Y,2,,Mycobacterium not suggestive of M tuberculosis
+Mycobacterial Culture Result Results,Mycobacterium tuberculosis complex was grown,,Y,3,,Mycobacterium tuberculosis complex was grown
+Mycobacterial Culture Result Results,No Growth,,Y,4,,No Growth
+Mycobacterial Culture Result Results,Possible Nontuberculous mycobacteria,,Y,5,,Possible Nontuberculous mycobacteria
+Pluslife MTB Nucleic Acid Test Card Results,Invalid,,Y,1,,Invalid
+Pluslife MTB Nucleic Acid Test Card Results,Invalid - Please recollect for repeat testing,,Y,2,,Invalid - Please recollect for repeat testing
+Pluslife MTB Nucleic Acid Test Card Results,Negative for Mycobacterium tuberculosis,,Y,3,,Negative for Mycobacterium tuberculosis
+Pluslife MTB Nucleic Acid Test Card Results,Positive for Mycobacterium tuberculosis,,Y,4,,Positive for Mycobacterium tuberculosis
+Pyrazinamide 100.00 Results,Not Available,,Y,1,,Not Available
+Pyrazinamide 100.00 Results,Not performed,,Y,2,,Not performed
+Pyrazinamide 100.00 Results,Resistant,,Y,3,,Resistant
+Pyrazinamide 100.00 Results,Susceptible,,Y,4,,Susceptible
+Truenat MTB Results,ERROR,,Y,1,,ERROR
+Truenat MTB Results,INVALID,,Y,2,,INVALID
+Truenat MTB Results,MTB DETECTED,,Y,3,,MTB DETECTED
+Truenat MTB Results,MTB NOT DETECTED,,Y,4,,MTB NOT DETECTED
+Truenat MTB Results,NO RESULT,,Y,5,,NO RESULT
+Truenat MTB-RIF Dx Results,ERROR,,Y,1,,ERROR
+Truenat MTB-RIF Dx Results,INVALID,,Y,2,,INVALID
+Truenat MTB-RIF Dx Results,RIF Resistance DETECTED,,Y,3,,RIF Resistance DETECTED
+Truenat MTB-RIF Dx Results,RIF Resistance INDETERMINATE,,Y,4,,RIF Resistance INDETERMINATE
+Truenat MTB-RIF Dx Results,RIF Resistance NOT DETECTED,,Y,5,,RIF Resistance NOT DETECTED
+WGS Species Results,M. abscessus complex,,Y,1,,M. abscessus complex
+WGS Species Results,M. avium,,Y,2,,M. avium
+WGS Species Results,M. chelonae,,Y,3,,M. chelonae
+WGS Species Results,M. chimaera,,Y,4,,M. chimaera
+WGS Species Results,M. fortuitum group,,Y,5,,M. fortuitum group
+WGS Species Results,M. gordonae,,Y,6,,M. gordonae
+WGS Species Results,M. haemophilum,,Y,7,,M. haemophilum
+WGS Species Results,M. immunogenum,,Y,8,,M. immunogenum
+WGS Species Results,M. interjectum,,Y,9,,M. interjectum
+WGS Species Results,M. intracellulare,,Y,10,,M. intracellulare
+WGS Species Results,M. kansasii,,Y,11,,M. kansasii
+WGS Species Results,M. mageritense,,Y,12,,M. mageritense
+WGS Species Results,M. malmoense,,Y,13,,M. malmoense
+WGS Species Results,M. marinum,,Y,14,,M. marinum
+WGS Species Results,M. marseillense,,Y,15,,M. marseillense
+WGS Species Results,M. nebraskense,,Y,16,,M. nebraskense
+WGS Species Results,M. palustre,,Y,17,,M. palustre
+WGS Species Results,M. paraffinicum,,Y,18,,M. paraffinicum
+WGS Species Results,M. parascrofulaceum,,Y,19,,M. parascrofulaceum
+WGS Species Results,M. scrofulaceum,,Y,20,,M. scrofulaceum
+WGS Species Results,M. szulgai,,Y,21,,M. szulgai
+WGS Species Results,M. tuberculosis,,Y,22,,M. tuberculosis
+WGS Species Results,M. tuberculosis complex,,Y,23,,M. tuberculosis complex
+WGS Species Results,M. ulcerans,,Y,24,,M. ulcerans
+WGS Species Results,M. xenopi,,Y,25,,M. xenopi
+ABON Tri-line HIV 1/2/0 Results,INVALID,,Y,1,,INVALID
+ABON Tri-line HIV 1/2/0 Results,NON-REACTIVE,,Y,2,,NON-REACTIVE
+ABON Tri-line HIV 1/2/0 Results,Not Available,,Y,3,,Not Available
+ABON Tri-line HIV 1/2/0 Results,Not performed,,Y,4,,Not performed
+ABON Tri-line HIV 1/2/0 Results,REACTIVE,,Y,5,,REACTIVE
+Abbott HIV/Syphilis Duo Results,HIV-1,,Y,1,,HIV-1
+Abbott HIV/Syphilis Duo Results,2 and Syphilis Reactive,,Y,2,,2 and Syphilis Reactive
+Abbott HIV/Syphilis Duo Results,HIV-1,,Y,3,,HIV-1
+Abbott HIV/Syphilis Duo Results,2 Reactive,,Y,4,,2 Reactive
+Abbott HIV/Syphilis Duo Results,Invalid,,Y,5,,Invalid
+Abbott HIV/Syphilis Duo Results,Nonreactive,,Y,6,,Nonreactive
+Abbott HIV/Syphilis Duo Results,Syphilis Reactive,,Y,7,,Syphilis Reactive
+Genie Fast HIV 1/2 Results,Invalid,,Y,1,,Invalid
+Genie Fast HIV 1/2 Results,Negative,,Y,2,,Negative
+Genie Fast HIV 1/2 Results,Not Available,,Y,3,,Not Available
+Genie Fast HIV 1/2 Results,Not performed,,Y,4,,Not performed
+Genie Fast HIV 1/2 Results,Positive,,Y,5,,Positive
+HIV Serology Results,Confirmed HIV NEGATIVE,,Y,1,,Confirmed HIV NEGATIVE
+HIV Serology Results,Confirmed HIV POSITIVE,,Y,2,,Confirmed HIV POSITIVE
+HIV Serology Results,INCONCLUSIVE,,Y,3,,INCONCLUSIVE
+HIV Serology Results,Invalid,,Y,4,,Invalid
+HIV Serology Results,Rejected,,Y,5,,Rejected
+Integrase Resistance Level Results,High Level Resistance,,Y,1,,High Level Resistance
+Integrase Resistance Level Results,Intermediate Resistance,,Y,2,,Intermediate Resistance
+Integrase Resistance Level Results,Invalid,,Y,3,,Invalid
+Integrase Resistance Level Results,Low Level Resistance,,Y,4,,Low Level Resistance
+Integrase Resistance Level Results,No Mutations Detected,,Y,5,,No Mutations Detected
+Invalid/Nonreactive/Reactive,Invalid,,Y,1,,Invalid
+Invalid/Nonreactive/Reactive,Nonreactive,,Y,2,,Nonreactive
+Invalid/Nonreactive/Reactive,Reactive,,Y,3,,Reactive
+SD Bioline HIV 1/2 Results,HIV-1 Positive,,Y,1,,HIV-1 Positive
+SD Bioline HIV 1/2 Results,HIV-2 Positive,,Y,2,,HIV-2 Positive
+SD Bioline HIV 1/2 Results,Invalid,,Y,3,,Invalid
+SD Bioline HIV 1/2 Results,Negative,,Y,4,,Negative
+Detected/Equivocal/Invalid/Not Detected,Detected,,Y,1,,Detected
+Detected/Equivocal/Invalid/Not Detected,Equivocal,,Y,2,,Equivocal
+Detected/Equivocal/Invalid/Not Detected,Invalid,,Y,3,,Invalid
+Detected/Equivocal/Invalid/Not Detected,Not Detected,,Y,4,,Not Detected
+Borderline/Negative/Positive,Borderline,,Y,1,,Borderline
+Borderline/Negative/Positive,Negative,,Y,2,,Negative
+Borderline/Negative/Positive,Positive,,Y,3,,Positive
+Impact RPR Titre Results,REACTIVE 1:1,,Y,1,,REACTIVE 1:1
+Impact RPR Titre Results,REACTIVE 1:128,,Y,2,,REACTIVE 1:128
+Impact RPR Titre Results,REACTIVE 1:16,,Y,3,,REACTIVE 1:16
+Impact RPR Titre Results,REACTIVE 1:2,,Y,4,,REACTIVE 1:2
+Impact RPR Titre Results,REACTIVE 1:256,,Y,5,,REACTIVE 1:256
+Impact RPR Titre Results,REACTIVE 1:32,,Y,6,,REACTIVE 1:32
+Impact RPR Titre Results,REACTIVE 1:4,,Y,7,,REACTIVE 1:4
+Impact RPR Titre Results,REACTIVE 1:64,,Y,8,,REACTIVE 1:64
+Impact RPR Titre Results,REACTIVE 1:8,,Y,9,,REACTIVE 1:8
+Impact RPR Titre Results,REACTIVE Neat,,Y,10,,REACTIVE Neat
+Equivocal/Negative/Positive,Equivocal,,Y,1,,Equivocal
+Equivocal/Negative/Positive,Negative,,Y,2,,Negative
+Equivocal/Negative/Positive,Positive,,Y,3,,Positive
+Poliovirus Culture Results,Enterovirus isolated,,Y,1,,Enterovirus isolated
+Poliovirus Culture Results,No enterovirus isolated,,Y,2,,No enterovirus isolated
+Poliovirus Culture Results,Non-polio virus isolated,,Y,3,,Non-polio virus isolated
+Poliovirus Culture Results,Polio enterovirus isolated,,Y,4,,Polio enterovirus isolated
+Poliovirus ITD / VDPV Results,Compatible Sabin PV1,,Y,1,,Compatible Sabin PV1
+Poliovirus ITD / VDPV Results,Compatible Sabin PV2,,Y,2,,Compatible Sabin PV2
+Poliovirus ITD / VDPV Results,Compatible Sabin PV3,,Y,3,,Compatible Sabin PV3
+Poliovirus ITD / VDPV Results,NPEV,,Y,4,,NPEV
+Poliovirus ITD / VDPV Results,Sabin-like PV1,,Y,5,,Sabin-like PV1
+Poliovirus ITD / VDPV Results,Sabin-like PV2,,Y,6,,Sabin-like PV2
+Poliovirus ITD / VDPV Results,Sabin-like PV3,,Y,7,,Sabin-like PV3
+Poliovirus ITD / VDPV Results,VDPV1,,Y,8,,VDPV1
+Poliovirus ITD / VDPV Results,VDPV2,,Y,9,,VDPV2
+Poliovirus ITD / VDPV Results,VDPV3,,Y,10,,VDPV3
+Poliovirus ITD / VDPV Results,WPV1,,Y,11,,WPV1
+Poliovirus ITD / VDPV Results,WPV2,,Y,12,,WPV2
+Poliovirus ITD / VDPV Results,WPV3,,Y,13,,WPV3
+Poliovirus Marker Results,L20B negative,,Y,1,,L20B negative
+Poliovirus Marker Results,L20B positive,,Y,2,,L20B positive
+Poliovirus Marker Results,RD negative,,Y,3,,RD negative
+Poliovirus Marker Results,RD positive,,Y,4,,RD positive
+Poliovirus Sequencing Results,Compatible Sabin PV1,,Y,1,,Compatible Sabin PV1
+Poliovirus Sequencing Results,Compatible Sabin PV2,,Y,2,,Compatible Sabin PV2
+Poliovirus Sequencing Results,Compatible Sabin PV3,,Y,3,,Compatible Sabin PV3
+Poliovirus Sequencing Results,Inconclusive,,Y,4,,Inconclusive
+Poliovirus Sequencing Results,Sabin-like PV1,,Y,5,,Sabin-like PV1
+Poliovirus Sequencing Results,Sabin-like PV2,,Y,6,,Sabin-like PV2
+Poliovirus Sequencing Results,Sabin-like PV3,,Y,7,,Sabin-like PV3
+Poliovirus Sequencing Results,VDPV1,,Y,8,,VDPV1
+Poliovirus Sequencing Results,VDPV2,,Y,9,,VDPV2
+Poliovirus Sequencing Results,VDPV3,,Y,10,,VDPV3
+Poliovirus Sequencing Results,WPV1,,Y,11,,WPV1
+Poliovirus Sequencing Results,WPV2,,Y,12,,WPV2
+Poliovirus Sequencing Results,WPV3,,Y,13,,WPV3
+Remel Cryptococcus Antigen Titre Results,REACTIVE 1:1,,Y,1,,REACTIVE 1:1
+Remel Cryptococcus Antigen Titre Results,REACTIVE 1:128,,Y,2,,REACTIVE 1:128
+Remel Cryptococcus Antigen Titre Results,REACTIVE 1:16,,Y,3,,REACTIVE 1:16
+Remel Cryptococcus Antigen Titre Results,REACTIVE 1:2,,Y,4,,REACTIVE 1:2
+Remel Cryptococcus Antigen Titre Results,REACTIVE 1:256,,Y,5,,REACTIVE 1:256
+Remel Cryptococcus Antigen Titre Results,REACTIVE 1:32,,Y,6,,REACTIVE 1:32
+Remel Cryptococcus Antigen Titre Results,REACTIVE 1:4,,Y,7,,REACTIVE 1:4
+Remel Cryptococcus Antigen Titre Results,REACTIVE 1:512,,Y,8,,REACTIVE 1:512
+Remel Cryptococcus Antigen Titre Results,REACTIVE 1:64,,Y,9,,REACTIVE 1:64
+Remel Cryptococcus Antigen Titre Results,REACTIVE 1:8,,Y,10,,REACTIVE 1:8
+StrongStep Cryptococcal Antigen Titre Results,REACTIVE 1:10,,Y,1,,REACTIVE 1:10
+StrongStep Cryptococcal Antigen Titre Results,REACTIVE 1:1280,,Y,2,,REACTIVE 1:1280
+StrongStep Cryptococcal Antigen Titre Results,REACTIVE 1:160,,Y,3,,REACTIVE 1:160
+StrongStep Cryptococcal Antigen Titre Results,REACTIVE 1:20,,Y,4,,REACTIVE 1:20
+StrongStep Cryptococcal Antigen Titre Results,REACTIVE 1:2560,,Y,5,,REACTIVE 1:2560
+StrongStep Cryptococcal Antigen Titre Results,REACTIVE 1:320,,Y,6,,REACTIVE 1:320
+StrongStep Cryptococcal Antigen Titre Results,REACTIVE 1:40,,Y,7,,REACTIVE 1:40
+StrongStep Cryptococcal Antigen Titre Results,REACTIVE 1:5,,Y,8,,REACTIVE 1:5
+StrongStep Cryptococcal Antigen Titre Results,REACTIVE 1:640,,Y,9,,REACTIVE 1:640
+StrongStep Cryptococcal Antigen Titre Results,REACTIVE 1:80,,Y,10,,REACTIVE 1:80
+Wampole ColorCard Streptozyme Titre Results,1:100 Titre,,Y,1,,1:100 Titre
+Wampole ColorCard Streptozyme Titre Results,1:200 Titre,,Y,2,,1:200 Titre
+Wampole ColorCard Streptozyme Titre Results,1:400 Titre,,Y,3,,1:400 Titre
+Wampole ColorCard Streptozyme Titre Results,1:600 Titre,,Y,4,,1:600 Titre
+Wampole ColorCard Streptozyme Titre Results,1:800 Titre,,Y,5,,1:800 Titre
+# Retained from the previous distro dictionary: analyzer result options and demographic entry deactivations.
+Xpert Results,Positive,POS,Y,1,,Positive
+Xpert Results,Negative,NEG,Y,2,,Negative
+Xpert Results,POS,XPOS,Y,3,,POS
+Xpert Results,NEG,XNEG,Y,4,,NEG
+Xpert Results,Detected,DET,Y,5,,Detected
+Xpert Results,Not Detected,ND,Y,6,,Not Detected
+Xpert Results,MTB Detected,MTBD,Y,7,,MTB Detected
+Xpert Results,Invalid,INV,Y,8,,Invalid
+Xpert Results,Error,ERR,Y,9,,Error
+Xpert Results,No Result,NR,Y,10,,No Result
+Xpert Results,Indeterminate,INDET,Y,11,,Indeterminate
+Xpert Results,Presumptive,PRES,Y,12,,Presumptive
+Xpert Results,High,HIGH,Y,13,,High
+Xpert Results,Medium,MED,Y,14,,Medium
+Xpert Results,Low,LOW,Y,15,,Low
+Xpert Results,Very Low,VLOW,Y,16,,Very Low
+Marital Status Demographic Information,DNA,,N,,,
+Marital Status Demographic Information,livingWith,,N,,,

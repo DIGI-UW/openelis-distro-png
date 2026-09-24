@@ -1,12 +1,59 @@
-description,localAbbreviation,domain,isActive,sortOrder,localization:en,localization:fr,localization:es,localization:id
-Cervical Swab,CERV,H,Y,50,Cervical Swab,Écouvillon Cervical,,
-Vaginal Swab,VAGS,H,Y,51,Vaginal Swab,Écouvillon Vaginal,,
-Endocervical Swab,ENDC,H,Y,52,Endocervical Swab,Écouvillon Endocervical,,
-Nasal Swab,NAS,H,Y,53,Nasal Swab,Écouvillon Nasal,,
-Nasopharyngeal Swab,NPS,H,Y,54,Nasopharyngeal Swab,Écouvillon Nasopharyngé,,
-Wound Swab,WND,H,Y,55,Wound Swab,Écouvillon de Plaie,,
-Rectal Swab,RECT,H,Y,56,Rectal Swab,Écouvillon Rectal,,
-Lesion Swab,LESN,H,Y,57,Lesion Swab,Écouvillon de Lésion,,
-Stool,STL,H,Y,58,Stool,Selles,,
-CSF,CSF,H,Y,59,Cerebrospinal Fluid,Liquide Céphalo-Rachidien,,
-Urine,URIN,H,Y,60,Urine,Urine,,
+description,localAbbreviation,domain,isActive,sortOrder,localization:en
+# localAbbreviation values are GENERATED — review before use (see review.csv)
+Plasma,PLA,H,Y,1,Plasma
+Serum,SER,H,Y,2,Serum
+Whole Blood,WB,H,Y,3,Whole Blood
+Blood Film,BF,H,Y,4,Blood Film
+Biopsy,BIO,H,Y,5,Biopsy
+Blood Culture,BC,H,Y,6,Blood Culture
+Bronchial Aspirate,BA,H,Y,7,Bronchial Aspirate
+Bronchial Lavage,BL,H,Y,8,Bronchial Lavage
+Cerebrospinal Fluid (CSF),CSF,H,Y,9,Cerebrospinal Fluid (CSF)
+Cervical Swab,CS,H,Y,10,Cervical Swab
+Endotracheal (ET) Aspirate,ET,H,Y,11,Endotracheal (ET) Aspirate
+Faeces,FAE,H,Y,12,Faeces
+Fine Needle Aspirate (FNA),FNA,H,Y,13,Fine Needle Aspirate (FNA)
+Food (Cooked),COOKED,H,Y,14,Food (Cooked)
+Food (Raw),RAW,H,Y,15,Food (Raw)
+Gastric Aspirate,GA,H,Y,16,Gastric Aspirate
+Genital Swab,GS,H,Y,17,Genital Swab
+High Vaginal Swab,HVS,H,Y,18,High Vaginal Swab
+IDC,IDC,H,Y,19,IDC
+In/Out Urine,IOU,H,Y,20,In/Out Urine
+Isolate,ISO,H,Y,21,Isolate
+Low Vaginal Swab,LVS,H,Y,22,Low Vaginal Swab
+Lymph Node,LN,H,Y,23,Lymph Node
+MSU,MSU,H,Y,24,MSU
+Nasopharyngeal Aspirate (NPA),NPA,H,Y,25,Nasopharyngeal Aspirate (NPA)
+Nasopharyngeal Swab,NS,H,Y,26,Nasopharyngeal Swab
+Oropharyngeal Swab,OS,H,Y,27,Oropharyngeal Swab
+Pericardial Effusion,PE,H,Y,28,Pericardial Effusion
+Pericardial Fluid,PF,H,Y,29,Pericardial Fluid
+Peritoneal Fluid,PEFL,H,Y,30,Peritoneal Fluid
+Pus/Wound Swab,PWS,H,Y,31,Pus/Wound Swab
+Sputum,SPU,H,Y,32,Sputum
+Stool,STO,H,Y,33,Stool
+Throat Swab,TS,H,Y,34,Throat Swab
+Tissue,TIS,H,Y,35,Tissue
+Tongue Swab,TOSW,H,Y,36,Tongue Swab
+Ulcer Swab,US,H,Y,37,Ulcer Swab
+Urethral Swab,URSW,H,Y,38,Urethral Swab
+Urine,URI,H,Y,39,Urine
+Water (Treated),TREATED,H,Y,40,Water (Treated)
+Water (Untreated - Raw),UNTREATEDR,H,Y,41,Water (Untreated - Raw)
+Cell Culture,CC,H,Y,42,Cell Culture
+Amniotic Fluid,AF,H,Y,43,Amniotic Fluid
+Fetal Tissue,FT,H,Y,44,Fetal Tissue
+Oral Fluid,OF,H,Y,45,Oral Fluid
+Saliva,SAL,H,Y,46,Saliva
+Concentrated Sediment,COSE,H,Y,47,Concentrated Sediment
+Pleural Effusion,PLEF,H,Y,48,Pleural Effusion
+Pleural Fluid,PLFL,H,Y,49,Pleural Fluid
+Nerve biopsy,NB,H,Y,50,Nerve biopsy
+Skin biopsy,SB,H,Y,51,Skin biopsy
+Skin smear,SS,H,Y,52,Skin smear
+Slit skin smear,SSS,H,Y,53,Slit skin smear
+DBS,DBS,H,Y,54,DBS
+Sewage,SEW,H,Y,55,Sewage
+Waste Water,WW,H,Y,56,Waste Water
+Respiratory Swab,RS,H,Y,57,Respiratory Swab

@@ -313,8 +313,8 @@ step 1.
 ## Loading the PNG test catalog
 
 The test catalog (tests, sample types, test sections, result options,
-dictionary entries, lab roles) is loaded from CSV files at start-up. The
-files live in:
+dictionary entries, panels) is loaded from CSV files at start-up. The files
+live in:
 
 ```
 configs/configuration/backend/<domain>/png-*.csv
@@ -325,7 +325,8 @@ load a new or updated set on a server:
 
 1. Take a backup.
 2. Copy each file into its folder, replacing the existing `png-*.csv`
-   (for example `tests/png-tests.csv`, `sample-types/png-sample-types.csv`).
+   (for example `tests/png-tests.csv`, `sample-types/png-sample-types.csv`,
+   `panels/png-panels.csv`).
 3. Fix permissions and restart the web application:
 
    ```bash
@@ -346,11 +347,31 @@ load a new or updated set on a server:
 
 Loading is safe to repeat: existing entries are updated, not duplicated.
 
-> **Catalog status.** The test catalog in this repository is a placeholder
-> for testing and training. It is not the PNG catalog and must not be used
-> for patient results. Replace it with the PNG catalog files before go-live.
-> `roles/png-lab-roles.csv` and `test-sections/png-test-sections.csv` are
-> currently empty.
+### What ships in this repository
+
+The distro includes the **CPHL test catalog**, generated from the CPHL test
+workbook:
+
+| File | Contents |
+|---|---|
+| `tests/png-tests.csv` | 394 tests |
+| `sample-types/png-sample-types.csv` | 57 sample types |
+| `test-sections/png-test-sections.csv` | 6 test sections |
+| `test-results/png-test-results.csv` | 1,856 result definitions |
+| `dictionaries/png-dictionary-entries.csv` | 734 result options, plus analyzer result options and demographic settings |
+| `panels/png-panels.csv` | 71 panels |
+
+> **Pending CPHL review.** This catalog has not yet been signed off by CPHL
+> and must be reviewed before go-live. In particular:
+>
+> - LOINC codes and units of measure are blank (they are not in the source
+>   workbook and were not guessed).
+> - Sample type abbreviations, result types (numeric / text / select list)
+>   and normal flags were generated and need checking.
+> - Test names with brackets were simplified for the loader
+>   (for example `Amikacin (AK)` is loaded as `Amikacin AK`).
+>
+> `roles/png-lab-roles.csv` is empty; lab roles use the OpenELIS defaults.
 
 ## PNG configuration included
 
