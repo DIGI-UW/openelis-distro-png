@@ -12,6 +12,7 @@ run OpenELIS servers. Developer and release notes are at the end.
 - [Choosing a version](#choosing-a-version)
 - [Installing a server](#installing-a-server)
 - [Set the admin password (mandatory)](#set-the-admin-password-mandatory)
+- [HTTPS with Let's Encrypt](#https-with-lets-encrypt)
 - [Day-to-day operation](#day-to-day-operation)
 - [Loading the PNG test catalog](#loading-the-png-test-catalog)
 - [PNG configuration included](#png-configuration-included)
@@ -27,6 +28,7 @@ run OpenELIS servers. Developer and release notes are at the end.
 | Disk | 50 GB free to start; plan for growth in results and backups |
 | Software | Docker Engine with the Compose v2 plugin (`docker compose`), `git` |
 | Network | Internet access during install to pull images; ports 80 and 443 reachable by users |
+| Hostname | A DNS name for the server (for example `lab.health.gov.pg`) pointing at its public IP, for the Let's Encrypt certificate |
 | Access | A user with `sudo` rights |
 
 Check Docker is ready before you start:
@@ -43,7 +45,7 @@ reachable by lab users; firewall the rest.
 
 | Port | Used by | Who needs it |
 |---|---|---|
-| 80, 443 | Web interface (HTTPS proxy) | All users |
+| 80, 443 | Web interface (HTTPS proxy); port 80 also answers Let's Encrypt checks | All users, and the internet for port 80 |
 | 12000 | Analyzer bridge, ASTM listener | Analyzers on the lab network only |
 | 8442 | Analyzer bridge API | Local only |
 | 8080, 8443 | Web application (behind the proxy) | Local only |
@@ -127,11 +129,15 @@ minutes while the database is created and the catalog is loaded.
 Run `./scripts/set-admin-password.sh`. See the next section; this step is
 required.
 
-### 6. Log in
+### 6. Set up HTTPS
 
-Open `https://<server-address>/` and sign in as `admin` with the password you
-set. The browser warns about the certificate until you install a real one
-(see [HTTPS certificates](#https-certificates)).
+Follow [HTTPS with Let's Encrypt](#https-with-lets-encrypt) below. Until you
+do, the server uses a self-signed certificate and browsers show a warning.
+
+### 7. Log in
+
+Open `https://<your-hostname>/` and sign in as `admin` with the password you
+set.
 
 ## Set the admin password (mandatory)
 
@@ -153,6 +159,89 @@ and the default no longer does. Check a site at any time with:
 If you later change the admin password in the application
 (Administration > Users), update `OE_ADMIN_PASSWORD` in `.env` to match. The
 analyzer bridge signs in with it.
+
+## HTTPS with Let's Encrypt
+
+The Ministry uses Let's Encrypt for server certificates. The distro includes
+an overlay (`compose.letsencrypt.yaml`) and a script
+(`scripts/generate-letsencrypt-certs.sh`) that request, install and renew
+the certificate. Full reference: [docs/letsencrypt.md](docs/letsencrypt.md).
+
+### Before you start
+
+- The hostname (for example `lab.health.gov.pg`) has a DNS `A` record
+  pointing at this server's public IP address.
+- **Port 80** is open to the internet. Let's Encrypt checks it to prove you
+  control the hostname. Port 443 is open to users.
+- The stack is running (`docker compose ps` shows the proxy up).
+
+### 1. Add the Let's Encrypt settings to `.env`
+
+Uncomment the `LETSENCRYPT_*` block in `.env` and fill it in, and add the
+`COMPOSE_FILE` line so every `docker compose` command uses the overlay:
+
+```dotenv
+LETSENCRYPT_EMAIL=ict-team@health.gov.pg
+LETSENCRYPT_DOMAINS=lab.health.gov.pg
+LETSENCRYPT_PRIMARY_DOMAIN=lab.health.gov.pg
+LETSENCRYPT_CERT_NAME=lab.health.gov.pg
+
+COMPOSE_FILE=docker-compose.yml:compose.letsencrypt.yaml
+```
+
+Use a shared team mailbox for `LETSENCRYPT_EMAIL`; expiry warnings go there.
+To put more than one name on the certificate, list them in
+`LETSENCRYPT_DOMAINS` separated by commas.
+
+The `COMPOSE_FILE` line matters. Without it, a later plain
+`docker compose up -d` (for example during an upgrade) starts the proxy
+without the overlay and it falls back to the self-signed certificate.
+
+### 2. Test without using up the quota
+
+```bash
+./scripts/generate-letsencrypt-certs.sh --dry-run
+```
+
+Let's Encrypt limits how many real certificates a hostname can get per week.
+The dry run checks DNS, port 80 and the settings without counting against
+that limit. Fix any error before going on.
+
+### 3. Request the certificate
+
+```bash
+./scripts/generate-letsencrypt-certs.sh
+```
+
+### 4. Switch the proxy to the new certificate
+
+```bash
+docker compose up -d --force-recreate proxy
+```
+
+### 5. Check it
+
+```bash
+curl -I http://lab.health.gov.pg        # should redirect to https
+curl -v https://lab.health.gov.pg/ 2>&1 | grep -i "issuer\|expire"
+```
+
+In a browser the padlock should show a valid certificate with no warning.
+
+### Renewal
+
+Let's Encrypt certificates last 90 days. Run the same script regularly; it
+renews only when the certificate is close to expiry, and does nothing
+otherwise. Add a weekly job to root's crontab (`sudo crontab -e`), adjusting
+the folder to where you cloned the distro:
+
+```cron
+0 3 * * 1 cd /opt/openelis-distro-png && ./scripts/generate-letsencrypt-certs.sh >> /var/log/oe-letsencrypt.log 2>&1 && docker compose restart proxy
+```
+
+The proxy restart makes nginx load a renewed certificate. It takes a few
+seconds and is scheduled for 03:00 on Mondays to avoid working hours. Check
+`/var/log/oe-letsencrypt.log` after the first run.
 
 ## Day-to-day operation
 
@@ -210,16 +299,6 @@ To roll back, check out the previous tag and run the same `pull` and
 `up -d`. If the new version changed the database, restore the backup from
 step 1.
 
-### HTTPS certificates
-
-The stack starts with a self-signed certificate, so browsers show a warning.
-For a server with a public hostname,
-[docs/letsencrypt.md](docs/letsencrypt.md) sets up a free Let's Encrypt
-certificate (settings go in the `LETSENCRYPT_*` block of `.env`). To use a
-certificate issued under the Ministry's own procedures, follow the same
-overlay pattern in `compose.letsencrypt.yaml` to mount it into the proxy,
-and check with the DIGI team before go-live.
-
 ### Troubleshooting
 
 | Symptom | Fix |
@@ -227,6 +306,8 @@ and check with the DIGI team before go-live.
 | `Failed to save checksums file` in the log, catalog reloads every start | `./scripts/fix-config-permissions.sh`, then restart |
 | Analyzer bridge fails to open its state store | `./scripts/init-bridge-state.sh`, then restart |
 | `admin` / `adminADMIN!` still works | `./scripts/set-admin-password.sh` |
+| Browser shows a certificate warning after an upgrade | `COMPOSE_FILE` line missing from `.env`; add it, then `docker compose up -d --force-recreate proxy` |
+| Let's Encrypt dry run fails | Check the DNS record points at this server and port 80 is open from the internet |
 | A service keeps restarting | `docker compose logs <service>` and read the last error |
 
 ## Loading the PNG test catalog
@@ -275,7 +356,7 @@ Loading is safe to repeat: existing entries are updated, not duplicated.
 
 | Setting | Value | File |
 |---|---|---|
-| Patient address | Province and District as dropdowns (22 provinces, 89 districts), then LLG and Village / Ward as free text | `address-hierarchy/png-levels.csv`, `png-values.csv` |
+| Patient address | Province and District as dropdowns (22 provinces, 90 districts), then LLG and Village / Ward as free text | `address-hierarchy/png-levels.csv`, `png-values.csv` |
 | Phone numbers | Optional `+675`, then 8-digit mobile (`7XXX XXXX`, `8XXX XXXX`) or 7-digit fixed line (`XXX XXXX`); international numbers accepted in `+CC` form | `site-information/png-site-information.csv`, `configs/properties/SystemConfiguration.properties` |
 | Interface language | English | `locales/png-locales.csv` |
 
