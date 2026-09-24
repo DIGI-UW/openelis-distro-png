@@ -8,6 +8,14 @@ bridge) with the PNG configuration already in place.
 It is written for the National Department of Health ICT staff who install and
 run OpenELIS servers. Developer and release notes are at the end.
 
+> **Test catalog: CPHL catalog, pending review.** Every new server starts
+> with the CPHL test catalog already loaded (394 tests, 71 panels, 57 sample
+> types). It has **not yet been signed off by CPHL**: LOINC codes and units
+> are blank, and some fields were generated automatically. Do not use it for
+> patient results until CPHL has approved it. When CPHL sends updated files,
+> load them as described in
+> [Loading the PNG test catalog](#loading-the-png-test-catalog).
+
 - [What you need](#what-you-need)
 - [Choosing a version](#choosing-a-version)
 - [Installing a server](#installing-a-server)
@@ -138,6 +146,11 @@ do, the server uses a self-signed certificate and browsers show a warning.
 
 Open `https://<your-hostname>/` and sign in as `admin` with the password you
 set.
+
+The CPHL test catalog is loaded automatically on the first start. To confirm,
+open **Administration > Test Management** and check that the CPHL tests and
+panels are listed. Remember the catalog is still pending CPHL review (see
+[What ships in this repository](#what-ships-in-this-repository)).
 
 ## Set the admin password (mandatory)
 
@@ -379,6 +392,7 @@ workbook:
 |---|---|---|
 | Patient address | Province and District as dropdowns (22 provinces, 90 districts), then LLG and Village / Ward as free text | `address-hierarchy/png-levels.csv`, `png-values.csv` |
 | Phone numbers | Optional `+675`, then 8-digit mobile (`7XXX XXXX`, `8XXX XXXX`) or 7-digit fixed line (`XXX XXXX`); international numbers accepted in `+CC` form | `site-information/png-site-information.csv`, `configs/properties/SystemConfiguration.properties` |
+| Test catalog | CPHL catalog: 394 tests, 71 panels, 57 sample types, 6 test sections (pending CPHL review) | `tests/`, `panels/`, `sample-types/`, `test-sections/`, `test-results/`, `dictionaries/` |
 | Interface language | English | `locales/png-locales.csv` |
 
 Address and phone settings can be adjusted later in the application under
