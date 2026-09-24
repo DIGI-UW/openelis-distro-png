@@ -40,6 +40,35 @@ services:
             -  keys-vol:/etc/ssl/private/
             -  certs-vol:/etc/ssl/certs/
 
+    bridge-state-init:
+        container_name: oe-bridge-state-init
+        # Reuses the bridge image purely so no extra image has to be pulled;
+        # it never runs the bridge itself (entrypoint is overridden).
+        image: itechuw/openelis-analyzer-bridge:develop
+        platform: linux/amd64
+        restart: "no"
+        # Runs as root on purpose -- it exists only to hand the bind mount to
+        # the unprivileged account the bridge actually runs as.
+        user: "0:0"
+        # Docker creates a missing bind-mount source on the host as root:root.
+        # The bridge runs as UID 9257 (`astm`) and then cannot create
+        # state.db, failing at boot with:
+        #   java.sql.SQLException: opening db: '...': Permission denied
+        # That crash-loop also blocks oe.openelis.org (service_started) and so
+        # the proxy, which gates on the webapp being healthy -- the whole stack
+        # stalls on one wrong directory owner. Fixing it here makes a clean
+        # `docker compose up` self-sufficient on a fresh clone.
+        # Mirrors scripts/init-bridge-state.sh, which stays the repair path for
+        # a restore that extracted configs/ without `tar --numeric-owner`.
+        entrypoint: ["sh", "-c"]
+        command:
+            - chown -R ${BRIDGE_UID:-9257}:${BRIDGE_GID:-9257} /data/openelis-analyzer-bridge
+              && chmod 750 /data/openelis-analyzer-bridge
+        volumes:
+            - ${BRIDGE_STATE_HOST_DIR:-./configs/bridge-state}:/data/openelis-analyzer-bridge
+        networks:
+            - openelis-network
+
     db.openelis.org:
         container_name: openelisglobal-database
         image: itechuw/openelis-global-2-database:develop
@@ -246,6 +275,8 @@ services:
         depends_on:
             certs:
                 condition: service_completed_successfully
+            bridge-state-init:
+                condition: service_completed_successfully
         ports:
             - "8442:8443" # HTTPS API port
             - "12000:12001" # ASTM listen port
@@ -262,8 +293,9 @@ services:
             # inside the container; a bind-mount target that Docker has to
             # create itself is owned by root, and SQLite then fails with
             # "Permission denied" trying to create state.db.
-            # The host directory must exist and be owned by UID:GID 9257:9257.
-            # See scripts/init-bridge-state.sh.
+            # The host directory must be owned by UID:GID 9257:9257. The
+            # bridge-state-init service above guarantees that on every
+            # `up`; scripts/init-bridge-state.sh does the same by hand.
             - ${BRIDGE_STATE_HOST_DIR:-./configs/bridge-state}:/data/openelis-analyzer-bridge
         environment:
             SPRING_PROFILES_ACTIVE: dev
