@@ -94,7 +94,11 @@ services:
             interval: 15s
             timeout: 10s
             retries: 8
-            start_period: 90s
+            # First boot (Liquibase + config loading) has been observed at
+            # ~6 min on a small host. Failures inside start_period don't
+            # count, and health flips as soon as a probe passes, so a long
+            # window costs nothing on fast hosts.
+            start_period: 600s
         networks:
           openelis-network:
               ipv4_address: 172.20.1.121
