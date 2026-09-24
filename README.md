@@ -106,12 +106,17 @@ rejected.
 
 ```bash
 ./scripts/fix-config-permissions.sh
-./scripts/init-bridge-state.sh
 ```
 
-Run both before the first start. They are safe to run again at any time.
-Skipping the first one makes OpenELIS log `Failed to save checksums file`
-and reload the whole catalog on every start.
+Run it before the first start. It is safe to run again at any time.
+Skipping it makes OpenELIS log `Failed to save checksums file` and reload
+the whole catalog on every start.
+
+`configs/bridge-state` needs no manual step: the `bridge-state-init` service
+in `docker-compose.yml` claims it for UID 9257 on every `up`, before the
+analyzer bridge starts. `./scripts/init-bridge-state.sh` does the same thing
+by hand and is still the repair path after a restore (see
+[docs/backup-restore.md](docs/backup-restore.md)).
 
 ### 4. Start the stack
 
@@ -303,7 +308,7 @@ step 1.
 | Symptom | Fix |
 |---|---|
 | `Failed to save checksums file` in the log, catalog reloads every start | `./scripts/fix-config-permissions.sh`, then restart |
-| Analyzer bridge fails to open its state store | `./scripts/init-bridge-state.sh`, then restart |
+| Analyzer bridge fails to open its state store | `docker compose up -d bridge-state-init`, then restart the bridge |
 | `admin` / `adminADMIN!` still works | `./scripts/set-admin-password.sh` |
 | Browser shows a certificate warning after an upgrade | `COMPOSE_FILE` line missing from `.env`; add it, then `docker compose up -d --force-recreate proxy` |
 | Let's Encrypt dry run fails | Check the DNS record points at this server and port 80 is open from the internet |
