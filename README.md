@@ -50,7 +50,6 @@ reachable by lab users; firewall the rest.
 | 8442 | Analyzer bridge API | Local only |
 | 8080, 8443 | Web application (behind the proxy) | Local only |
 | 8081, 8444 | FHIR API | Local only, or the consolidated server if connected |
-| 15432 | PostgreSQL database | Local only |
 
 ## Choosing a version
 
