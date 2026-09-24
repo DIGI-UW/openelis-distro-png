@@ -1,13 +1,13 @@
 # Template Source Inventory
 
-This Madagascar distro is the source reference for extracting a clean
+Maintainer note. This distro is a source reference for extracting a clean
 `openelis-distro-template` repository. The template repository should be created
 fresh with `git init`; files from this repo should be copied deliberately after
-classification, not by preserving Madagascar git history.
+classification, not by preserving this repo's git history.
 
 ## Generic Template Core
 
-These files are broadly reusable after replacing Madagascar-specific defaults in
+These files are broadly reusable after replacing country-specific defaults in
 the new template repo only:
 
 - `docker-compose.yml`
@@ -26,7 +26,7 @@ the new template repo only:
 - `configs/configuration/backend/questionnaires/generic-sample-logbook-questionnaire.json`
 
 Pure vendor analyzer profiles can move into the template after a final copy-time
-check confirms they contain no Madagascar, LA2M, or site-specific notes:
+check confirms they contain no country- or site-specific notes:
 
 - `configs/analyzer-profiles/astm/horiba-micros60.json`
 - `configs/analyzer-profiles/astm/horiba-pentra60.json`
@@ -47,15 +47,15 @@ These files are country production configuration and should stay in generated
 country repos, not in the base template.
 
 The catalog CSVs below carry the `png-` prefix because this is the Papua New
-Guinea distro, but their **contents are still the Madagascar payload** this
-repo was branched from — Malagasy address hierarchy, `+261` phone validation
-and French localization. They are placeholders awaiting the PNG catalog; see
-"Catalog configuration" in the README.
+Guinea distro. The address hierarchy, phone validation and the CPHL test
+catalog (pending CPHL review; see "Loading the PNG test catalog" in the
+README) are PNG-specific.
 
 - `configs/configuration/backend/address-hierarchy/png-levels.csv`
 - `configs/configuration/backend/address-hierarchy/png-values.csv`
 - `configs/configuration/backend/dictionaries/png-dictionary-entries.csv`
 - `configs/configuration/backend/locales/png-locales.csv`
+- `configs/configuration/backend/panels/png-panels.csv`
 - `configs/configuration/backend/roles/png-lab-roles.csv`
 - `configs/configuration/backend/sample-types/png-sample-types.csv`
 - `configs/configuration/backend/site-information/png-site-information.csv`
@@ -66,7 +66,7 @@ and French localization. They are placeholders awaiting the PNG catalog; see
 - `configs/menu/menu_config.json`
 - `configs/odoo/odoo-test-product-mapping.csv`
 
-These analyzer profiles carry Madagascar/site test-code mappings or notes and
+These analyzer profiles carry site-specific test-code mappings or notes and
 should remain country payload unless they are later split into a generic vendor
 profile plus country overlay:
 
@@ -80,7 +80,7 @@ profile plus country overlay:
 - `configs/analyzer-profiles/file/wondfo-csv.json`
 
 The converter scripts under `scripts/converters/` show a reusable host-side
-adaptation pattern, but the current scripts target Madagascar lab file formats.
+adaptation pattern, but the current scripts target specific lab file formats.
 Treat them as country payload for the first template extraction.
 
 ## Runtime And Local Artifacts

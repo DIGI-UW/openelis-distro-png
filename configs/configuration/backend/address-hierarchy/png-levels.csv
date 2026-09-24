@@ -1,6 +1,5 @@
 level,typeName,displayKey,sortOrder,defaultValue,inputType,bindKey
-1,Province,patient.address.province,3,,dropdown,
-2,Health Region,patient.address.healthregion,4,,dropdown,
-3,Health District,patient.address.healthdistrict,5,,dropdown,
-4,Fokontany,patient.address.fokontany,1,,freetext,addressHierarchy_3
-5,Hamlet/Lot,patient.address.hamletOrLot,2,,freetext,addressHierarchy_4
+1,Province,patient.address.province,1,,dropdown,
+2,Health District,patient.address.healthdistrict,2,,dropdown,
+3,LLG,,3,,freetext,addressHierarchy_2
+4,Village / Ward,,4,,freetext,addressHierarchy_3

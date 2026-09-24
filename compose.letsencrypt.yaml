@@ -21,9 +21,9 @@ services:
             - ./configs/nginx/docker-entrypoint.sh:/docker-entrypoint.sh:ro
         environment:
             # Neutral placeholders only. These used to default to
-            # mgtest.openelis-global.org — a Madagascar test host — so an
+            # a test host from another project, so an
             # unconfigured PNG deployment looked for a certificate lineage
-            # belonging to a different country's site. Override every one of
+            # belonging to a different site. Override every one of
             # them in .env before using this overlay.
             - LETSENCRYPT_DOMAINS=${LETSENCRYPT_DOMAINS:-example.com}
             - LETSENCRYPT_PRIMARY_DOMAIN=${LETSENCRYPT_PRIMARY_DOMAIN:-example.com}

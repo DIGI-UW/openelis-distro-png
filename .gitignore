@@ -9,7 +9,7 @@ openelis-png-distro-*.tar.gz
 
 # Local compose files. The canonical tracked compose lives at
 # docker-compose.yml; compose.yaml + the override files are local
-# mgtest/test-harness state with :local image pins and machine-specific
+# test-harness state with :local image pins and machine-specific
 # paths — never commit these.
 compose.yaml
 compose.override.yaml
