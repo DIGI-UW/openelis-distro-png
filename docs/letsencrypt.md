@@ -70,9 +70,9 @@ precedence).
 | `LETSENCRYPT_DOMAIN` | Legacy | — | Backward-compatible single-domain fallback |
 | `LETSENCRYPT_STAGING` | No | `false` | First-time `certonly` only: use `--staging` (untrusted chain) |
 
-There is no built-in hostname default. It used to be
-`mgtest.openelis-global.org`, a Madagascar test host, so an unconfigured run
-requested a certificate for another country's site and spent this host's ACME
+There is no built-in hostname default. It used to fall back to another
+project's test host, so an unconfigured run requested a certificate for
+somebody else's site and spent this host's ACME
 quota doing it. The script now stops with an error instead.
 
 Example for two names on one certificate, in `.env`:

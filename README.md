@@ -1,242 +1,357 @@
-# openelis-distro-png
+# OpenELIS Global: Papua New Guinea distribution
 
-OpenELIS Global deployment package for Papua New Guinea — Docker Compose stack
-with the Papua New Guinea configuration profile, analyzer bridge, and lab-data
-converters bundled.
+This repository is the deployment package for OpenELIS Global in Papua New
+Guinea. It is a Docker Compose stack that brings up the full OpenELIS system
+(database, web application, FHIR API, front end, HTTPS proxy and analyzer
+bridge) with the PNG configuration already in place.
 
-This repo IS the deployment artifact: every tagged release is consumable
-as a [GitHub auto-archive](https://github.com/DIGI-UW/openelis-distro-png/releases),
-a `git clone --branch <tag>`, or a downloaded Release tarball. Ozone-style
-consumers and direct implementers all use the same versioned tag.
+It is written for the National Department of Health ICT staff who install and
+run OpenELIS servers. Developer and release notes are at the end.
 
-## Quickstart (localhost demo)
+- [What you need](#what-you-need)
+- [Choosing a version](#choosing-a-version)
+- [Installing a server](#installing-a-server)
+- [Set the admin password (mandatory)](#set-the-admin-password-mandatory)
+- [Day-to-day operation](#day-to-day-operation)
+- [Loading the PNG test catalog](#loading-the-png-test-catalog)
+- [PNG configuration included](#png-configuration-included)
+- [Analyzers](#analyzers)
+- [For maintainers](#for-maintainers)
+
+## What you need
+
+| Item | Requirement |
+|---|---|
+| Operating system | Ubuntu Server LTS (22.04 or 24.04), 64-bit x86 (`amd64`) |
+| CPU / memory | 4 cores and 8 GB RAM minimum |
+| Disk | 50 GB free to start; plan for growth in results and backups |
+| Software | Docker Engine with the Compose v2 plugin (`docker compose`), `git` |
+| Network | Internet access during install to pull images; ports 80 and 443 reachable by users |
+| Access | A user with `sudo` rights |
+
+Check Docker is ready before you start:
 
 ```bash
-git clone https://github.com/DIGI-UW/openelis-distro-png
-cd openelis-distro-png
-
-./scripts/fix-config-permissions.sh   # before first start — see note below
-./scripts/init-bridge-state.sh
-
-docker compose up -d
+docker --version
+docker compose version
 ```
 
-Then open https://localhost/ in your browser:
+### Ports
 
-| URL | Credentials |
-|---|---|
-| https://localhost/ | `admin` / `adminADMIN!` |
+The stack publishes these ports on the host. Only 80 and 443 need to be
+reachable by lab users; firewall the rest.
 
-`scripts/fix-config-permissions.sh` hands `configs/configuration` to UID 8443
-(the webapp's `tomcat_admin`) with group write for you. Skip it and every
-boot logs `Failed to save checksums file ...` for all 15 catalog domains and
-re-imports the whole catalog each time. Run it before the first
-`docker compose up -d`; it is idempotent.
+| Port | Used by | Who needs it |
+|---|---|---|
+| 80, 443 | Web interface (HTTPS proxy) | All users |
+| 12000 | Analyzer bridge, ASTM listener | Analyzers on the lab network only |
+| 8442 | Analyzer bridge API | Local only |
+| 8080, 8443 | Web application (behind the proxy) | Local only |
+| 8081, 8444 | FHIR API | Local only, or the consolidated server if connected |
+| 15432 | PostgreSQL database | Local only |
 
-`docker-compose.yml` ships sensible localhost-demo defaults (DB password, TLS
-material paths) so the stack boots out of the box without a local `.env`. To
-override anything for production, copy `.env.example` to `.env` and edit.
-**`.env` is gitignored — never commit it.**
+## Choosing a version
 
-## Deploying a real site
+Always install from a **release tag**, not from `main`. The `main` branch
+follows the OpenELIS development build and changes every day; a tag is a
+fixed, tested snapshot that installs the same way every time.
 
-Everything in Quickstart, plus:
+Find the current release on the
+[Releases page](https://github.com/DIGI-UW/openelis-distro-png/releases), or
+list tags from the command line:
+
+```bash
+git ls-remote --tags https://github.com/DIGI-UW/openelis-distro-png
+```
+
+In the commands below, replace `<release-tag>` with the tag you chose. Record
+which tag each server runs; you need it for upgrades and rollbacks.
+
+## Installing a server
+
+### 1. Get the release
+
+```bash
+git clone --branch <release-tag> https://github.com/DIGI-UW/openelis-distro-png
+cd openelis-distro-png
+```
+
+Each release also has a downloadable tarball on the Releases page if the
+server cannot reach GitHub directly.
+
+### 2. Set site passwords
 
 ```bash
 cp .env.example .env
-# set OE_DB_PASSWORD, ADMIN_PASSWORD and OE_ADMIN_PASSWORD to site values.
-# OE_ADMIN_PASSWORD must satisfy the OpenELIS password policy — .env.example
-# spells it out; a hyphen will be rejected.
-
-./scripts/fix-config-permissions.sh
-./scripts/init-bridge-state.sh
-docker compose up -d
-
-docker compose ps                    # wait for oe.openelis.org -> healthy
-./scripts/set-admin-password.sh      # MANDATORY — see below
+nano .env
 ```
 
-### The admin password step is not optional
+Set these three values for every real site:
 
-`OE_ADMIN_PASSWORD` in `.env` does **not** by itself change the login
-password. OpenELIS creates the `admin` account on first boot from a bcrypt
-hash baked into the webapp image at *build* time (upstream `ARG DEFAULT_PW`
-→ `adminPassword.txt` on the WAR classpath). A distro that ships pinned
-upstream images cannot change a build argument, so a fresh site accepts the
-published default `admin` / `adminADMIN!` until you run:
+| Variable | What it is |
+|---|---|
+| `OE_DB_PASSWORD` | Database password for the OpenELIS schema |
+| `ADMIN_PASSWORD` | PostgreSQL superuser password (used at first start) |
+| `OE_ADMIN_PASSWORD` | Password for the OpenELIS `admin` login |
+
+`OE_ADMIN_PASSWORD` must meet the OpenELIS password policy: at least 8
+characters, only `A-Z a-z 0-9 _ % $ # !`, and at least three of lowercase,
+uppercase, digit and special character. A hyphen (`-`), `@` or `*` will be
+rejected.
+
+`.env` holds passwords. Never commit it or copy it anywhere unprotected.
+
+### 3. Prepare folders
+
+```bash
+./scripts/fix-config-permissions.sh
+./scripts/init-bridge-state.sh
+```
+
+Run both before the first start. They are safe to run again at any time.
+Skipping the first one makes OpenELIS log `Failed to save checksums file`
+and reload the whole catalog on every start.
+
+### 4. Start the stack
+
+```bash
+docker compose up -d
+docker compose ps
+```
+
+Wait until `oe.openelis.org` shows `healthy`. The first start takes several
+minutes while the database is created and the catalog is loaded.
+
+### 5. Set the admin password
+
+Run `./scripts/set-admin-password.sh`. See the next section; this step is
+required.
+
+### 6. Log in
+
+Open `https://<server-address>/` and sign in as `admin` with the password you
+set. The browser warns about the certificate until you install a real one
+(see [HTTPS certificates](#https-certificates)).
+
+## Set the admin password (mandatory)
+
+Putting `OE_ADMIN_PASSWORD` in `.env` does **not** change the login password
+on its own. Every new site starts with the published default
+`admin` / `adminADMIN!` until you run:
 
 ```bash
 ./scripts/set-admin-password.sh
 ```
 
-It applies `OE_ADMIN_PASSWORD`, then verifies through OpenELIS's own login
-endpoint that the configured password is accepted and `adminADMIN!` is
-rejected. Re-check at any time with `./scripts/set-admin-password.sh --check`.
-
-Earlier revisions of this distro carried `DEFAULT_PW=${OE_ADMIN_PASSWORD}` in
-`docker-compose.yml`; it was read at build time only and had no effect at
-runtime, so sites went live on the public default.
-
-## Image pinning
-
-Every service in `docker-compose.yml` is pinned directly to a literal
-`repo:tag@sha256:<digest>` reference:
-
-```yaml
-image: itechuw/openelis-global-2:3.2.1.6@sha256:0fb3a481...
-image: itechuw/openelis-analyzer-bridge:3.0.1@sha256:6d43bf5b...
-```
-
-The tag is human-readable documentation ("this is the 3.2.1.6 release");
-the digest is the immutability lock — `docker compose pull` returns the
-exact bytes regardless of when or where it runs, even if upstream
-republishes the tag.
-
-To bump pins (maintainer workflow) — accepts any published upstream tag,
-release name or `develop`:
+The script applies `OE_ADMIN_PASSWORD`, then confirms the new password works
+and the default no longer does. Check a site at any time with:
 
 ```bash
-./scripts/pin-versions.sh                       # refresh digests, current tags
-./scripts/pin-versions.sh 3.2.1.7 3.0.2         # bump both to release tags
-./scripts/pin-versions.sh develop 3.0.1         # OE to current develop snapshot; bridge to release
-./scripts/pin-versions.sh develop develop       # both at current develop snapshots
-git diff docker-compose.yml                            # review
-git commit docker-compose.yml -m "chore: bump pins to ..."
+./scripts/set-admin-password.sh --check
 ```
 
-Distro tags release independently of upstream OE versioning — distro
-`3.2.2.0` could ship with OE `3.2.1.6` images, OE `develop` snapshots,
-or any mix.
+If you later change the admin password in the application
+(Administration > Users), update `OE_ADMIN_PASSWORD` in `.env` to match. The
+analyzer bridge signs in with it.
 
-## Cutting a release
+## Day-to-day operation
 
-Releases are produced by the `Release` GitHub Actions workflow
-(`workflow_dispatch`). The workflow collects all version inputs up front,
-refreshes image digests in `docker-compose.yml`, validates the result is
-release-shaped, then tags and publishes — no local `git tag`/`git push`
-step.
+### Status and logs
 
-To cut a release:
+```bash
+docker compose ps                                # is everything running?
+docker compose logs -f oe.openelis.org           # web application log
+docker compose logs -f openelis-analyzer-bridge  # analyzer bridge log
+```
 
-1. **Actions → Release → Run workflow** in the GitHub UI.
-2. Fill in the inputs:
-   - `distro_version` — e.g. `3.2.2.0`. Must not collide with an existing tag.
-   - `oe_version` — OE image tag, e.g. `3.2.1.6`.
-   - `bridge_version` — Analyzer Bridge image tag, e.g. `3.0.1`.
-   - `base_ref` *(optional)* — branch or commit to release from; defaults to `main`. Useful for backports.
-   - `allow_develop_pins` *(optional)* — leave **off** for normal releases. The workflow fails if any image pin is non-release (`:develop`/`:latest`/missing digest) unless this is on.
-   - `draft` *(optional)* — leave **on** (default) to review the Release before publishing.
-   - `prerelease` *(optional)* — flag the Release as pre-release.
-3. Click **Run workflow**.
+### Stop and start
 
-The workflow then:
+```bash
+docker compose stop        # stop, keeping all data
+docker compose up -d       # start again
+```
 
-1. Validates `distro_version` shape, captures the previous tag, and confirms the new tag doesn't already exist.
-2. Runs `scripts/pin-versions.sh <oe> <bridge>` to refresh digests in `docker-compose.yml`.
-3. Runs `scripts/check-release-pins.sh` to assert every pin is release-shaped.
-4. If digests changed, commits the diff (a release commit reachable **only via the new tag**); otherwise tags the existing `base_ref` HEAD.
-5. Builds the release tarball via `scripts/build-tarball.sh`.
-6. Publishes a GitHub Release with notes assembled from the upstream OE and Analyzer Bridge release bodies plus the distro-side commit log since the previous distro tag, with the tarball attached.
+Do not run `docker compose down -v`. The `-v` deletes volumes.
 
-Review the draft Release in the GitHub UI, then publish when satisfied.
-At any commit (`main` or a release tag), `docker-compose.yml` carries fully
-resolved literal image references; consumers cloning at the tag (or
-downloading the auto-archive or the Release tarball) get a self-contained,
-byte-reproducible package.
+### Backups
 
-## Production deployment
+```bash
+sudo ./scripts/backup.sh                    # writes ./backups/<timestamp>/
+sudo ./scripts/backup.sh /srv/oe-backups    # or to a folder you choose
+```
 
-| Topic | Pointer |
+It must run with `sudo`, or the backup silently misses the analyzer bridge
+state. The backup contains `.env`, so treat it as sensitive. Copy backups off
+the server as part of the Ministry's disaster recovery plan.
+
+Read [docs/backup-restore.md](docs/backup-restore.md) **before** restoring.
+Restoring the database as the wrong user takes the site down.
+
+### Upgrading to a new release
+
+1. Take a backup: `sudo ./scripts/backup.sh`
+2. Fetch and switch to the new tag:
+
+   ```bash
+   git fetch --tags
+   git checkout <new-release-tag>
+   ```
+
+3. Pull the new images and restart:
+
+   ```bash
+   docker compose pull
+   docker compose up -d
+   ```
+
+4. Wait for `healthy`, then log in and spot-check a recent order.
+
+To roll back, check out the previous tag and run the same `pull` and
+`up -d`. If the new version changed the database, restore the backup from
+step 1.
+
+### HTTPS certificates
+
+The stack starts with a self-signed certificate, so browsers show a warning.
+For a server with a public hostname,
+[docs/letsencrypt.md](docs/letsencrypt.md) sets up a free Let's Encrypt
+certificate (settings go in the `LETSENCRYPT_*` block of `.env`). To use a
+certificate issued under the Ministry's own procedures, follow the same
+overlay pattern in `compose.letsencrypt.yaml` to mount it into the proxy,
+and check with the DIGI team before go-live.
+
+### Troubleshooting
+
+| Symptom | Fix |
 |---|---|
-| Setting the in-app admin password (mandatory) | `./scripts/set-admin-password.sh` |
-| Backup and restore | [docs/backup-restore.md](docs/backup-restore.md) |
-| Let's Encrypt TLS for a public hostname | [docs/letsencrypt.md](docs/letsencrypt.md) |
-| `Failed to save checksums` / permission errors on `configs/` | `./scripts/fix-config-permissions.sh` |
-| Bridge state store fails to open | `./scripts/init-bridge-state.sh` |
-| Template extraction source classification | [docs/template-source-inventory.md](docs/template-source-inventory.md) |
+| `Failed to save checksums file` in the log, catalog reloads every start | `./scripts/fix-config-permissions.sh`, then restart |
+| Analyzer bridge fails to open its state store | `./scripts/init-bridge-state.sh`, then restart |
+| `admin` / `adminADMIN!` still works | `./scripts/set-admin-password.sh` |
+| A service keeps restarting | `docker compose logs <service>` and read the last error |
 
-Both the Let's Encrypt overlay and
-`scripts/generate-letsencrypt-certs.sh` read `LETSENCRYPT_*` from `.env`.
-Start from `.env.example` (uncomment the LE block) and follow
-`docs/letsencrypt.md` for the full walkthrough.
+## Loading the PNG test catalog
 
-Back up with `sudo ./scripts/backup.sh` — it must run as root, or the
-archive silently omits `configs/bridge-state`. Read
-[docs/backup-restore.md](docs/backup-restore.md) before restoring: restoring
-the dump as `-U postgres` takes the site down.
-
-## Lab-data utilities
-
-`scripts/converters/` holds standalone host-side preprocessors that
-normalize vendor-specific analyzer exports into the shape each
-`configs/analyzer-profiles/file/*.json` profile expects, before the
-bridge picks the file up. See [scripts/converters/README.md](scripts/converters/README.md)
-for per-script usage, the adapt-at-host design rationale, and operational
-placement.
-
-## Catalog configuration
-
-`configs/configuration/backend/<domain>/png-*.csv` are this distro's catalog
-data — lab roles, tests, sample types, test sections, test results,
-dictionary entries, and address hierarchy levels/values. OE auto-imports them
-at startup via `ConfigurationInitializationService`, with SHA-256 checksum
-tracking that skips re-import on subsequent boots if file content is
-unchanged. Imports are idempotent (upsert by domain key), so renaming or
-re-running is safe.
-
-The `png-` prefix marks these as this deployment's catalog slot, not generic
-samples (the prior `example-` prefix was misleading: the loader doesn't filter
-by filename prefix — any `*.csv` in each domain subdirectory is processed).
-
-> **The contents are not yet Papua New Guinea's data.** These files still hold
-> the Madagascar payload this repo was branched from, and nothing in them has
-> been localized for PNG:
->
-> | File | Still contains |
-> |---|---|
-> | `address-hierarchy/png-values.csv` | 110 Malagasy provinces / regions / districts (Toamasina, Alaotra-Mangoro, …) |
-> | `address-hierarchy/png-levels.csv` | `Fokontany`, a Malagasy administrative unit |
-> | `site-information/png-site-information.csv` | phone validation for `+261` (Madagascar; PNG is `+675`) |
-> | `tests/png-tests.csv`, `sample-types/`, `dictionaries/` | French localization columns, no Tok Pisin |
-> | `roles/png-lab-roles.csv`, `test-sections/png-test-sections.csv` | header only — empty |
->
-> Replacing this content with the PNG catalog is outstanding work. Until then
-> a deployed site carries Madagascar reference data under PNG filenames.
-
-### Upgrading a site across the `madagascar-*` → `png-*` rename
-
-`ConfigurationInitializationService` keys its checksums by **file basename**
-(`resource.getFilename()`), so on a site that already ran the old filenames
-the first boot after this change re-imports all ten renamed files once, then
-settles:
+The test catalog (tests, sample types, test sections, result options,
+dictionary entries, lab roles) is loaded from CSV files at start-up. The
+files live in:
 
 ```
-png-tests.csv ... Successfully loaded tests configuration      # first boot
-png-tests.csv ... unchanged (checksum matches). Skipping.      # every boot after
+configs/configuration/backend/<domain>/png-*.csv
 ```
 
-That re-import is safe — the handlers upsert by domain key, and the file
-contents did not change with the rename. The stale `madagascar-*.csv` entries
-left behind in each `<domain>-checksums.properties` are inert; delete the
-checksum files if you want them tidied, and OE will regenerate them on the
-next start. Fresh installs have no checksum files and are unaffected.
+The PNG catalog files are prepared by the catalog team (CPHL and DIGI). To
+load a new or updated set on a server:
 
-If this distro is ever reused as a template by other deployments, OE
-also supports `OPENELIS_CONFIGURATION_INSTANCE_ID` for instance-scoped
-subdirectory overlays
-([ConfigurationInitializationService.java:125-145][cis]) — set the
-env var to the customer's instance id and place that customer's CSVs
-under `<domain>/<instance-id>/*.csv` to scope them. Not implemented
-here because this artifact is Papua New Guinea-specific.
+1. Take a backup.
+2. Copy each file into its folder, replacing the existing `png-*.csv`
+   (for example `tests/png-tests.csv`, `sample-types/png-sample-types.csv`).
+3. Fix permissions and restart the web application:
 
-[cis]: https://github.com/I-TECH-UW/OpenELIS-Global-2/blob/develop/src/main/java/org/openelisglobal/configuration/service/ConfigurationInitializationService.java#L125-L145
+   ```bash
+   ./scripts/fix-config-permissions.sh
+   docker compose restart oe.openelis.org
+   ```
 
-## Developing or testing this distro
+4. Check the log for each file:
 
-The dev workspace, Playwright E2E tests, build overlays, and dev
-orchestration scripts live in the sibling
-[openelis-png-test-harness][harness] repo. The harness consumes
-this distro at a tag (or as a sibling clone) and adds a mock analyzer +
-test runner on top.
+   ```bash
+   docker compose logs oe.openelis.org | grep -i "configuration"
+   ```
 
-[harness]: https://github.com/DIGI-UW/openelis-png-test-harness
+   You should see `Successfully loaded ...` for changed files and
+   `unchanged (checksum matches). Skipping.` for the rest. Any error names
+   the file and row; send it back to the catalog team rather than editing
+   the file on the server.
+
+Loading is safe to repeat: existing entries are updated, not duplicated.
+
+> **Catalog status.** The test catalog in this repository is a placeholder
+> for testing and training. It is not the PNG catalog and must not be used
+> for patient results. Replace it with the PNG catalog files before go-live.
+> `roles/png-lab-roles.csv` and `test-sections/png-test-sections.csv` are
+> currently empty.
+
+## PNG configuration included
+
+| Setting | Value | File |
+|---|---|---|
+| Patient address | Province and District as dropdowns (22 provinces, 89 districts), then LLG and Village / Ward as free text | `address-hierarchy/png-levels.csv`, `png-values.csv` |
+| Phone numbers | Optional `+675`, then 8-digit mobile (`7XXX XXXX`, `8XXX XXXX`) or 7-digit fixed line (`XXX XXXX`); international numbers accepted in `+CC` form | `site-information/png-site-information.csv`, `configs/properties/SystemConfiguration.properties` |
+| Interface language | English | `locales/png-locales.csv` |
+
+Address and phone settings can be adjusted later in the application under
+Administration.
+
+## Analyzers
+
+The analyzer bridge is included. It listens for ASTM connections on port
+12000 and picks up result files dropped into its watched import folder.
+Ready-made profiles for common analyzers are in `configs/analyzer-profiles/`
+(ASTM, HL7 and file formats). Connecting an analyzer is done with the DIGI
+analyzer team; ICT staff only need to make sure the analyzer can reach the
+server on the lab network.
+
+`scripts/converters/` holds small tools that reshape some vendors' export
+files before the bridge reads them. See
+[scripts/converters/README.md](scripts/converters/README.md).
+
+## For maintainers
+
+### Versioning
+
+`main` tracks upstream `develop` images (`itechuw/openelis-global-2:develop`
+and related). Releases are cut from `main` by the **Release** GitHub Actions
+workflow, which pins every image to an exact `tag@sha256:<digest>` so that a
+release tag always installs the same bytes. Distro release numbers are
+independent of upstream OpenELIS version numbers.
+
+To cut a release: **Actions > Release > Run workflow**, then fill in:
+
+- `distro_version`: the new tag; must not already exist
+- `oe_version`, `bridge_version`: upstream image tags to pin
+- `base_ref` (optional): branch or commit to release from; default `main`
+- `allow_develop_pins` (optional): leave off for real releases; the workflow
+  fails if any pin is `:develop`, `:latest` or missing a digest
+- `draft` (default on) and `prerelease` (optional)
+
+The workflow refreshes digests with `scripts/pin-versions.sh`, checks them
+with `scripts/check-release-pins.sh`, commits the pinned
+`docker-compose.yml` on the tag only, builds the tarball with
+`scripts/build-tarball.sh`, and drafts a GitHub Release with notes from the
+upstream releases plus the distro commit log. Review the draft, then
+publish.
+
+To refresh pins by hand:
+
+```bash
+./scripts/pin-versions.sh <oe-tag|develop> <bridge-tag|develop>
+git diff docker-compose.yml
+```
+
+### Why the admin password needs a script
+
+OpenELIS creates the `admin` account on first start from a password hash
+built into the web application image (`ARG DEFAULT_PW` at image build time).
+A distro that uses published images cannot change that, so
+`scripts/set-admin-password.sh` sets the real password after start-up and
+verifies it through the login endpoint.
+
+### Catalog loading details
+
+`ConfigurationInitializationService` loads every `*.csv` in each domain
+folder (the `png-` prefix is a naming convention, not a filter) and records a
+SHA-256 checksum per file name so unchanged files are skipped on later
+starts. OpenELIS also supports instance-scoped overlays via
+`OPENELIS_CONFIGURATION_INSTANCE_ID`
+([source](https://github.com/I-TECH-UW/OpenELIS-Global-2/blob/develop/src/main/java/org/openelisglobal/configuration/service/ConfigurationInitializationService.java#L125-L145));
+this distro does not use them.
+
+### Development and testing
+
+Playwright end-to-end tests, a mock analyzer and development overlays live
+in the companion `openelis-png-test-harness` repository, which consumes this
+distro at a tag.
+
+[docs/template-source-inventory.md](docs/template-source-inventory.md)
+classifies which files are generic and which are country-specific, for
+extracting a shared distro template.

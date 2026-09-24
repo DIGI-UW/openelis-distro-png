@@ -25,7 +25,7 @@
     "TestCode": "testCode"
   },
   "locale_support": {
-    "description": "Madagascar site uses French locale. CSV exports use semicolons as delimiter and commas as decimal separator.",
+    "description": "French-locale instruments: CSV exports use semicolons as delimiter and commas as decimal separator.",
     "french_csv": {
       "delimiter": ";",
       "decimal_separator": ","

@@ -83,8 +83,8 @@ done
 
 mkdir -p ./configs/letsencrypt ./configs/nginx/certbot
 
-# No built-in hostname default: this used to fall back to a Madagascar test
-# host, so an unconfigured run would request a certificate for somebody
+# No built-in hostname default: this used to fall back to another
+# project's test host, so an unconfigured run would request a certificate for somebody
 # else's name (and burn this host's ACME quota doing it).
 DOMAINS_INPUT="${LETSENCRYPT_DOMAINS:-${LETSENCRYPT_DOMAIN:-}}"
 DOMAINS_INPUT="${DOMAINS_INPUT//,/ }"

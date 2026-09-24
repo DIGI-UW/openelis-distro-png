@@ -10,6 +10,6 @@ localeCode,displayName,isActive,isFallback,sortOrder
 # - sortOrder: Display order in dropdowns (lower numbers appear first)
 # ============================================================================
 en,English,Y,Y,1
-fr,Français,Y,N,2
-es,Español,Y,N,3
-id,Indonesia,Y,N,4
+fr,Français,N,N,2
+es,Español,N,N,3
+id,Indonesia,N,N,4

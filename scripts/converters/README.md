@@ -7,7 +7,7 @@ IT, not by the stack itself.
 
 ## Why ship these in the deployment distro?
 
-Three Madagascar-fleet analyzers (FluoroCycler XT, Multiskan FC, Tecan F50)
+Three analyzers (FluoroCycler XT, Multiskan FC, Tecan F50)
 emit files in vendor-specific shapes that the bridge cannot consume directly:
 each uses a 96-well plate-grid layout where sample IDs and result values live
 on separate sheets (or separate row-blocks within one sheet), instead of the
