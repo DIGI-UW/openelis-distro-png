@@ -35,7 +35,7 @@ run OpenELIS servers. Developer and release notes are at the end.
 | CPU / memory | 4 cores and 8 GB RAM minimum |
 | Disk | 50 GB free to start; plan for growth in results and backups |
 | Software | Docker Engine with the Compose v2 plugin (`docker compose`), `git` |
-| Network | Internet access during install to pull images; ports 80 and 443 reachable by users |
+| Network | Internet access during install to pull images; a firewall in front of the server that you control (see [Ports and firewall](#ports-and-firewall)) |
 | Hostname | A DNS name for the server (for example `lab.health.gov.pg`) pointing at its public IP, for the Let's Encrypt certificate |
 | Access | A user with `sudo` rights |
 
@@ -46,19 +46,47 @@ docker --version
 docker compose version
 ```
 
-### Ports
+### Ports and firewall
 
-The stack publishes these ports on the host. Only 80 and 443 need to be
-reachable by lab users; firewall the rest.
+Only the ports in the first table should ever be opened in a firewall.
 
-| Port | Used by | Who needs it |
+**Open these:**
+
+| Port | Used by | Open to |
 |---|---|---|
-| 80, 443 | Web interface (HTTPS proxy); port 80 also answers Let's Encrypt checks | All users, and the internet for port 80 |
-| 12000 | Analyzer bridge, ASTM listener | Analyzers on the lab network only |
-| 8442 | Analyzer bridge API | Local only |
-| 8080, 8443 | Web application (behind the proxy) | Local only |
-| 8081, 8444 | FHIR API | Local only, or the consolidated server if connected |
-| 15432 | PostgreSQL database | Local only |
+| 443 | Web interface (HTTPS) | Lab users |
+| 80 | Redirect to HTTPS, and Let's Encrypt certificate checks | The internet (Let's Encrypt needs it to issue and renew certificates) |
+| 12000 | Analyzer bridge, ASTM listener | The lab network where analyzers sit only. Never the internet. |
+
+**Never open these.** They are listed for reference only. The containers talk
+to each other over the internal Docker network and do not need these ports;
+they are published on the server only so admins and scripts on the server
+itself can reach the services (for example `scripts/set-admin-password.sh`
+calls port 8443 on `localhost`).
+
+| Port | Service | Why it is published |
+|---|---|---|
+| 15432 | PostgreSQL database | Local admin and troubleshooting |
+| 8080, 8443 | Web application, bypassing the proxy | Local scripts and health checks |
+| 8081, 8444 | FHIR API | Local troubleshooting |
+| 8442 | Analyzer bridge API | Local troubleshooting |
+
+> **ufw does not protect Docker ports.** `docker-compose.yml` publishes every
+> port above on all network interfaces, and Docker adds its own firewall
+> rules that are checked **before** ufw. A `ufw deny 15432` has no effect: the
+> database stays reachable from any network that can reach the server.
+> Block the "never open" ports in the firewall **in front of** the server
+> instead: the cloud security group (for example on AWS), the data centre
+> firewall or the network router. Allow only 80, 443 and (from the lab
+> network) 12000.
+>
+> Check from **another machine** that the database is not reachable:
+>
+> ```bash
+> nc -zv -w 5 <server-address> 15432   # should time out or be refused
+> ```
+>
+> If it connects, the firewall in front of the server is not blocking it.
 
 ## Choosing a version
 
