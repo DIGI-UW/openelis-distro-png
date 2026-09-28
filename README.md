@@ -379,7 +379,7 @@ workbook:
 |---|---|---|
 | Patient address | Province and District as dropdowns (22 provinces, 90 districts), then LLG and Village / Ward as free text | `address-hierarchy/png-levels.csv`, `png-values.csv` |
 | Phone numbers | Optional `+675`, then 8-digit mobile (`7XXX XXXX`, `8XXX XXXX`) or 7-digit fixed line (`XXX XXXX`); international numbers accepted in `+CC` form | `site-information/png-site-information.csv`, `configs/properties/SystemConfiguration.properties` |
-| Interface language | English | `locales/png-locales.csv` |
+| Interface language | English (Papua New Guinea) as the default, plus English | `locales/png-locales.csv` |
 
 Address and phone settings can be adjusted later in the application under
 Administration.

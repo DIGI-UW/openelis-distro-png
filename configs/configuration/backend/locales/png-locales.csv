@@ -9,7 +9,13 @@ localeCode,displayName,isActive,isFallback,sortOrder
 # - isFallback: Y/N - the default locale used when translation is missing (only one should be Y)
 # - sortOrder: Display order in dropdowns (lower numbers appear first)
 # ============================================================================
-en,English,Y,Y,1
-fr,Français,N,N,2
-es,Español,N,N,3
-id,Indonesia,N,N,4
+# PNG: English (Papua New Guinea) is the fallback locale and listed first; plain
+# English is also offered. en-PG uses the hyphenated BCP 47 form so the backend
+# fallback chain resolves en-PG -> en for any value not stored under en-PG.
+# French, Spanish and Indonesian stay listed as inactive so a server that
+# previously had them switched on gets them switched off on reload.
+en-PG,English (Papua New Guinea),Y,Y,1
+en,English,Y,N,2
+fr,Français,N,N,3
+es,Español,N,N,4
+id,Indonesia,N,N,5
