@@ -54,6 +54,7 @@ README) are PNG-specific.
 - `configs/configuration/backend/address-hierarchy/png-levels.csv`
 - `configs/configuration/backend/address-hierarchy/png-values.csv`
 - `configs/configuration/backend/dictionaries/png-dictionary-entries.csv`
+- `configs/configuration/backend/eqa-programs/png-eqa-programs.csv`
 - `configs/configuration/backend/locales/png-locales.csv`
 - `configs/configuration/backend/panels/png-panels.csv`
 - `configs/configuration/backend/roles/png-lab-roles.csv`
