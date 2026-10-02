@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Nightly SNAPSHOT copy of OpenELIS on this server (intended for the VPS).
+# Nightly SNAPSHOT copy of OpenELIS on this server (intended for the off-site server).
 # A second, fully running OpenELIS ("oesnap") rebuilt every night from this
 # server's standby database. Everything entered into it is DISCARDED at the
 # next refresh and is NEVER sent back to the live system. Outbound
@@ -9,7 +9,7 @@
 #   sudo ./scripts/ha/snapshot-refresh.sh          # rebuild now (~10 min)
 #   sudo ./scripts/ha/snapshot-refresh.sh --stop   # stop and remove the snapshot
 # Cron (02:00 every night):
-#   0 2 * * * root /opt/openelis-png/scripts/ha/snapshot-refresh.sh >> /var/log/oesnap.log 2>&1
+#   0 2 * * * root /opt/openelis/scripts/ha/snapshot-refresh.sh >> /var/log/oesnap.log 2>&1
 . "$(dirname "$0")/lib.sh"
 SNAP=${HA_SNAPSHOT_DIR:-/srv/oe-snapshot}
 PORT=${HA_SNAPSHOT_PORT:-9443}

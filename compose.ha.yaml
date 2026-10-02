@@ -1,4 +1,4 @@
-# High-availability overlay for openelis-distro-png.
+# High-availability overlay (scripts/ha) for the OpenELIS Docker Compose distros.
 # Publishes PostgreSQL ONLY on the addresses the other cluster members use
 # (WireGuard address, plus a LAN address or 127.0.0.1). Add to .env:
 #   COMPOSE_FILE=docker-compose.yml:compose.ha.yaml

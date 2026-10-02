@@ -28,7 +28,7 @@ ALTER SYSTEM SET wal_level = 'replica';
 ALTER SYSTEM SET max_wal_senders = 10;
 ALTER SYSTEM SET max_replication_slots = 10;
 ALTER SYSTEM SET wal_keep_size = '1GB';
--- cap WAL held for a disconnected standby so a dead VPS link cannot fill this disk
+-- cap WAL held for a disconnected standby so a dead off-site link cannot fill this disk
 ALTER SYSTEM SET max_slot_wal_keep_size = '${HA_MAX_SLOT_WAL_KEEP:-20GB}';
 ALTER SYSTEM SET wal_log_hints = on;
 ALTER SYSTEM SET hot_standby = on;

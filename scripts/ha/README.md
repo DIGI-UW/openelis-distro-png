@@ -1,6 +1,7 @@
-# scripts/ha: PostgreSQL streaming-replication failover for openelis-distro-png
+# scripts/ha: PostgreSQL streaming-replication failover for OpenELIS (Docker Compose distros)
 
-Full procedure and checklists: Confluence, OpenELIS Global > "Setup High Availability Fail Over".
+Full procedure and checklists: Confluence, OpenELIS Global > "Setup High Availability Fail Over"
+(https://uwdigi.atlassian.net/wiki/spaces/oeg/pages/240877572). Site runbooks (e.g. CPHL) are on this repo's wiki.
 
 One primary runs OpenELIS; standbys run only the database and follow it.
 Never two writable servers: fence the old primary before promoting.
@@ -15,14 +16,14 @@ Never two writable servers: fence the old primary before promoting.
 | `rejoin.sh <new primary>` | old primary / other standbys: pg_rewind, follow, fall back to full copy |
 | `config-sync.sh push\|restore` | primary cron (push) / promote (restore): config checksum files via the DB |
 | `install-guard.sh` | all: boot + 2-minute split-brain guard, Docker-after-WireGuard |
-| `snapshot-refresh.sh [--stop]` | VPS: nightly do-not-enter-data copy on port 9443 |
+| `snapshot-refresh.sh [--stop]` | off-site server: nightly do-not-enter-data copy on port 9443 |
 
 Required in `.env` (identical passwords on every server):
 
 ```dotenv
 COMPOSE_FILE=docker-compose.yml:compose.ha.yaml
-HA_NODE=local
-HA_MEMBERS="vps=10.88.0.1 local=10.88.0.2,192.168.1.10 local2=10.88.0.3,192.168.1.11"
+HA_NODE=site-a
+HA_MEMBERS="offsite=10.88.0.1 site-a=10.88.0.2,192.168.1.10 site-b=10.88.0.3,192.168.1.11"
 HA_PG_BIND_WG=10.88.0.2
 HA_PG_BIND_LAN=192.168.1.10
 HA_REPLICATION_PASSWORD=change-me
