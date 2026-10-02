@@ -1,0 +1,14 @@
+# High-availability overlay for openelis-distro-png.
+# Publishes PostgreSQL ONLY on the addresses the other cluster members use
+# (WireGuard address, plus a LAN address or 127.0.0.1). Add to .env:
+#   COMPOSE_FILE=docker-compose.yml:compose.ha.yaml
+# (append :compose.letsencrypt.yaml if you use Let's Encrypt).
+# Note: ufw does NOT filter Docker-published ports; binding to specific
+# addresses is what keeps 5432 off the public interface.
+services:
+  db.openelis.org:
+    ports:
+      - "${HA_PG_BIND_WG:?set HA_PG_BIND_WG in .env}:5432:5432"
+      - "${HA_PG_BIND_LAN:-127.0.0.1}:5432:5432"
+    # Give PostgreSQL time for a clean shutdown (default is 10 s, then SIGKILL).
+    stop_grace_period: 2m
