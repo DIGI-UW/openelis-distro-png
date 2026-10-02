@@ -58,3 +58,6 @@ test-artifacts/
 .claude/
 .idea/
 .DS_Store
+
+# HA state (scripts/ha): FENCED marker, standby-since
+configs/ha/
