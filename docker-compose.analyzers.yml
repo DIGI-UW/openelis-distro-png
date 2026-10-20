@@ -33,6 +33,8 @@ services:
             # Host directory for real analyzer file drops (NFS, USB...).
             # Read-only: the Bridge must never delete or move source files.
             - ${ANALYZER_HOST_MOUNT:-./configs/analyzer-drops}:/data/analyzer-drops:ro
+            # The PNG analyzer types (configs/analyzer-catalog/README.md).
+            - ./configs/analyzer-catalog:/etc/openelis-analyzer-catalog:ro
         environment:
             - TZ=${TZ:-Pacific/Port_Moresby}
             # OpenELIS pairs with this code. Without one, the Bridge logs a
@@ -42,6 +44,12 @@ services:
             - BRIDGE_FILE_STATE_STORE_PATH=/data/openelis-analyzer-bridge/state.db
             - BRIDGE_OUTBOX_DB_PATH=/data/openelis-analyzer-bridge/outbox.db
             - LOGGING_LEVEL_ORG_ITECH=${BRIDGE_LOG_LEVEL:-INFO}
+            # Analyzer types offered for setup: the PNG set in place of the
+            # Bridge's built-in ones. Types a site creates on Admin > Analyzer
+            # types are kept in DATA_ROOT/bridge either way. Set
+            # BRIDGE_SHIPPED_PROFILES=classpath*:/analyzer-profiles/**/*.json
+            # to offer the Bridge's built-in types instead.
+            - BRIDGE_PROFILECATALOG_SHIPPEDPATTERN=${BRIDGE_SHIPPED_PROFILES:-file:/etc/openelis-analyzer-catalog/*/*.json}
             # OpenELIS base URL: results go to {uri}/analyzer/fhir and the
             # forwarding health check reads {uri}/health.
             - ORG_ITECH_AHB_FORWARD_HTTP_SERVER_URI=https://oe.openelis.org:8443/OpenELIS-Global

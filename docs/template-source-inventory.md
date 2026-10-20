@@ -25,21 +25,10 @@ the new template repo only:
 - `configs/configuration/backend/nce-types/nce-types.csv`
 - `configs/configuration/backend/questionnaires/generic-sample-logbook-questionnaire.json`
 
-Pure vendor analyzer profiles can move into the template after a final copy-time
-check confirms they contain no country- or site-specific notes:
-
-- `configs/analyzer-profiles/astm/horiba-micros60.json`
-- `configs/analyzer-profiles/astm/horiba-pentra60.json`
-- `configs/analyzer-profiles/astm/mindray-ba88a.json`
-- `configs/analyzer-profiles/astm/stago-start4.json`
-- `configs/analyzer-profiles/astm/sysmex-xn.json`
-- `configs/analyzer-profiles/hl7/abbott-architect.json`
-- `configs/analyzer-profiles/hl7/mindray-bc2000.json`
-- `configs/analyzer-profiles/hl7/mindray-bc5380.json`
-- `configs/analyzer-profiles/hl7/mindray-bs200.json`
-- `configs/analyzer-profiles/hl7/mindray-bs300.json`
-- `configs/analyzer-profiles/hl7/mindray-bs360e.json`
-- `configs/analyzer-profiles/file/dtprime.json`
+Vendor analyzer types come with the Analyzer Bridge image. A distribution
+lists only its own under `configs/analyzer-catalog`, which replaces them; a
+template ships that folder empty with its README and
+`scripts/sign-analyzer-profile.py`.
 
 ## Country Payload
 
@@ -63,26 +52,9 @@ README) are PNG-specific.
 - `configs/configuration/backend/test-results/png-test-results.csv`
 - `configs/configuration/backend/test-sections/png-test-sections.csv`
 - `configs/configuration/backend/tests/png-tests.csv`
-- `configs/analyzer/analyzer-test-map.csv`
+- `configs/analyzer-catalog/` (the PNG analyzer types)
 - `configs/menu/menu_config.json`
 - `configs/odoo/odoo-test-product-mapping.csv`
-
-These analyzer profiles carry site-specific test-code mappings or notes and
-should remain country payload unless they are later split into a generic vendor
-profile plus country overlay:
-
-- `configs/analyzer-profiles/astm/genexpert-astm.json`
-- `configs/analyzer-profiles/hl7/genexpert-hl7.json`
-- `configs/analyzer-profiles/file/fluorocycler-xt.json`
-- `configs/analyzer-profiles/file/genexpert-csv.json`
-- `configs/analyzer-profiles/file/multiskan-fc.json`
-- `configs/analyzer-profiles/file/quantstudio.json`
-- `configs/analyzer-profiles/file/tecan-f50.json`
-- `configs/analyzer-profiles/file/wondfo-csv.json`
-
-The converter scripts under `scripts/converters/` show a reusable host-side
-adaptation pattern, but the current scripts target specific lab file formats.
-Treat them as country payload for the first template extraction.
 
 ## Runtime And Local Artifacts
 

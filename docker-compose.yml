@@ -142,7 +142,6 @@ services:
             # printing every -D flag, including -Ddatasource.password, at boot.
             - ./configs/tomcat/setenv.sh:/usr/local/tomcat/bin/setenv.sh:ro
             - ./configs/plugins/:/var/lib/openelis-global/plugins
-            - ./configs/analyzer/analyzer-test-map.csv:/var/lib/openelis-global/analyzer/analyzer-test-map.csv
             - ./configs/odoo/odoo-test-product-mapping.csv:/var/lib/openelis-global/odoo/odoo-test-product-mapping.csv
             - ./configs/programs/:/var/lib/openelis-global/programs
             # Catalog CSVs (baseline) plus the checksums OpenELIS writes back.

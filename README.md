@@ -433,19 +433,14 @@ messages. It also picks up result files dropped into its watched import
 folder. OpenELIS and the bridge trust each other by certificate after pairing
 once with `ANALYZER_BRIDGE_PAIRING_CODE`.
 
-Profiles for the core analyzers come with the bridge. The profiles CPHL
-authored for its own instruments (BD EpiCenter, Bruker MALDI Biotyper, CPHL
-GeneXpert) are kept in [configs/analyzer-catalog](configs/analyzer-catalog/README.md).
-`configs/analyzer-profiles/` holds the older pre-bridge profile files and is
-not read by the stack. Connecting an analyzer is done with the DIGI analyzer
+The analyzer types offered are the PNG set in
+[configs/analyzer-catalog](configs/analyzer-catalog/README.md) (GeneXpert,
+BD EpiCenter, Bruker MALDI Biotyper), in place of the bridge's built-in ones.
+Connecting an analyzer is done with the DIGI analyzer
 team; ICT staff only need to make sure the analyzer can reach the server.
 
 Moving a site from an `openelis-docker` folder to this distribution:
 [docs/migrating-from-allinone.md](docs/migrating-from-allinone.md).
-
-`scripts/converters/` holds small tools that reshape some vendors' export
-files before the bridge reads them. See
-[scripts/converters/README.md](scripts/converters/README.md).
 
 ## For maintainers
 
