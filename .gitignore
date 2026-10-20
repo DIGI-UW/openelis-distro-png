@@ -12,11 +12,15 @@ openelis-png-distro-*.tar.gz
 # test-harness state with :local image pins and machine-specific
 # paths — never commit these.
 compose.yaml
+docker-compose.site.yml
 compose.override.yaml
 compose.override.yml
 docker-compose.override.yml
 
-# Bridge FileStateStore bind mount (SQLite runtime state, owned by UID 9257)
+# Runtime data (DATA_ROOT): database, bridge state, uploads, logs, TLS.
+/data/
+
+# Pre-data-root layout, kept ignored for older checkouts
 configs/bridge-state/
 
 # scripts/backup.sh output — database dumps and a copy of .env

@@ -1,0 +1,186 @@
+{
+  "profile" : {
+    "$schema" : "https://openelis-global.org/contracts/analyzer/v1/analyzer-profile.schema.json",
+    "schemaVersion" : "1.0",
+    "profileMeta" : {
+      "id" : "site.49ab1f03-6536-4ffc-8325-3bfa2b6b32fe",
+      "version" : "1.0.0",
+      "displayName" : "BD EpiCenter (ASTM)",
+      "confidence" : "MEDIUM"
+    },
+    "analyzer_name" : "BD EpiCenter",
+    "manufacturer" : "BD (Becton Dickinson)",
+    "model" : "EpiCenter (MGIT 960 / Phoenix M50 / BACTEC FX)",
+    "category" : "MICROBIOLOGY",
+    "protocol" : {
+      "name" : "ASTM",
+      "version" : "LIS2-A2",
+      "lowerLayerVersion" : "LIS01_A"
+    },
+    "identifier_pattern" : "EPICENTER|EpiCenter",
+    "transport" : [ "TCP/IP" ],
+    "transport_config" : {
+      "TCP/IP" : { }
+    },
+    "communication" : {
+      "mode" : "BOTH",
+      "supports_lis_initiated" : true
+    },
+    "capabilities" : {
+      "inboundResults" : true,
+      "outboundOrders" : true,
+      "connectionTest" : true
+    },
+    "default_test_mappings" : [ {
+      "test_code" : "MGIT_960_GND",
+      "unit" : "",
+      "result_type" : "qualitative",
+      "values" : [ "POSITIVE", "NEGATIVE", "IN PROGRESS" ],
+      "loinc" : "543-9"
+    }, {
+      "test_code" : "MGIT_960_AST",
+      "unit" : "",
+      "result_type" : "qualitative",
+      "values" : [ "S", "I", "R", "N", "X" ],
+      "loinc" : "18769-0"
+    }, {
+      "test_code" : "NMIC/ID-x",
+      "unit" : "",
+      "result_type" : "qualitative",
+      "values" : [ "S", "I", "R", "N", "X" ],
+      "loinc" : "18769-0"
+    }, {
+      "test_code" : "PMIC/ID-x",
+      "unit" : "",
+      "result_type" : "qualitative",
+      "values" : [ "S", "I", "R", "N", "X" ],
+      "loinc" : "18769-0"
+    }, {
+      "test_code" : "PLUSAEF",
+      "unit" : "",
+      "result_type" : "qualitative",
+      "values" : [ "POSITIVE", "NEGATIVE", "IN PROGRESS" ],
+      "loinc" : "600-7"
+    }, {
+      "test_code" : "STDAEF",
+      "unit" : "",
+      "result_type" : "qualitative",
+      "values" : [ "POSITIVE", "NEGATIVE", "IN PROGRESS" ],
+      "loinc" : "600-7"
+    }, {
+      "test_code" : "ORGANISM",
+      "unit" : "",
+      "result_type" : "text",
+      "loinc" : "11475-1"
+    } ],
+    "configDefaults" : {
+      "dataFlow" : "TWO_WAY",
+      "connectionRole" : "SERVER",
+      "transport" : "TCP/IP",
+      "aggregationMode" : "PER_MESSAGE",
+      "flagMappings" : { },
+      "transforms" : { },
+      "extractionOverrides" : {
+        "resultRecordSelection" : {
+          "mode" : "ALL"
+        }
+      }
+    },
+    "connectionFields" : [ {
+      "key" : "dataFlow",
+      "labelKey" : "analyzer.setup.connect.dataFlow",
+      "inputKind" : "SELECT",
+      "required" : true,
+      "choices" : [ {
+        "value" : "RESULTS_ONLY",
+        "labelKey" : "analyzer.setup.connect.dataFlow.resultsOnly"
+      }, {
+        "value" : "TWO_WAY",
+        "labelKey" : "analyzer.setup.connect.dataFlow.twoWay"
+      } ]
+    }, {
+      "key" : "transport",
+      "labelKey" : "analyzer.connection.field.transport",
+      "inputKind" : "SELECT",
+      "required" : true,
+      "choices" : [ {
+        "value" : "RS-232",
+        "labelKey" : "analyzer.connection.transport.RS-232"
+      }, {
+        "value" : "TCP/IP",
+        "labelKey" : "analyzer.connection.transport.TCP/IP"
+      } ]
+    }, {
+      "key" : "connectionRole",
+      "labelKey" : "analyzer.connection.field.connectionRole",
+      "inputKind" : "SELECT",
+      "required" : true,
+      "choices" : [ {
+        "value" : "SERVER",
+        "labelKey" : "analyzer.connection.role.server"
+      }, {
+        "value" : "CLIENT",
+        "labelKey" : "analyzer.connection.role.client"
+      } ],
+      "visibleWhen" : {
+        "fieldKey" : "transport",
+        "operator" : "NOT_EQUALS",
+        "value" : "RS-232"
+      }
+    }, {
+      "key" : "host",
+      "labelKey" : "analyzer.connection.field.host",
+      "inputKind" : "TEXT",
+      "required" : true,
+      "choices" : [ ],
+      "visibleWhen" : {
+        "fieldKey" : "connectionRole",
+        "operator" : "EQUALS",
+        "value" : "CLIENT"
+      }
+    }, {
+      "key" : "port",
+      "labelKey" : "analyzer.connection.field.port",
+      "inputKind" : "NUMBER",
+      "required" : true,
+      "choices" : [ ],
+      "visibleWhen" : {
+        "fieldKey" : "transport",
+        "operator" : "EQUALS",
+        "value" : "TCP/IP"
+      }
+    } ],
+    "controlResultRecognition" : {
+      "mode" : "RULES",
+      "rules" : {
+        "bd-o12-qc-flag" : {
+          "ruleType" : "FIELD_EQUALS",
+          "targetField" : "O.12",
+          "operand" : "Q"
+        },
+        "cphl-qc-accession" : {
+          "ruleType" : "SPECIMEN_ID_PATTERN",
+          "operand" : "^(QC|CTRL|ATCC).*"
+        }
+      }
+    },
+    "catalog" : {
+      "revision" : 1,
+      "revisionFingerprint" : "sha256:520f38e3848ae15f97e3e72a37e38e282deea0b68a4bd92bfc447d4e81a5d177",
+      "recognitionFingerprint" : "sha256:40cde98ca5f333303c1dff4531c8ca9bb2356e3b71ab6277e685715ddefbe835",
+      "source" : "SITE",
+      "status" : "ACTIVE",
+      "publishedAt" : "2026-09-23T00:34:10.445545425Z",
+      "publishedBy" : "1",
+      "lineage" : {
+        "parentProfileId" : "genexpert-astm",
+        "parentRevision" : 4
+      }
+    }
+  },
+  "publication" : {
+    "action" : "DUPLICATED",
+    "actor" : "1",
+    "markedAt" : "2026-09-23T00:34:10.445545425Z"
+  }
+}

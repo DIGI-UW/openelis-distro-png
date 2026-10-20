@@ -17,7 +17,7 @@ need() { [ -n "${!1:-}" ] || die "$1 is not set in .env (see scripts/ha/README.m
 need HA_NODE; need HA_MEMBERS; need HA_REPLICATION_PASSWORD; need HA_PG_BIND_WG
 case ":${COMPOSE_FILE:-}:" in
   *compose.ha.yaml*) ;;
-  *) die "COMPOSE_FILE in .env must include compose.ha.yaml (e.g. COMPOSE_FILE=docker-compose.yml:compose.ha.yaml)";;
+  *) die "COMPOSE_FILE in .env must include compose.ha.yaml (e.g. COMPOSE_FILE=docker-compose.yml:docker-compose.analyzers.yml:compose.ha.yaml)";;
 esac
 
 DB=db.openelis.org
@@ -31,10 +31,9 @@ psql_su() { dc exec -T "$DB" psql -X -q -v ON_ERROR_STOP=1 -U postgres -d "${PGD
 q() { psql_su -At -c "$1"; }
 in_recovery() { q "SELECT pg_is_in_recovery()"; }
 
-data_dir() {
-  local d="${DB_VOLUME_MOUNT:-./configs/database/data}"
-  case "$d" in /*) echo "$d";; *) echo "$HA_ROOT/${d#./}";; esac
-}
+abs_path() { case "$1" in /*) echo "$1";; *) echo "$HA_ROOT/${1#./}";; esac; }
+data_root() { abs_path "${DATA_ROOT:-./data}"; }
+data_dir() { abs_path "${DB_VOLUME_MOUNT:-$(data_root)/db}"; }
 
 db_image() {
   docker compose config --format json | python3 -c 'import json,sys; print(json.load(sys.stdin)["services"]["db.openelis.org"]["image"])'

@@ -46,10 +46,10 @@ reachable by lab users; firewall the rest.
 | Port | Used by | Who needs it |
 |---|---|---|
 | 80, 443 | Web interface (HTTPS proxy); port 80 also answers Let's Encrypt checks | All users, and the internet for port 80 |
-| 12000 | Analyzer bridge, ASTM listener | Analyzers on the lab network only |
-| 8442 | Analyzer bridge API | Local only |
-| 8080, 8443 | Web application (behind the proxy) | Local only |
-| 8081, 8444 | FHIR API | Local only, or the consolidated server if connected |
+| 12000 | Analyzer bridge: the one shared ASTM listener every TCP analyzer connects to | Analyzers only |
+| 8442 | Analyzer bridge API | Bound to 127.0.0.1 |
+| 8080, 8443 | Web application (behind the proxy) | Bound to 127.0.0.1 |
+| 8081, 8444 | FHIR API | Bound to 127.0.0.1 (set `LOCAL_BIND` in `.env` if a consolidated server must reach it) |
 
 ## Choosing a version
 
@@ -94,6 +94,8 @@ Set these three values for every real site:
 | `OE_DB_PASSWORD` | Database password for the OpenELIS schema |
 | `ADMIN_PASSWORD` | PostgreSQL superuser password (used at first start) |
 | `OE_ADMIN_PASSWORD` | Password for the OpenELIS `admin` login |
+| `OE_ENCRYPTION_PASSWORD` | Key OpenELIS encrypts database secrets with. Set once; never change it on a site with data |
+| `ANALYZER_BRIDGE_PAIRING_CODE` | One-time code OpenELIS and the analyzer bridge pair with. Generate one: `openssl rand -hex 16` |
 
 `OE_ADMIN_PASSWORD` must meet the OpenELIS password policy: at least 8
 characters, only `A-Z a-z 0-9 _ % $ # !`, and at least three of lowercase,
@@ -112,11 +114,10 @@ Run it before the first start. It is safe to run again at any time.
 Skipping it makes OpenELIS log `Failed to save checksums file` and reload
 the whole catalog on every start.
 
-`configs/bridge-state` needs no manual step: the `bridge-state-init` service
-in `docker-compose.yml` claims it for UID 9257 on every `up`, before the
-analyzer bridge starts. `./scripts/init-bridge-state.sh` does the same thing
-by hand and is still the repair path after a restore (see
-[docs/backup-restore.md](docs/backup-restore.md)).
+Everything else is prepared automatically: the `init` service runs before
+the other services on every `up` and creates `./data` (see
+[Where the data lives](#where-the-data-lives)) with the right owners, and the
+first time it generates this site's own internal certificate and keystores.
 
 ### 4. Start the stack
 
@@ -126,7 +127,9 @@ docker compose ps
 ```
 
 Wait until `oe.openelis.org` shows `healthy`. The first start takes several
-minutes while the database is created and the catalog is loaded.
+minutes while the database is created and the catalog is loaded. OpenELIS
+pairs with the analyzer bridge by itself on that first start, using
+`ANALYZER_BRIDGE_PAIRING_CODE`.
 
 ### 5. Set the admin password
 
@@ -190,8 +193,14 @@ LETSENCRYPT_DOMAINS=lab.health.gov.pg
 LETSENCRYPT_PRIMARY_DOMAIN=lab.health.gov.pg
 LETSENCRYPT_CERT_NAME=lab.health.gov.pg
 
-COMPOSE_FILE=docker-compose.yml:compose.letsencrypt.yaml
+COMPOSE_FILE=docker-compose.yml:docker-compose.analyzers.yml:compose.letsencrypt.yaml
 ```
+
+If a certbot already runs on the server itself and keeps a certificate under
+`/etc/letsencrypt`, point the overlay at it instead of requesting a new one:
+add `LETSENCRYPT_DIR=/etc/letsencrypt` and `CERTBOT_WEBROOT=` set to the
+certbot's webroot, skip steps 2 and 3, and make sure its deploy hook runs
+`docker restart openelisglobal-proxy`.
 
 Use a shared team mailbox for `LETSENCRYPT_EMAIL`; expiry warnings go there.
 To put more than one name on the certificate, list them in
@@ -264,7 +273,32 @@ docker compose stop        # stop, keeping all data
 docker compose up -d       # start again
 ```
 
-Do not run `docker compose down -v`. The `-v` deletes volumes.
+### Where the data lives
+
+Everything the site must keep is in `./data` (the `DATA_ROOT` setting in
+`.env`), not in Docker volumes:
+
+| Folder | Contents |
+|---|---|
+| `data/db` | PostgreSQL database |
+| `data/bridge` | Analyzer bridge: saved connections, profile revisions, undelivered results, pairing |
+| `data/webapp` | Uploaded logos and attachments, report exports, search index, effective settings |
+| `data/tls` | This site's internal certificate and keystores (browsers see the Let's Encrypt one) |
+| `data/logs` | Web application and Tomcat logs |
+
+Never delete `./data`. `docker compose down` (even with `-v`) leaves it alone.
+
+### Following the development build
+
+On the `main` branch the images track OpenELIS `develop`. One command takes
+a database dump, pulls the newest images, restarts and waits until the site
+is healthy:
+
+```bash
+./scripts/update.sh
+```
+
+See the comments at the top of the script for rollback.
 
 ### Backups
 
@@ -308,7 +342,8 @@ step 1.
 | Symptom | Fix |
 |---|---|
 | `Failed to save checksums file` in the log, catalog reloads every start | `./scripts/fix-config-permissions.sh`, then restart |
-| Analyzer bridge fails to open its state store | `docker compose up -d bridge-state-init`, then restart the bridge |
+| Analyzer bridge fails to open its state store | `docker compose up -d init`, then `docker compose restart openelis-analyzer-bridge` |
+| Analyzers page says OpenELIS is not paired | Enter `ANALYZER_BRIDGE_PAIRING_CODE` from `.env` on Admin > Analyzers |
 | `admin` / `adminADMIN!` still works | `./scripts/set-admin-password.sh` |
 | Browser shows a certificate warning after an upgrade | `COMPOSE_FILE` line missing from `.env`; add it, then `docker compose up -d --force-recreate proxy` |
 | Let's Encrypt dry run fails | Check the DNS record points at this server and port 80 is open from the internet |
@@ -391,12 +426,22 @@ Administration.
 
 ## Analyzers
 
-The analyzer bridge is included. It listens for ASTM connections on port
-12000 and picks up result files dropped into its watched import folder.
-Ready-made profiles for common analyzers are in `configs/analyzer-profiles/`
-(ASTM, HL7 and file formats). Connecting an analyzer is done with the DIGI
-analyzer team; ICT staff only need to make sure the analyzer can reach the
-server on the lab network.
+The analyzer bridge is included (`docker-compose.analyzers.yml`). Every TCP
+analyzer connects to the one shared ASTM listener on port 12000; the bridge
+tells them apart by source address and the name the instrument puts in its
+messages. It also picks up result files dropped into its watched import
+folder. OpenELIS and the bridge trust each other by certificate after pairing
+once with `ANALYZER_BRIDGE_PAIRING_CODE`.
+
+Profiles for the core analyzers come with the bridge. The profiles CPHL
+authored for its own instruments (BD EpiCenter, Bruker MALDI Biotyper, CPHL
+GeneXpert) are kept in [configs/analyzer-catalog](configs/analyzer-catalog/README.md).
+`configs/analyzer-profiles/` holds the older pre-bridge profile files and is
+not read by the stack. Connecting an analyzer is done with the DIGI analyzer
+team; ICT staff only need to make sure the analyzer can reach the server.
+
+Moving a site from an `openelis-docker` folder to this distribution:
+[docs/migrating-from-allinone.md](docs/migrating-from-allinone.md).
 
 `scripts/converters/` holds small tools that reshape some vendors' export
 files before the bridge reads them. See

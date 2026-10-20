@@ -1,30 +1,31 @@
 # Let's Encrypt overlay for the reverse proxy.
-# Usage:
-#   docker compose -f docker-compose.yml -f compose.letsencrypt.yaml up -d
-#   # (add other overlays as needed, e.g. -f compose.validate.yaml)
+# Usage: add it to COMPOSE_FILE in .env (see .env.example), or
+#   docker compose -f docker-compose.yml -f docker-compose.analyzers.yml -f compose.letsencrypt.yaml up -d
 #
-# Certificates: run ./scripts/generate-letsencrypt-certs.sh from repo root after proxy is up.
-# Env: LETSENCRYPT_EMAIL (required), LETSENCRYPT_DOMAINS / LETSENCRYPT_PRIMARY_DOMAIN / LETSENCRYPT_CERT_NAME
-# Set them in .env (see the LETSENCRYPT_* block in .env.example); both this
-# overlay and the script read them from there.
+# Two ways to get the certificate:
+#   - this distro's scripts/generate-letsencrypt-certs.sh (default paths
+#     below: ./configs/letsencrypt and ./configs/nginx/certbot), or
+#   - a certbot already running on the host: set LETSENCRYPT_DIR=/etc/letsencrypt
+#     and CERTBOT_WEBROOT to its webroot, and have its deploy hook run
+#     `docker restart openelisglobal-proxy`.
+# Set LETSENCRYPT_CERT_NAME (the lineage under live/) in .env; see docs/letsencrypt.md.
 #
-# Compose replaces service volumes on override; this file lists the full proxy volume set.
+# The volume list is replaced, not merged (!override): the proxy's
+# docker-entrypoint.sh rewrites /etc/nginx/certs, so that path must stay inside
+# the container. This site's self-signed pair is mounted read-only elsewhere
+# and used only when no Let's Encrypt certificate is found.
 
 services:
     proxy:
-        volumes:
-            - certs-vol:/etc/nginx/certs/
-            - keys-vol:/etc/nginx/keys/
+        volumes: !override
+            - ${DATA_ROOT:-./data}/tls/certs:/etc/nginx/selfsigned/certs:ro
+            - ${DATA_ROOT:-./data}/tls/keys:/etc/nginx/selfsigned/keys:ro
             - ./configs/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-            - ./configs/nginx/certbot:/var/www/certbot
-            - ./configs/letsencrypt:/etc/letsencrypt:ro
+            - ${CERTBOT_WEBROOT:-./configs/nginx/certbot}:/var/www/certbot
+            - ${LETSENCRYPT_DIR:-./configs/letsencrypt}:/etc/letsencrypt:ro
             - ./configs/nginx/docker-entrypoint.sh:/docker-entrypoint.sh:ro
         environment:
-            # Neutral placeholders only. These used to default to
-            # a test host from another project, so an
-            # unconfigured PNG deployment looked for a certificate lineage
-            # belonging to a different site. Override every one of
-            # them in .env before using this overlay.
+            # Neutral placeholders: override them in .env.
             - LETSENCRYPT_DOMAINS=${LETSENCRYPT_DOMAINS:-example.com}
             - LETSENCRYPT_PRIMARY_DOMAIN=${LETSENCRYPT_PRIMARY_DOMAIN:-example.com}
             - LETSENCRYPT_CERT_NAME=${LETSENCRYPT_CERT_NAME:-example.com}

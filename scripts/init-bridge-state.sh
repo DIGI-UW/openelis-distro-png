@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Prepare the bridge state-store host directory before first `docker compose up`.
+# Repair the bridge state-store host directory (DATA_ROOT/bridge). The init
+# service does this on every `docker compose up`; this is the manual path, for
+# example after restoring a backup without `tar --numeric-owner`.
 #
 # The analyzer bridge runs as UID 9257 (`astm`) inside the container and writes
 # its SQLite state to /data/openelis-analyzer-bridge/state.db. We bind-mount a
@@ -11,7 +13,7 @@
 
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-STATE_DIR="${BRIDGE_STATE_HOST_DIR:-${ROOT}/configs/bridge-state}"
+STATE_DIR="${BRIDGE_STATE_HOST_DIR:-${ROOT}/data/bridge}"
 BRIDGE_UID="${BRIDGE_UID:-9257}"
 BRIDGE_GID="${BRIDGE_GID:-9257}"
 

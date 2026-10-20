@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Back up an OpenELIS PNG site: the clinlims database plus the on-disk
-# configuration tree.
+# Back up an OpenELIS PNG site: the clinlims database, the on-disk
+# configuration tree and the site data under DATA_ROOT (Analyzer Bridge
+# state, uploads, internal TLS material).
 #
-# MUST RUN AS ROOT (sudo). configs/bridge-state is mode 750 owned by
-# UID 9257 (the analyzer bridge's `astm` account — see
-# scripts/init-bridge-state.sh), and configs/configuration is owned by
+# MUST RUN AS ROOT (sudo). DATA_ROOT/bridge is mode 750 owned by
+# UID 9257 (the analyzer bridge's `astm` account), DATA_ROOT/tls/keys is
+# root-only, and configs/configuration is owned by
 # UID 8443 after scripts/fix-config-permissions.sh. A host-user `tar` over
 # configs/ therefore hits "Cannot open: Permission denied", exits 2, and
 # still leaves a tarball behind — an archive that looks fine and silently
@@ -29,14 +30,18 @@ DEST="${DEST_ROOT}/${STAMP}"
 
 if [ "$(id -u)" -ne 0 ]; then
     echo "ERROR: this script must run as root." >&2
-    echo "       configs/bridge-state is 750 9257:9257 and configs/configuration is" >&2
+    echo "       DATA_ROOT/bridge is 750 9257:9257 and configs/configuration is" >&2
     echo "       owned by UID 8443; an unprivileged tar skips them and still exits" >&2
     echo "       with an archive, so the backup would be quietly incomplete." >&2
     echo "  sudo $0 $*" >&2
     exit 1
 fi
 
-compose() { docker compose -f docker-compose.yml "$@"; }
+# COMPOSE_FILE and DATA_ROOT come from .env, as for every docker compose call.
+compose() { docker compose "$@"; }
+DATA_ROOT="$(grep -E '^DATA_ROOT=' .env 2>/dev/null | tail -n1 | cut -d= -f2- || true)"
+DATA_ROOT="${DATA_ROOT:-./data}"
+case "$DATA_ROOT" in /*) ;; *) DATA_ROOT="./${DATA_ROOT#./}";; esac
 
 if ! compose ps --status running --services 2>/dev/null | grep -qx "$DB_SERVICE"; then
     echo "ERROR: ${DB_SERVICE} is not running; cannot dump the database." >&2
@@ -66,20 +71,22 @@ echo "[backup]   clinlims.dump: $(numfmt --to=iec "$DUMP_BYTES" 2>/dev/null || e
 # --- configuration tree ---------------------------------------------------
 # Ownership and modes are preserved (--numeric-owner) because they are load
 # bearing: UID 8443 must own configs/configuration for the webapp to write
-# its checksum files, and UID 9257 must own configs/bridge-state for the
+# its checksum files, and UID 9257 must own DATA_ROOT/bridge for the
 # bridge's SQLite store to open. A restore that flattens them re-creates
-# the very faults fix-config-permissions.sh and init-bridge-state.sh exist
-# to prevent.
+# the very faults fix-config-permissions.sh and the init service exist to
+# prevent.
 #
-# configs/database/data is excluded deliberately: a file-level copy of a
-# live PostgreSQL data directory is not a consistent backup. clinlims.dump
-# above is the database backup.
-echo "[backup] tar configs/ (excluding the live postgres data directory)..."
+# DATA_ROOT/db is excluded deliberately: a file-level copy of a live
+# PostgreSQL data directory is not a consistent backup. clinlims.dump above
+# is the database backup. Logs are not state.
+echo "[backup] tar configs/ and ${DATA_ROOT} (excluding the live database and logs)..."
 tar --numeric-owner \
     --exclude='./configs/database/data' \
     --exclude='./configs/logs' \
+    --exclude="${DATA_ROOT}/db" \
+    --exclude="${DATA_ROOT}/logs" \
     -czf "${DEST}/configs.tar.gz" \
-    ./configs
+    ./configs "${DATA_ROOT}"
 
 # tar exits 2 on a read failure. `set -e` already aborted if that happened,
 # so reaching here means every member was read.
@@ -87,11 +94,12 @@ echo "[backup]   configs.tar.gz: $(du -h "${DEST}/configs.tar.gz" | cut -f1)"
 
 # Confirm the root-only subtrees really made it in — these are exactly the
 # ones an unprivileged tar drops. Each is checked only if it exists on this
-# host (configs/bridge-state is created by scripts/init-bridge-state.sh).
+# host (DATA_ROOT/bridge is created by the init service).
 tar tzf "${DEST}/configs.tar.gz" > "${DEST}/.members"
-for required in configs/bridge-state configs/configuration/backend; do
-    [ -d "${ROOT}/${required}" ] || continue
-    if ! grep -q "^\./${required}/" "${DEST}/.members"; then
+for required in "${DATA_ROOT#./}/bridge" "${DATA_ROOT#./}/tls" configs/configuration/backend; do
+    case "$required" in /*) dir="$required";; *) dir="${ROOT}/${required}";; esac
+    [ -d "$dir" ] || continue
+    if ! grep -qE "^(\./)?${required#/}/" "${DEST}/.members"; then
         echo "ERROR: ${required}/ is missing from configs.tar.gz — incomplete backup." >&2
         rm -f "${DEST}/.members"
         exit 1
@@ -116,7 +124,9 @@ fi
     echo "taken:       ${STAMP} (UTC)"
     echo "distro ref:  $(git -C "$ROOT" describe --tags --always --dirty 2>/dev/null || echo unknown)"
     echo "images:"
-    grep -E '^[[:space:]]+image:' docker-compose.yml | sed 's/^[[:space:]]*/  /'
+    compose config --images 2>/dev/null | sed 's/^/  /'
+    echo "image ids:"
+    compose images --format '{{.Repository}}:{{.Tag}} {{.ID}}' 2>/dev/null | sed 's/^/  /' || true
 } > "${DEST}/MANIFEST.txt"
 
 ( cd "$DEST" && sha256sum ./* > SHA256SUMS 2>/dev/null || true )

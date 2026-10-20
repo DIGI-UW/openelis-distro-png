@@ -1,0 +1,54 @@
+{
+  "source": "training server bridge state, 2026-10-20 (Bridge 20b2707)",
+  "profiles": [
+    {
+      "profileId": "site.2e526773-6387-4285-ae04-7902e182b487",
+      "revision": 1,
+      "displayName": "Bruker MALDI Biotyper (ASTM)",
+      "manufacturer": "Bruker",
+      "model": "MALDI Biotyper sirius (MBT Compass IVD)",
+      "parent": {
+        "parentProfileId": "genexpert-astm",
+        "parentRevision": 4
+      },
+      "revisionFingerprint": "sha256:7c19a7d8b5cc6aa94034c2bb5addaf035e940f529a0f7511781ccd9ec967cfd3",
+      "fileSha256": "sha256:2c358c7d01043cbb3b2c71c6b2bdd1e62bf138155995594385708c16371f03f2",
+      "liveConnections": [
+        "CPHL Bruker MALDI Biotyper"
+      ]
+    },
+    {
+      "profileId": "site.49ab1f03-6536-4ffc-8325-3bfa2b6b32fe",
+      "revision": 1,
+      "displayName": "BD EpiCenter (ASTM)",
+      "manufacturer": "BD (Becton Dickinson)",
+      "model": "EpiCenter (MGIT 960 / Phoenix M50 / BACTEC FX)",
+      "parent": {
+        "parentProfileId": "genexpert-astm",
+        "parentRevision": 4
+      },
+      "revisionFingerprint": "sha256:520f38e3848ae15f97e3e72a37e38e282deea0b68a4bd92bfc447d4e81a5d177",
+      "fileSha256": "sha256:5a2a0dbf2622472f3dda9c8805de27e8d598f5f8a3f3f087f3f2441b23607835",
+      "liveConnections": [
+        "CPHL BD EpiCenter"
+      ]
+    },
+    {
+      "profileId": "site.a295bd7e-9920-4350-a923-85c74dd5c6e2",
+      "revision": 1,
+      "displayName": "CPHL GeneXpert (ASTM, results only)",
+      "manufacturer": "Cepheid",
+      "model": "GeneXpert",
+      "parent": {
+        "parentProfileId": "genexpert-astm",
+        "parentRevision": 4
+      },
+      "revisionFingerprint": "sha256:1b32e0a6e55f4539ed809e3aaaa96ece5cf2070d67ed725cc8cd58a0ec23075c",
+      "fileSha256": "sha256:9c22b70dc0d0535bce9fa7f1a2dd2ab2d496c6eac9898ec76302c7d0a4315afd",
+      "liveConnections": [
+        "Bert",
+        "CPHL GeneXpert"
+      ]
+    }
+  ]
+}

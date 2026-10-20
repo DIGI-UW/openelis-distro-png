@@ -8,8 +8,12 @@
       "elementId": "menu_sample",
       "childMenus": [
         {
-          "elementId": "menu_sample_add",
-          "childMenus": []
+          "elementId": "menu_clinical_workflow",
+          "childMenus": ["*"]
+        },
+        {
+          "elementId": "menu_environmental_workflow",
+          "childMenus": ["*"]
         },
         {
           "elementId": "menu_sample_edit",
@@ -30,6 +34,10 @@
       ]
     },
     {
+      "elementId": "menu_environmental_compliance",
+      "childMenus": ["*"]
+    },
+    {
       "elementId": "menu_patient",
       "childMenus": [
         {
@@ -46,9 +54,9 @@
         }
       ]
     },
-     {
+    {
       "elementId": "menu_storage",
-      "childMenus": [ 
+      "childMenus": [
         {
           "elementId": "menu_storage_management",
           "childMenus": ["*"]
@@ -59,24 +67,11 @@
         }
       ]
     },
-     {
+    {
       "elementId": "menu_sample_shipment",
       "childMenus": ["*"]
     },
-     {
-      "elementId": "menu_eqa_tests",
-      "childMenus": ["*"]
-    },
-    
-     {
-      "elementId": "menu_eqa_mgmt",
-      "childMenus": ["*"]
-    },
-     {
-      "elementId": "menu_alerts_standalone",
-      "childMenus": ["*"]
-    },
-     {
+    {
       "elementId": "menu_analyzers",
       "childMenus": [
         {
@@ -84,26 +79,47 @@
           "childMenus": []
         },
         {
-          "elementId": "menu_analyzers_errors",
-          "childMenus": []
-        },
-        {
           "elementId": "menu_analyzers_types",
           "childMenus": []
+        }
+      ]
+    },
+    {
+      "elementId": "menu_qa",
+      "childMenus": [
+        {
+          "elementId": "menu_qa_overview",
+          "childMenus": []
         },
         {
-          "elementId": "menu_analyzers_qc",
+          "elementId": "menu_qa_qc",
+          "childMenus": ["*"]
+        },
+        {
+          "elementId": "menu_eqa",
+          "childMenus": ["*"]
+        },
+        {
+          "elementId": "menu_qa_qi",
+          "childMenus": ["*"]
+        },
+        {
+          "elementId": "menu_qa_qms",
           "childMenus": ["*"]
         }
       ]
     },
     {
-      "elementId": "menu_nonconformity",
+      "elementId": "menu_alerts_standalone",
       "childMenus": ["*"]
     },
     {
       "elementId": "menu_workplan",
       "childMenus": [
+        {
+          "elementId": "menu_workplan_batch",
+          "childMenus": []
+        },
         {
           "elementId": "menu_workplan_test",
           "childMenus": []
@@ -126,15 +142,7 @@
       "elementId": "menu_results",
       "childMenus": [
         {
-          "elementId": "menu_results_logbook",
-          "childMenus": []
-        },
-        {
-          "elementId": "menu_results_patient",
-          "childMenus": []
-        },
-        {
-          "elementId": "menu_results_accession",
+          "elementId": "menu_results_unified",
           "childMenus": []
         },
         {
@@ -142,14 +150,6 @@
           "childMenus": []
         },
         {
-          "elementId": "menu_results_range",
-          "childMenus": []
-        },
-        {
-          "elementId": "menu_results_status",
-          "childMenus": []
-        },
-         {
           "elementId": "order_programmes",
           "childMenus": []
         },
@@ -161,115 +161,29 @@
     },
     {
       "elementId": "menu_resultvalidation",
-      "childMenus": [
-        {
-          "elementId": "menu_resultvalidation_routine",
-          "childMenus": []
-        },
-        {
-          "elementId": "menu_accession_validation",
-          "childMenus": []
-        },
-        {
-          "elementId": "menu_accession_validation_range",
-          "childMenus": []
-        },
-        {
-          "elementId": "menu_resultvalidation_date",
-          "childMenus": []
-        }
-      ]
+      "childMenus": ["*"]
     },
     {
       "elementId": "menu_reports",
       "childMenus": [
         {
-          "elementId": "menu_reports_routine",
-          "childMenus": [
-            {
-              "elementId": "menu_reports_status_patient",
-              "childMenus": []
-            },
-            {
-              "elementId": "menu_reports_aggregate",
-              "childMenus": [
-                {
-                  "elementId": "menu_reports_aggregate_statistics",
-                  "childMenus": []
-                },
-                {
-                  "elementId": "menu_reports_aggregate_all",
-                  "childMenus": []
-                },
-                {
-                  "elementId": "menu_reports_aggregate_hiv",
-                  "childMenus": []
-                }
-              ]
-            },
-            {
-              "elementId": "menu_reports_management",
-              "childMenus": [
-                {
-                  "elementId": "menu_reports_management_rejection",
-                  "childMenus": []
-                },
-                {
-                  "elementId": "menu_reports_activity",
-                  "childMenus": [
-                    {
-                      "elementId": "menu_activity_report_test",
-                      "childMenus": []
-                    },
-                    {
-                      "elementId": "menu_activity_report_panel",
-                      "childMenus": []
-                    },
-                    {
-                      "elementId": "menu_activity_report_bench",
-                      "childMenus": []
-                    }
-                  ]
-                },
-                {
-                  "elementId": "menu_reports_referred",
-                  "childMenus": []
-                },
-                {
-                  "elementId": "menu_reports_nonconformity",
-                  "childMenus": [
-                    {
-                      "elementId": "menu_reports_nonconformity_date",
-                      "childMenus": []
-                    },
-                    {
-                      "elementId": "menu_reports_nonconformity_section",
-                      "childMenus": []
-                    }
-                  ]
-                },
-                {
-                  "elementId": "menu_reports_validation_backlog",
-                  "childMenus": []
-                },
-                {
-                  "elementId": "menu_reports_auditTrail",
-                  "childMenus": []
-                }
-              ]
-            },
-            {
-              "elementId": "menu_reports_export_routine",
-              "childMenus": []
-            }
-          ]
+          "elementId": "menu_reports_custom_data_export",
+          "childMenus": []
         },
         {
-          "elementId": "menu_reports_audittrail",
+          "elementId": "menu_reports_routine",
           "childMenus": ["*"]
         },
         {
           "elementId": "menu_reports_tatreport",
+          "childMenus": []
+        },
+        {
+          "elementId": "menu_reports_environmental",
+          "childMenus": ["*"]
+        },
+        {
+          "elementId": "menu_reports_whonet_export",
           "childMenus": []
         }
       ]
@@ -279,8 +193,21 @@
       "childMenus": []
     },
     {
-      "elementId": "menu_aliquot",
-      "childMenus": []
+      "elementId": "menu_inventory",
+      "childMenus": [
+        {
+          "elementId": "menu_inventory_management",
+          "childMenus": []
+        },
+        {
+          "elementId": "menu_inventory_receive",
+          "childMenus": []
+        },
+        {
+          "elementId": "menu_inventory_reports",
+          "childMenus": []
+        }
+      ]
     },
     {
       "elementId": "menu_help",
@@ -291,6 +218,59 @@
         }
       ]
     }
-  ]
+  ],
+  "_disabled": {
+    "topLevel": [
+      {
+        "elementId": "menu_generic_sample",
+        "childMenus": ["*"]
+      },
+      {
+        "elementId": "menu_pathology",
+        "childMenus": []
+      },
+      {
+        "elementId": "menu_immunochem",
+        "childMenus": []
+      },
+      {
+        "elementId": "menu_cytology",
+        "childMenus": []
+      },
+      {
+        "elementId": "menu_billing",
+        "childMenus": []
+      },
+      {
+        "elementId": "menu_aliquot",
+        "childMenus": []
+      },
+      {
+        "elementId": "menu_notebook",
+        "childMenus": []
+      }
+    ],
+    "under_menu_sample": [
+      {
+        "elementId": "menu_sample_add",
+        "childMenus": []
+      },
+      {
+        "elementId": "menu_vector_workflow",
+        "childMenus": ["*"]
+      }
+    ],
+    "under_menu_results": [
+      {
+        "elementId": "menu_vector_identification",
+        "childMenus": []
+      }
+    ],
+    "under_menu_reports": [
+      {
+        "elementId": "menu_reports_vectorsurveillance",
+        "childMenus": []
+      }
+    ]
+  }
 }
-
