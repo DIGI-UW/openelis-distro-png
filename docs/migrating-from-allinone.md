@@ -81,9 +81,11 @@ Nothing here touches the running site.
    The `init` service runs first: it sets owners on `data/` and generates
    this stack's internal certificate and keystores.
 4. Pair OpenELIS with the analyzer bridge. The copied database remembers the
-   old bridge, so OpenELIS does not pair by itself: on Admin > Analyzers,
-   enter `ANALYZER_BRIDGE_PAIRING_CODE` from `.env`. Results analyzers send
-   meanwhile wait in the bridge and are delivered once paired.
+   old bridge, so OpenELIS does not pair by itself, and Admin > Analyzers
+   still shows "Paired" with the old bridge certificate. Click **Pair again**
+   and enter `ANALYZER_BRIDGE_PAIRING_CODE` from `.env`; the certificate shown
+   afterwards should change. Results analyzers send meanwhile wait in the
+   bridge and are delivered once paired.
 5. Check:
    - The site opens over HTTPS with no certificate warning.
    - Log in; the banner, site name and menus are as before.
