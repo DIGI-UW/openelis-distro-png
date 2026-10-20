@@ -192,6 +192,19 @@
       }
     },
     {
+      "key": "senderId",
+      "labelKey": "analyzer.connection.field.senderId",
+      "helpTextKey": "analyzer.connection.field.senderId.help",
+      "inputKind": "TEXT",
+      "required": false,
+      "choices": [],
+      "visibleWhen": {
+        "fieldKey": "transport",
+        "operator": "EQUALS",
+        "value": "TCP/IP"
+      }
+    },
+    {
       "key": "port",
       "labelKey": "analyzer.connection.field.port",
       "inputKind": "NUMBER",
@@ -225,6 +238,6 @@
     "publishedAt": "2026-10-21T00:00:00Z",
     "publishedBy": "distribution",
     "recognitionFingerprint": "sha256:40cde98ca5f333303c1dff4531c8ca9bb2356e3b71ab6277e685715ddefbe835",
-    "revisionFingerprint": "sha256:0d56b282f0439f5913d21f70220cd99493f8301502e9ec73e606e4ce958b9ef1"
+    "revisionFingerprint": "sha256:49e61563fb52a12d54052e5afefcd083f80fb6583c16ed6995731109322bb3fa"
   }
 }
