@@ -84,14 +84,12 @@ Nothing here touches the running site.
    old bridge, so OpenELIS does not pair by itself: on Admin > Analyzers,
    enter `ANALYZER_BRIDGE_PAIRING_CODE` from `.env`. Results analyzers send
    meanwhile wait in the bridge and are delivered once paired.
-5. Rebuild the patient search index once: logged in as admin, open
-   `https://<your-host>/api/OpenELIS-Global/rest/reindex`.
-6. Check:
+5. Check:
    - The site opens over HTTPS with no certificate warning.
    - Log in; the banner, site name and menus are as before.
    - Recent orders and results are there; patient search finds a known patient.
    - Admin > Analyzers shows the bridge as paired and lists the analyzers.
-7. Tidy the host: scheduled jobs that still point at the old folder or
+6. Tidy the host: scheduled jobs that still point at the old folder or
    patch the database directly (backups, boot-time scripts, a cron running
    `scripts/generate-letsencrypt-certs.sh` when a host certbot owns the
    certificate). Point backups at `sudo ./scripts/backup.sh`. A host
