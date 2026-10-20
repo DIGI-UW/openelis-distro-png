@@ -3,7 +3,7 @@
 .env.letsencrypt
 .env.local
 .env.*.local
-# Copies of .env kept by scripts/migrate-from-allinone.sh prepare
+# Copies of an older .env kept while moving a site
 .env.pre-migration-*
 
 # Locally-built release tarballs (scripts/build-tarball.sh output).

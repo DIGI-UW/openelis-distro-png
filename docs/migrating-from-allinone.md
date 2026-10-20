@@ -1,108 +1,113 @@
 # Moving a site from openelis-docker to this distribution
 
 For a server that runs OpenELIS from an `openelis-docker` ("allinone")
-folder and should run from this distribution instead, keeping its data. The
-old folder is never modified, so going back is one command.
+folder and should run from this distribution instead, keeping its data.
 
-Plan a window outside working hours. The stack is down from the start of the
-cutover until the web application reports healthy: allow 30 to 45 minutes,
+The data is copied, never moved: the old folder is not modified, so it
+stays the backup, and going back means starting it again.
+
+Plan a window outside working hours. The site is down from stopping the old
+stack until the web application reports healthy: allow 30 to 45 minutes,
 most of it the first start (database migrations on the copied database).
 
-## What moves where
-
-| Old folder | This distribution | How |
-|---|---|---|
-| `.env` | `.env` | rebuilt by `prepare` (credentials and the database encryption key kept) |
-| `configs/database/data` | `data/db` | copied while the old stack is stopped |
-| `configs/bridge-state` | `data/bridge` | copied, owners kept (UID 9257) |
-| `configs/branding`, `configs/nce-attachments` | `data/webapp/...` | copied |
-| volume `<folder>_lucene_index-vol` | `data/webapp/lucene` | copied |
-| volume `<folder>_key_trust-store-volume` | `data/tls` | **not copied**: this stack generates its own |
-| `configs/menu/menu_config.json`, translations | tracked in `configs/` | already part of the distribution |
-| `configs/configuration/backend/*.csv` | not used | the catalog lives in the database; `OE_CONFIGURATION_AUTOCREATE=false` |
+The commands below use `/srv/openelis-docker` for the old folder and
+`/srv/openelis-distro-png` for this one; use your own paths.
 
 ## Before the window
 
-Nothing here stops or changes the running site.
+Nothing here touches the running site.
 
-1. Check out this distribution next to the old folder (the branch or release
-   tag you are deploying).
-2. Prepare:
+1. Check out this distribution next to the old folder (the branch or
+   release tag you are deploying).
+2. Write `.env` from `.env.example` (`cp .env.example .env`, then edit; keep
+   it mode 0600). Carry these over from the old stack:
+
+   | Setting | Value |
+   |---|---|
+   | `OE_DB_PASSWORD`, `ADMIN_PASSWORD`, `OE_ADMIN_PASSWORD` | the old `.env`'s values |
+   | `OE_ENCRYPTION_PASSWORD` | the key the old database's secrets are encrypted with: the value of `encryption.general.password` in the old `configs/properties/common.properties`, or the variable it names (usually the old `SSL_KEYSTORE_PASSWORD`). It must not change |
+   | `OE_CONFIGURATION_AUTOCREATE` | `false`: the catalog lives in the database; don't import the baseline over it |
+
+   Generate new ones for this stack:
+
+   | Setting | Value |
+   |---|---|
+   | `ANALYZER_BRIDGE_PAIRING_CODE` | `openssl rand -hex 16` |
+   | `SSL_KEYSTORE_PASSWORD`, `SSL_TRUSTSTORE_PASSWORD` | `openssl rand -hex 16` each (they protect this stack's own internal keystores) |
+
+   If a certbot on the host already keeps the site's certificate, add the
+   Let's Encrypt block with `LETSENCRYPT_DIR=/etc/letsencrypt` and
+   `CERTBOT_WEBROOT` set to its webroot, and include
+   `compose.letsencrypt.yaml` in `COMPOSE_FILE` (see
+   [letsencrypt.md](letsencrypt.md)).
+3. Check and pre-pull:
 
    ```bash
-   sudo ./scripts/migrate-from-allinone.sh prepare /path/to/openelis-docker
+   docker compose config -q
+   docker compose pull
    ```
 
-   It writes `.env` (mode 0600; an existing one is kept as
-   `.env.pre-migration-<time>`), validates the compose files and pulls every
-   image. It is safe to run again; the generated pairing code and keystore
-   passwords are kept.
-3. Read `.env` once. Check:
-   - `OE_ENCRYPTION_PASSWORD`: copied from the old stack. It must not change.
-   - `ANALYZER_BRIDGE_PAIRING_CODE`: you will need it after the first start.
-   - The Let's Encrypt block: present when the host's certbot keeps exactly
-     one certificate under `/etc/letsencrypt/live`.
-4. Check free disk space: at least twice the size of
-   `configs/database/data`, plus the dump.
+   Pulling updates the shared `:develop` tags; the running old stack keeps
+   the images it started with.
+4. Check free disk space: at least the size of the old
+   `configs/database/data` again.
 
 ## In the window
 
-1. **Cut over.** Dumps the database and the bridge state into
-   `backups/cutover-<time>/`, stops the old stack, copies the data:
+1. Stop the old stack (its volumes and folders stay as they are):
 
    ```bash
-   sudo ./scripts/migrate-from-allinone.sh cutover /path/to/openelis-docker
+   cd /srv/openelis-docker && docker compose down
    ```
 
-2. **Start.**
+2. Copy its data:
 
    ```bash
-   docker compose up -d
-   docker compose logs -f oe.openelis.org     # Ctrl-C once it is up
-   docker compose ps                          # wait for oe.openelis.org: healthy
+   sudo mkdir -p /srv/openelis-distro-png/data
+   sudo cp -a /srv/openelis-docker/configs/database/data /srv/openelis-distro-png/data/db
+   sudo cp -a /srv/openelis-docker/configs/bridge-state /srv/openelis-distro-png/data/bridge
    ```
 
-   The `init` service runs first and logs `generating this site's internal
-   certificate` and `data tree ready`.
-
-3. **Pair OpenELIS with the analyzer bridge.** The copied database remembers
-   the old bridge, so OpenELIS does not pair by itself. In Admin > Analyzers,
-   pair with the code from:
+   If the old `configs/branding` or `configs/nce-attachments` hold files,
+   copy them into `data/webapp/branding` and `data/webapp/nce-attachments`
+   the same way.
+3. Start:
 
    ```bash
-   grep ANALYZER_BRIDGE_PAIRING_CODE .env
+   cd /srv/openelis-distro-png && docker compose up -d
+   docker compose ps        # wait for oe.openelis.org: healthy
    ```
 
-   Results analyzers send before this wait in the bridge and are delivered
-   once paired.
-
-4. **Check.**
+   The `init` service runs first: it sets owners on `data/` and generates
+   this stack's internal certificate and keystores.
+4. Pair OpenELIS with the analyzer bridge. The copied database remembers the
+   old bridge, so OpenELIS does not pair by itself: on Admin > Analyzers,
+   enter `ANALYZER_BRIDGE_PAIRING_CODE` from `.env`. Results analyzers send
+   meanwhile wait in the bridge and are delivered once paired.
+5. Rebuild the patient search index once: logged in as admin, open
+   `https://<your-host>/api/OpenELIS-Global/rest/reindex`.
+6. Check:
    - The site opens over HTTPS with no certificate warning.
    - Log in; the banner, site name and menus are as before.
-   - Recent orders and results are there.
+   - Recent orders and results are there; patient search finds a known patient.
    - Admin > Analyzers shows the bridge as paired and lists the analyzers.
-   - `docker compose logs openelis-analyzer-bridge | grep -i listening` shows
-     port 12001 (host port 12000).
-
-5. **Tidy the host.** Anything on the server that still points at the old
-   folder or the old database:
-   - Scheduled backups: replace them with `sudo ./scripts/backup.sh`.
-   - Scripts that write settings straight into the database at boot: remove
-     them; settings belong in Administration or
-     `configs/properties/SystemConfiguration.properties`.
-   - A host certbot keeps working: its deploy hook restarts
-     `openelisglobal-proxy`, which is the same container name. Remove any
-     cron job running `scripts/generate-letsencrypt-certs.sh` in that case.
+7. Tidy the host: scheduled jobs that still point at the old folder or
+   patch the database directly (backups, boot-time scripts, a cron running
+   `scripts/generate-letsencrypt-certs.sh` when a host certbot owns the
+   certificate). Point backups at `sudo ./scripts/backup.sh`. A host
+   certbot's deploy hook keeps working: the proxy container keeps its name,
+   `openelisglobal-proxy`.
 
 ## Going back
 
 ```bash
-sudo ./scripts/migrate-from-allinone.sh rollback /path/to/openelis-docker
+cd /srv/openelis-distro-png && docker compose down
+cd /srv/openelis-docker && docker compose up -d
 ```
 
-Stops this stack and starts the old one exactly as it was at cutover time.
-Anything entered on this stack since then is not carried back. `data/` is
-kept for inspection.
+The old stack starts on its untouched data, with the newest `:develop`
+images (the pull above updated the tags). Anything entered on this stack
+since the cutover is not carried back. `data/` is kept for inspection.
 
 ## Differences to expect
 
