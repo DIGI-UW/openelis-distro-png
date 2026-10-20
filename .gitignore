@@ -3,6 +3,8 @@
 .env.letsencrypt
 .env.local
 .env.*.local
+# Copies of .env kept by scripts/migrate-from-allinone.sh prepare
+.env.pre-migration-*
 
 # Locally-built release tarballs (scripts/build-tarball.sh output).
 openelis-png-distro-*.tar.gz
