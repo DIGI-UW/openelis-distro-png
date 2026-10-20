@@ -80,12 +80,17 @@ Nothing here touches the running site.
 
    The `init` service runs first: it sets owners on `data/` and generates
    this stack's internal certificate and keystores.
-4. Pair OpenELIS with the analyzer bridge. The copied database remembers the
-   old bridge, so OpenELIS does not pair by itself, and Admin > Analyzers
-   still shows "Paired" with the old bridge certificate. Click **Pair again**
-   and enter `ANALYZER_BRIDGE_PAIRING_CODE` from `.env`; the certificate shown
-   afterwards should change. Results analyzers send meanwhile wait in the
-   bridge and are delivered once paired.
+4. Clear the old bridge pairing. OpenELIS pairs by itself with
+   `ANALYZER_BRIDGE_PAIRING_CODE` from `.env`, but only while it has no
+   pairing record, and the copied database holds the old bridge's:
+
+   ```bash
+   docker exec openelisglobal-database psql -U clinlims clinlims -c "DELETE FROM clinlims.analyzer_bridge_pairing"
+   ```
+
+   Within 30 seconds OpenELIS pairs with the new bridge; Admin > Analyzers
+   then shows "Paired" with a new bridge certificate. Results analyzers send
+   meanwhile wait in the bridge and are delivered once paired.
 5. Check:
    - The site opens over HTTPS with no certificate warning.
    - Log in; the banner, site name and menus are as before.
