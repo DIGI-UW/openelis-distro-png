@@ -45,7 +45,7 @@ services:
             # OpenELIS base URL: results go to {uri}/analyzer/fhir and the
             # forwarding health check reads {uri}/health.
             - ORG_ITECH_AHB_FORWARD_HTTP_SERVER_URI=https://oe.openelis.org:8443/OpenELIS-Global
-            - JDK_JAVA_OPTIONS=-Djavax.net.ssl.trustStore=/etc/openelis-global/truststore -Djavax.net.ssl.trustStorePassword=${SSL_TRUSTSTORE_PASSWORD:-tspass} -Djavax.net.ssl.trustStoreType=PKCS12
+            - JDK_JAVA_OPTIONS=-XX:+ExitOnOutOfMemoryError -Djavax.net.ssl.trustStore=/etc/openelis-global/truststore -Djavax.net.ssl.trustStorePassword=${SSL_TRUSTSTORE_PASSWORD:-tspass} -Djavax.net.ssl.trustStoreType=PKCS12
         networks:
             openelis-network:
                 aliases:

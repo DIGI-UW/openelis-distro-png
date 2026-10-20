@@ -91,8 +91,14 @@ services:
             timeout: 10s
             retries: 8
             # First boot (Liquibase + catalog loading) has taken ~6 min on a
-            # small host; failures inside start_period don't count.
-            start_period: 600s
+            # small host; failures inside start_period don't count, and the
+            # first passing check ends it. Kept long so autoheal never
+            # restarts OpenELIS in the middle of a database migration.
+            start_period: 1200s
+        labels:
+            # Restarted by the autoheal service when unhealthy.
+            - autoheal=true
+            - autoheal.stop.timeout=60
         networks:
           openelis-network:
               ipv4_address: 172.20.1.121
@@ -106,7 +112,9 @@ services:
             # a system property so a site can switch catalog loading off from
             # .env (OE_CONFIGURATION_AUTOCREATE=false) without editing the
             # tracked common.properties: system properties win over it.
-            - CATALINA_OPTS= -Ddatasource.url=jdbc:postgresql://db.openelis.org:5432/clinlims -Ddatasource.username=clinlims -Ddatasource.password=${OE_DB_PASSWORD:-clinlims} -Doe.ssl.truststorepath=${SSL_TRUSTSTORE_PATH:-/etc/openelis-global/truststore} -Doe.ssl.truststorepassword=${SSL_TRUSTSTORE_PASSWORD:-tspass} -Doe.ssl.keystorepath=${SSL_KEYSTORE_PATH:-/etc/openelis-global/keystore} -Doe.ssl.keystorepassword=${SSL_KEYSTORE_PASSWORD:-kspass} -Dorg.openelisglobal.configuration.autocreate=${OE_CONFIGURATION_AUTOCREATE:-true}
+            # ExitOnOutOfMemoryError: a JVM out of memory stays up but stops
+            # working; exiting lets `restart: always` bring it back.
+            - CATALINA_OPTS= -XX:+ExitOnOutOfMemoryError -Ddatasource.url=jdbc:postgresql://db.openelis.org:5432/clinlims -Ddatasource.username=clinlims -Ddatasource.password=${OE_DB_PASSWORD:-clinlims} -Doe.ssl.truststorepath=${SSL_TRUSTSTORE_PATH:-/etc/openelis-global/truststore} -Doe.ssl.truststorepassword=${SSL_TRUSTSTORE_PASSWORD:-tspass} -Doe.ssl.keystorepath=${SSL_KEYSTORE_PATH:-/etc/openelis-global/keystore} -Doe.ssl.keystorepassword=${SSL_KEYSTORE_PASSWORD:-kspass} -Dorg.openelisglobal.configuration.autocreate=${OE_CONFIGURATION_AUTOCREATE:-true}
             # Read by common.properties placeholders.
             - SSL_KEYSTORE_PATH=${SSL_KEYSTORE_PATH:-/etc/openelis-global/keystore}
             - SSL_KEYSTORE_PASSWORD=${SSL_KEYSTORE_PASSWORD:-kspass}
@@ -168,9 +176,13 @@ services:
             timeout: 5s
             retries: 6
             start_period: 60s
+        labels:
+            - autoheal=true
+            - autoheal.stop.timeout=30
         environment:
           TZ: ${TZ:-Pacific/Port_Moresby}
-          JAVA_OPTS: "-Djavax.net.ssl.trustStore=${SSL_TRUSTSTORE_PATH:-/etc/openelis-global/truststore}
+          JAVA_OPTS: "-XX:+ExitOnOutOfMemoryError
+                      -Djavax.net.ssl.trustStore=${SSL_TRUSTSTORE_PATH:-/etc/openelis-global/truststore}
                       -Djavax.net.ssl.trustStorePassword=${SSL_TRUSTSTORE_PASSWORD:-tspass}
                       -Djavax.net.ssl.trustStoreType=pkcs12
                       -Djavax.net.ssl.keyStore=${SSL_KEYSTORE_PATH:-/etc/openelis-global/keystore}
@@ -243,6 +255,27 @@ services:
             timeout: 5s
             retries: 5
             start_period: 30s
+
+    # Docker restarts a container that exits, never one that is running but
+    # unhealthy. This restarts containers labelled autoheal=true (the webapp
+    # and FHIR) once their healthcheck reports unhealthy. The database is left
+    # out on purpose: a failing pg_isready usually means recovery or load, which
+    # a restart makes worse, and a crashed Postgres exits and is restarted anyway.
+    autoheal:
+        container_name: autoheal-oe
+        image: willfarrell/autoheal:1.2.0
+        restart: always
+        environment:
+            - AUTOHEAL_CONTAINER_LABEL=autoheal
+            - TZ=${TZ:-Pacific/Port_Moresby}
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+        # The image's own healthcheck can sit at "starting" and stall
+        # `docker compose down`; nothing depends on it.
+        healthcheck:
+            disable: true
+        network_mode: none
+        logging: *local-logging
 
 secrets:
   common.properties:
