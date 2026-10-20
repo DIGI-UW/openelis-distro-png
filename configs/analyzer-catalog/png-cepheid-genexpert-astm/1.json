@@ -37,27 +37,47 @@
       "test_code": "HIV-1_VL 2",
       "loinc": "20447-9",
       "unit": "copies/mL",
-      "result_type": "text"
+      "result_type": "text",
+      "run_failure_values": [
+        "ERROR",
+        "INVALID",
+        "NO RESULT"
+      ]
     },
     {
       "test_code": "MTB-RIF_ULTRA 2",
       "loinc": "85362-2",
       "unit": "",
-      "result_type": "text"
+      "result_type": "text",
+      "run_failure_values": [
+        "ERROR",
+        "INVALID",
+        "NO RESULT"
+      ]
     },
     {
       "test_code": "HIV-1_QUAL 2 2",
       "loinc": "79380-2",
       "unit": "",
       "result_type": "text",
-      "test_name_hint": "Xpert HIV-1 Qual (total nucleic acid, whole blood or DBS)"
+      "test_name_hint": "Xpert HIV-1 Qual (total nucleic acid, whole blood or DBS)",
+      "run_failure_values": [
+        "ERROR",
+        "INVALID",
+        "NO RESULT"
+      ]
     },
     {
       "test_code": "MTB-XDR 2",
-      "loinc": "85362-2",
+      "loinc": "38379-4",
       "unit": "",
       "result_type": "text",
-      "test_name_hint": "Xpert MTB/XDR, MTB detection"
+      "test_name_hint": "Xpert MTB/XDR, MTB detection",
+      "run_failure_values": [
+        "ERROR",
+        "INVALID",
+        "NO RESULT"
+      ]
     }
   ],
   "configDefaults": {
@@ -183,6 +203,6 @@
     "publishedAt": "2026-10-21T00:00:00Z",
     "publishedBy": "distribution",
     "recognitionFingerprint": "sha256:68a4cf6c695d3a23662a7a5dc97983bbc78e38726f932517d09238d47aad701e",
-    "revisionFingerprint": "sha256:6d4837ef38b7f530ce3ae2cfce2a1dad64044d067d83541ce03ca3f4ab5e0a0e"
+    "revisionFingerprint": "sha256:04da87e19adf60ee574fb9dda10247796b33bab78dfb18ebea200e701570bd85"
   }
 }

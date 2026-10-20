@@ -236,7 +236,7 @@ Microbiology Culture Result Results,Mixed growth 3+,,Y,5,,Mixed growth 3+
 Microbiology Culture Result Results,Mixed growth Nil,,Y,6,,Mixed growth Nil
 Microbiology Culture Result Results,Mixed growth Scanty,,Y,7,,Mixed growth Scanty
 Microbiology Culture Result Results,No enteropathogens isolated,,Y,8,,No enteropathogens isolated
-Microbiology Culture Result Results,No growth,,Y,9,,No growth
+Microbiology Culture Result Results,No growth,,Y,9,LA21123-7,No growth
 Microbiology Culture Result Results,No growth after 5 days,,Y,10,,No growth after 5 days
 Microbiology Culture Result Results,Normal flora 1+,,Y,11,,Normal flora 1+
 Microbiology Culture Result Results,Normal flora 2+,,Y,12,,Normal flora 2+
@@ -576,7 +576,7 @@ M. ulcerans PCR Interpretation Results,The presence or absence of target (M. ulc
 Mycobacterial Culture Result Results,Contaminated,,Y,1,,Contaminated
 Mycobacterial Culture Result Results,Mycobacterium not suggestive of M tuberculosis,,Y,2,,Mycobacterium not suggestive of M tuberculosis
 Mycobacterial Culture Result Results,Mycobacterium tuberculosis complex was grown,,Y,3,,Mycobacterium tuberculosis complex was grown
-Mycobacterial Culture Result Results,No Growth,,Y,4,,No Growth
+Mycobacterial Culture Result Results,No Growth,,Y,4,LA21123-7,No Growth
 Mycobacterial Culture Result Results,Possible Nontuberculous mycobacteria,,Y,5,,Possible Nontuberculous mycobacteria
 Pluslife MTB Nucleic Acid Test Card Results,Invalid,,Y,1,,Invalid
 Pluslife MTB Nucleic Acid Test Card Results,Invalid - Please recollect for repeat testing,,Y,2,,Invalid - Please recollect for repeat testing

@@ -19,11 +19,29 @@ the `HIV-1_QUAL 2 2` and `MTB-XDR 2` assays the CPHL GeneXpert reports.
 
 ## Test codes and OpenELIS tests
 
-Each test entry carries a LOINC code (the profile format requires one).
-OpenELIS pre-fills an analyzer's mapping from it only when the OpenELIS test
-has the same LOINC code; otherwise each code is mapped once per analyzer in
-its setup. `MTB-XDR 2` covers the MTB detection result; the drug-resistance
-calls are not told apart yet.
+Each test entry carries a LOINC code (the profile format requires one), and
+each coded answer a LOINC answer code (`value_codes`). OpenELIS pre-fills an
+analyzer's mapping from them when an OpenELIS test, or one of its answers,
+carries the same code. The PNG catalog gives its tests and answers these codes
+(`loinc` in `tests/png-tests.csv`, `loincCode` in
+`dictionaries/png-dictionary-entries.csv`):
+
+| Instrument code | LOINC | OpenELIS test |
+|---|---|---|
+| `HIV-1_VL 2` | 20447-9 | Xpert HIV-1 VL Result |
+| `HIV-1_QUAL 2 2` | 79380-2 | Xpert HIV-1 Qual Result |
+| `MTB-RIF_ULTRA 2` | 85362-2 | Xpert MTB/RIF Ultra MTB Result |
+| `MTB-XDR 2` | 38379-4 | Xpert MTB/XDR MTB Result |
+| `MGIT_960_GND` | 543-9 | Mycobacterial Culture Result |
+| `PLUSAEF`, `STDAEF` | 600-7 | Microbiology Culture Result |
+| `ORGANISM` | 11475-1 | Microbiology Culture Identification |
+
+`NEGATIVE` on the culture codes is "No growth" (LA21123-7). The GeneXpert's
+ERROR, INVALID and NO RESULT are run failures, held for review rather than
+saved as results. Codes with no OpenELIS test or answer yet (BD
+susceptibility results, MALDI `SCORE`, a culture `POSITIVE`, `IN PROGRESS`)
+are mapped or left out in each analyzer's setup. `MTB-XDR 2` covers the MTB
+detection result; the drug-resistance calls are not told apart yet.
 
 ## Changing a type
 

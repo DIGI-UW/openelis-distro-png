@@ -42,7 +42,21 @@
         "NEGATIVE",
         "IN PROGRESS"
       ],
-      "loinc": "543-9"
+      "loinc": "543-9",
+      "value_codes": {
+        "POSITIVE": [
+          {
+            "system": "http://loinc.org",
+            "code": "LA31297-7"
+          }
+        ],
+        "NEGATIVE": [
+          {
+            "system": "http://loinc.org",
+            "code": "LA21123-7"
+          }
+        ]
+      }
     },
     {
       "test_code": "MGIT_960_AST",
@@ -55,7 +69,21 @@
         "N",
         "X"
       ],
-      "loinc": "18769-0"
+      "loinc": "18769-0",
+      "value_codes": {
+        "S": [
+          {
+            "system": "http://loinc.org",
+            "code": "LA24225-7"
+          }
+        ],
+        "R": [
+          {
+            "system": "http://loinc.org",
+            "code": "LA6676-6"
+          }
+        ]
+      }
     },
     {
       "test_code": "NMIC/ID-x",
@@ -68,7 +96,21 @@
         "N",
         "X"
       ],
-      "loinc": "18769-0"
+      "loinc": "18769-0",
+      "value_codes": {
+        "S": [
+          {
+            "system": "http://loinc.org",
+            "code": "LA24225-7"
+          }
+        ],
+        "R": [
+          {
+            "system": "http://loinc.org",
+            "code": "LA6676-6"
+          }
+        ]
+      }
     },
     {
       "test_code": "PMIC/ID-x",
@@ -81,7 +123,21 @@
         "N",
         "X"
       ],
-      "loinc": "18769-0"
+      "loinc": "18769-0",
+      "value_codes": {
+        "S": [
+          {
+            "system": "http://loinc.org",
+            "code": "LA24225-7"
+          }
+        ],
+        "R": [
+          {
+            "system": "http://loinc.org",
+            "code": "LA6676-6"
+          }
+        ]
+      }
     },
     {
       "test_code": "PLUSAEF",
@@ -92,7 +148,21 @@
         "NEGATIVE",
         "IN PROGRESS"
       ],
-      "loinc": "600-7"
+      "loinc": "600-7",
+      "value_codes": {
+        "POSITIVE": [
+          {
+            "system": "http://loinc.org",
+            "code": "LA31297-7"
+          }
+        ],
+        "NEGATIVE": [
+          {
+            "system": "http://loinc.org",
+            "code": "LA21123-7"
+          }
+        ]
+      }
     },
     {
       "test_code": "STDAEF",
@@ -103,7 +173,21 @@
         "NEGATIVE",
         "IN PROGRESS"
       ],
-      "loinc": "600-7"
+      "loinc": "600-7",
+      "value_codes": {
+        "POSITIVE": [
+          {
+            "system": "http://loinc.org",
+            "code": "LA31297-7"
+          }
+        ],
+        "NEGATIVE": [
+          {
+            "system": "http://loinc.org",
+            "code": "LA21123-7"
+          }
+        ]
+      }
     },
     {
       "test_code": "ORGANISM",
@@ -238,6 +322,6 @@
     "publishedAt": "2026-10-21T00:00:00Z",
     "publishedBy": "distribution",
     "recognitionFingerprint": "sha256:40cde98ca5f333303c1dff4531c8ca9bb2356e3b71ab6277e685715ddefbe835",
-    "revisionFingerprint": "sha256:49e61563fb52a12d54052e5afefcd083f80fb6583c16ed6995731109322bb3fa"
+    "revisionFingerprint": "sha256:2e8cdc5b1bce8dc96c6c3bfaee88e12b1a1f0d39b850b8d109b534e61ad9fbbc"
   }
 }
