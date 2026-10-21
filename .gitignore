@@ -71,3 +71,6 @@ configs/ha/
 # Local branch checkouts and Python test caches
 .worktrees/
 __pycache__/
+
+# Downloaded metadata installed by the pinned-package initializer.
+configs/configuration/backend/*/pkg--*

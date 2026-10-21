@@ -40,13 +40,16 @@ chmod 750 "$D/webapp/properties"
 chown -R "$BRIDGE_UID:$BRIDGE_UID" "$D/bridge" "$D/analyzer-imports"
 chmod 750 "$D/bridge"
 
-# A configured reference pin is prepared before OpenELIS can start. The webapp
-# sees only verified .zip files; previous versions stay available on upgrades.
-python3 /opt/openelis/prepare-amr-reference.py \
-    --pin /opt/openelis/reference-packages/amr.json \
-    --destination "$D/webapp/reference-packages"
+# External metadata is installed into the ordinary configuration tree before
+# OpenELIS starts. The installer does not import records or activate standards.
+python3 /opt/openelis/prepare-configuration-packages.py \
+    --pins /opt/openelis/configuration-packages \
+    --cache "$D/webapp/reference-packages" \
+    --configuration /opt/openelis/configuration
 mkdir -p "$D/webapp/reference-packages"
 chown -R "$WEBAPP_UID" "$D/webapp/reference-packages"
+# Package-created directories must allow OE2 to persist its usual checksum files.
+chown -R "$WEBAPP_UID" /opt/openelis/configuration/backend
 
 # --- this site's certificate -----------------------------------------------
 CERT="$D/tls/certs/apache-selfsigned.crt"

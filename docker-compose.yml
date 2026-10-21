@@ -41,8 +41,9 @@ services:
             - BRIDGE_UID=${BRIDGE_UID:-9257}
         volumes:
             - ./scripts/init-data.sh:/opt/openelis/init-data.sh:ro
-            - ./scripts/prepare-amr-reference.py:/opt/openelis/prepare-amr-reference.py:ro
-            - ./configs/reference-packages:/opt/openelis/reference-packages:ro
+            - ./scripts/prepare-configuration-packages.py:/opt/openelis/prepare-configuration-packages.py:ro
+            - ./configs/configuration-packages:/opt/openelis/configuration-packages:ro
+            - ./configs/configuration:/opt/openelis/configuration
             - ${DATA_ROOT:-./data}:/data
         networks:
             - openelis-network
@@ -149,7 +150,6 @@ services:
             - ./configs/programs/:/var/lib/openelis-global/programs
             # Catalog CSVs (baseline) plus the checksums OpenELIS writes back.
             - ./configs/configuration:/var/lib/openelis-global/configuration
-            - ${DATA_ROOT:-./data}/webapp/reference-packages:/var/lib/openelis-global/configuration/backend/microbiology-reference-packages
             - ./configs/menu/menu_config.json:/var/lib/openelis-global/menu/menu_config.json:ro
             # Translation overrides; the printed patient report reads them here.
             - ./configs/translation:/var/lib/openelis-global/translation:ro
