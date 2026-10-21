@@ -14,18 +14,20 @@ candidate commit. Exact application/tool images are the digest references in
 - Clean Ubuntu 24.04.5 machine `png-distro-linux`: native ARM64 Docker daemon,
   native Linux storage, the pinned AMD64 application containers under emulation.
   Candidate source copied to `/opt/png-candidate`, independent empty state and
-  synthetic credentials; online pulls followed the documented installer.
+  synthetic credentials; online pulls followed by plain `docker compose up -d`.
 - This is not performance qualification on production x86 hardware. An initial
   emulated x86 Ubuntu VM failed inside Docker/runc before application startup;
   it was replaced by the native-daemon environment above and deleted.
 - A Java diagnostic signal terminated the first ARM-hosted Ubuntu application
   attempt under emulation. That interrupted attempt is not counted as a clean
   install pass. Its synthetic database, Bridge state and security volumes were
-  discarded; the installer is being rerun from empty state without that probe.
+  discarded. The later installer-only rerun was superseded by the user request
+  for raw Compose. The completed plain-Compose run started from empty state and
+  did not use that diagnostic probe.
 - No existing PNG server was accessed or modified. No migration, GitHub CI run,
   release publication or production deployment is represented by these checks.
 
-## Recorded checks
+## Baseline checks before the plain-Compose revision
 
 | Check | Observed result |
 |---|---|
@@ -43,7 +45,7 @@ candidate commit. Exact application/tool images are the digest references in
 | Analyzer file access | Synthetic file used the shared internal import volume, without a host mount. Connection probe succeeded and reported the directory non-writable to Bridge. |
 | Unknown HTTP sender | Bridge returned HTTP 403: no active HTTP analyzer connection for that sender. Historical logs were not imported as authorization. |
 | Full stack restart | Passed after removing/recreating containers and network without deleting volumes. Identical key/encryption hashes, pairing fingerprints, saved Glucose result and report; exactly one analyzer review row. Bridge logged file hash deduplication. |
-| Documented Ubuntu installer | In progress; image pulls and dependencies passed, first catalog load running. |
+| Earlier Ubuntu installer | Superseded by the requested plain-Compose startup revision before completion; not counted as an install pass. |
 | Syntax and whitespace | Shell syntax checks and `git diff --check` passed. |
 
 The first isolated startup took approximately 22 minutes under emulation. The
@@ -53,11 +55,47 @@ selection. Final generation was separately retested and is used by the clean
 Ubuntu installation; its encrypted PKCS12 also passed a live, verified FHIR
 metadata request (HTTP 200). Its existing identity was preserved, not silently replaced.
 
+## Plain-Compose revision
+
+The user requested `docker compose up -d` as the installation entry point.
+The `certs` job now checks site credentials and prepares configuration permissions
+before the database starts. `admin-init` sets the fresh password once;
+`admin-verify` checks it through the live application before proxy startup.
+They reuse already-pinned database and application images. The initializer
+retains PostgreSQL's standard `pgcrypto` extension instead of removing it.
+
+The built-in PostgreSQL account also now receives `ADMIN_PASSWORD` through
+`POSTGRES_PASSWORD`; the earlier candidate left that account on its published
+password. This fix applies to an empty database, not an existing deployment.
+
+- Host suite: 17 tests ran, 16 passed, Linux-only permission test skipped.
+- Full Linux suite: all 17 tests passed in 106.859 seconds, with no skips.
+- Fresh plain-Compose boot: passed from empty Ubuntu state, without calling
+  `scripts/install.sh` or `scripts/fix-config-permissions.sh`. Started at
+  20:41:38 UTC and finished at 21:09:25 UTC (27 minutes 46 seconds under
+  emulation). Initialization jobs exited 0 and the proxy became healthy.
+- Default-credential negative startup: an isolated plain-Compose project refused
+  the example administrator password; database, application and proxy never
+  started. Its containers/network/volumes were then removed.
+- PostgreSQL transport remains internal and unencrypted (`SHOW ssl` returned
+  `off`); whole-database/file encryption is not claimed.
+- Fresh database authentication: both `postgres` and `admin` accepted the
+  configured password and rejected their published defaults over the Docker network.
+- Fresh administrator: configured login HTTP 200, published default HTTP 401.
+  Browser login passed with zero page errors; dashboard screenshot inspected.
+- Repeated plain Compose startup: administrator password hash unchanged. A
+  deliberately mismatched verification password blocked proxy startup without
+  resetting the account; restoring the configured value restored proxy access.
+- Secret logging: all service logs excluded the configured application, database
+  and store passwords and the generated field-encryption secret.
+- The earlier README review finding about plain Compose bypassing initialization
+  is resolved by this requested behavior change; the command now owns the checks.
+
 ## Repeating the checks
 
 For an empty target, follow the README installation steps: copy `.env.example`,
-set unique passwords, run `scripts/fix-config-permissions.sh`, then
-`scripts/install.sh`. Run `scripts/set-admin-password.sh --check` afterwards.
+set unique passwords, then run `docker compose up -d`. No host permission or
+installer script is needed. Run `scripts/set-admin-password.sh --check` afterwards.
 Never use an existing installation's state for a fresh-install test.
 
 After pulling the pinned Bridge and certgen images, run:
@@ -79,6 +117,12 @@ Private local evidence is retained under `.local/fresh-install/` (ignored by
 Git), including screenshots and synthetic PDFs. That directory also contains
 session and configuration secrets; do not publish or archive it wholesale.
 
+The final Ubuntu startup log and focused-test log are retained locally. The
+validation machine is stopped with its state retained for inspection. The earlier
+isolated host stack is also down, with its synthetic state retained. Browser
+evidence is `.local/ubuntu-compose-login.png`. No secret-bearing evidence is
+included in the source archive.
+
 ## Remaining operator acceptance
 
 - Configure the real domain and complete Let's Encrypt issuance; validate
@@ -93,11 +137,12 @@ session and configuration secrets; do not publish or archive it wholesale.
 
 ## Brief for the dev meeting
 
-PNG now has a lean online installation path with optional analyzer file mounts,
+PNG now uses familiar Docker Compose startup, with optional analyzer file mounts,
 private install-generated keys, verified internal service connections, a separate
 stored-field encryption secret, and fixed image digests. Login, a synthetic
 clinical report and one analyzer delivery have passed locally. Full restart also passed;
-clean Ubuntu installer completion is being checked. No OE2 or Bridge source
-changes were required. Public-domain HTTPS, clinical sign-off and actual
+the new plain-Compose path also passed from an empty Ubuntu target, including
+password initialization, browser login and safe repeated startup. No OE2 or Bridge
+source changes were required. Public-domain HTTPS, clinical sign-off and actual
 instrument checks remain deployment acceptance; offline packaging, broad
 certificate rotation and migration automation remain deferred.

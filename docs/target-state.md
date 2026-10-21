@@ -1,9 +1,10 @@
 # PNG target state
 
 This is the fresh online, single-host target. It does not migrate the training
-server. Run `scripts/install.sh` after setting site passwords. The proxy starts
-only after the administrator password has been changed and verified. Ordinary
-`docker compose up` bypasses that installation sequence.
+server. Set site passwords in `.env`, then run `docker compose up -d`. Compose
+prepares configuration permissions, generates keys and initializes the
+administrator once. The proxy waits for successful live password verification.
+No separate installer command is required.
 
 ## Security material
 
@@ -12,7 +13,10 @@ Every security volume disables Docker's automatic image-file copy. On an empty
 installation the job creates a new private key, service certificate, encrypted
 Java stores and a separate random stored-field encryption secret. Image-bundled
 keys are not the target's identity. No generated private material belongs in
-Git, release archives or test reports.
+Git, release archives or test reports. The separate secret protects fields that
+the application encrypts; it does not encrypt the whole database or its files.
+PostgreSQL transport TLS is not enabled in this single-host target (`SHOW ssl`
+returned `off`); its port is not published outside the Docker network.
 
 The internal certificate covers `oe.openelis.org`, `fhir.openelis.org`,
 `bridge.openelis.org`, `localhost` and `127.0.0.1`. The three Java services share
@@ -45,6 +49,7 @@ startup stops. It never silently replaces keys needed to read existing data.
 | Internal identity and encryption secret | Compose volume `key_trust-store-volume` | Retain **with the database**. Includes `keystore`, `client_facing_keystore`, `truststore`, `internal.crt`, `encryption.key`, `png-initialized`. Do not regenerate during restore. |
 | Browser key and certificates, internal proxy trust | `keys-vol`, `certs-vol`; `configs/letsencrypt` when enabled | Keep all three together. Let's Encrypt overlay can place symlinks in the named volumes. |
 | Bridge state, pairings and pending results | `BRIDGE_STATE_HOST_DIR`, default `configs/bridge-state` | Retain consistently; SQLite may have active WAL files. Owner UID/GID 9257 by default. |
+| Administrator initialization marker | Compose volume `installation-state` | Retain with the database. Prevents ordinary startup from resetting an initialized administrator; mismatched credentials fail verification. |
 | Internal analyzer imports | Compose volume `analyzer-imports` | Retain any pending files. This remains present even without a host file mount. |
 | Optional instrument files | `ANALYZER_HOST_MOUNT`, only with `compose.analyzer-files.yaml` | Same existing directory mounted read-only into both services; owner must allow required service access. |
 | Search index | Compose volume `lucene_index-vol` | Retain or explicitly plan a supported rebuild. |
@@ -55,9 +60,14 @@ name and resolved mount locations. The initializer owns raw private keys as
 root; the encryption secret is owned by UID 8443 with mode 0400. OpenELIS and
 FHIR use that same UID and share the store volume; this is not isolation of the
 secret from the FHIR service.
-Java stores are readable by the three services that need them and mounted
-read-only. Bridge state ownership is initialized before the Bridge starts.
-The database and security initializer must be ready before Java consumers start.
+Java stores are mounted read-only into the three Java services and the
+short-lived administrator verification job. Bridge state ownership is initialized before the Bridge starts.
+The security/preparation job must succeed before the database starts. Java
+services wait for their dependencies; administrator initialization waits for
+application readiness, and the proxy waits for administrator verification. The
+standard PostgreSQL `pgcrypto` extension is retained for password hashing. Both
+PostgreSQL privileged accounts use the configured `ADMIN_PASSWORD` on a fresh
+database; existing database passwords are not rotated by changing `.env`.
 
 Old encrypted data requires its original encryption secret or an explicit
 conversion. This target does not discover that secret or re-encrypt old data.

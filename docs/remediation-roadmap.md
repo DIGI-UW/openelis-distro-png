@@ -1,9 +1,10 @@
 # PNG target installation plan
 
 Updated: 21 October 2026  
-Status: distro implementation in progress on `c/optional-analyzer-mounts`.
-The isolated Docker and Ubuntu fresh-install checks are running; acceptance
-is not yet complete.
+Status: implemented and validated locally on `c/optional-analyzer-mounts`.
+The original isolated workflow/restart checks and the requested plain-Compose
+fresh Ubuntu startup, browser login and repeated-startup checks passed.
+Not published or deployed to the existing PNG server.
 
 ## Objective and boundary
 
@@ -44,8 +45,8 @@ archive is a convenient delivery format, not an offline installer.
   Docker mount failure and give existing file-based installations an actionable
   message when a mount setting lacks its optional Compose file.
 - Keep installation instructions short: copy the example environment, set site
-  passwords, prepare configuration permissions, enable file mounts only if
-  needed, start services, verify readiness and set the administrator password.
+  passwords, prepare configuration permissions automatically, enable file mounts only if needed, and run
+  `docker compose up -d`. Compose sets and verifies the fresh administrator.
 - Retain the current Bridge state initializer and shared internal import volume.
   Removing a host file mount must not disable unrelated Bridge functionality.
 
@@ -56,7 +57,7 @@ installation/upgrade instructions, ignored runtime result folders and automated
 checks. The security work below now also generates private install-time keys,
 separates the encryption secret and enables verified service connections.
 
-**Evidence:** all 14 focused tests passed on Ubuntu, including native Linux
+**Evidence:** all 17 focused tests passed on Ubuntu, including native Linux
 permission denial and independent certificate generation. Browser login,
 a synthetic clinical report, Bridge pairing and a synthetic QuantStudio delivery
 passed in the isolated stack. See the [validation record](validation-2026-10-21.md)
@@ -142,16 +143,21 @@ Implemented locally in the distro only:
   profile, proxy upstream verification and localhost-only management ports.
 - Suppression of password-bearing Tomcat startup argument logs in both Java
   services, verified in the running fixture.
-- Online installer that changes and verifies the administrator password before
-  starting the browser proxy; administrator checks now fail on network errors.
+- Plain Compose startup prepares permissions, sets the administrator once and
+  verifies it before starting the proxy. A retained initialization marker prevents
+  password resets on ordinary restarts. Administrator checks fail on network errors.
+- Both PostgreSQL privileged accounts use the configured site password on a fresh
+  database. The published built-in PostgreSQL password is no longer retained.
 - Immutable image pins and release publication that preserves the tested bytes.
 - [Persistent state and security contract](target-state.md).
 
 Focused tests have verified distinct keys for independent installations,
 restart retention, custom store passwords, wrong-password and missing-secret
-failure, hostname rejection and optional host-mount behavior. All 14 focused tests passed on Ubuntu. Login, a synthetic clinical report and
-one analyzer delivery and full restart persistence passed; installer completion
-remains in progress.
+failure, hostname rejection and optional host-mount behavior. All 17 focused
+tests passed on Ubuntu. Login, a synthetic clinical report, one analyzer delivery
+and full restart persistence passed on the initial candidate. The subsequent
+plain-Compose startup flow passed from empty Ubuntu state, including browser
+login and repeated startup without resetting the administrator password.
 No upstream repository has been changed for this implementation. No source
 server has been inspected or modified.
 

@@ -53,8 +53,8 @@ cp "$work/server.crt" "$stores/internal.crt"
 cp "$work/server.crt" "$certs/png-internal.crt"
 cp "$work/server.crt" "$certs/apache-selfsigned.crt"
 cp "$work/server.key" "$keys/apache-selfsigned.key"
-# The three Java services share the internal identity. Only those services
-# mount these encrypted stores; application mounts are read-only.
+# The three Java services share the internal identity. Consumer mounts,
+# including the short-lived password verification job, are read-only.
 chmod 644 "$stores/keystore" "$stores/truststore" "$stores/client_facing_keystore" "$stores/internal.crt" "$certs/"*.crt
 chmod 600 "$keys/apache-selfsigned.key"
 rm -rf "$work"

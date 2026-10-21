@@ -30,14 +30,18 @@ services:
         image: itechuw/certgen:main@sha256:b769aba3465e921239e8cb732e47406e38a5ee2ef40853e34f794433d96bf5fe
         platform: linux/amd64
         restart: "no"
-        entrypoint: ["/bin/sh", "/init-security.sh"]
+        entrypoint: ["/bin/sh", "/scripts/prepare-install.sh"]
         environment:
+            OE_ADMIN_PASSWORD: ${OE_ADMIN_PASSWORD:-adminADMIN!}
+            OE_DB_PASSWORD: ${OE_DB_PASSWORD:-clinlims}
+            ADMIN_PASSWORD: ${ADMIN_PASSWORD:-superuser}
             KEYSTORE_PW: ${SSL_KEYSTORE_PASSWORD:-kspass}
             TRUSTSTORE_PW: ${SSL_TRUSTSTORE_PASSWORD:-tspass}
         networks:
             - openelis-network
         volumes:
-            - ./scripts/init-security.sh:/init-security.sh:ro
+            - ./scripts:/scripts:ro
+            - ./configs/configuration:/configuration
             - type: volume
               source: key_trust-store-volume
               target: /etc/openelis-global
@@ -85,11 +89,15 @@ services:
         image: itechuw/openelis-global-2-database:develop@sha256:ead8e9bc52cf1fde57a9094fd7024eaeb4cd1b6c89a91ba0f86e5342b74ab92e
         platform: linux/amd64
         restart: always
+        depends_on:
+            certs:
+                condition: service_completed_successfully
         env_file:
             - ./configs/database/database.env
         environment:
             - DB_PASSWORD=${OE_DB_PASSWORD:-clinlims}
             - DB_SUPERUSER_PASSWORD=${ADMIN_PASSWORD:-superuser}
+            - POSTGRES_PASSWORD=${ADMIN_PASSWORD:-superuser}
         volumes:
               # preserves the database between containers
             - ${DB_VOLUME_MOUNT:-./configs/database/data}:/var/lib/postgresql/data
@@ -149,9 +157,8 @@ services:
             # first boot, so setting DEFAULT_PW as a runtime environment
             # variable silently does nothing and every site came up on the
             # public default admin/adminADMIN!.
-            # The admin password is set post-install instead:
-            #   ./scripts/set-admin-password.sh
-            # See .env.example (OE_ADMIN_PASSWORD) and README "Quickstart".
+            # admin-init sets the fresh password and admin-verify checks it
+            # before the proxy starts. See OE_ADMIN_PASSWORD in .env.example.
             - TZ=Pacific/Port_Moresby
               # Config variables loaded through Tomacat server.xml
             - CATALINA_OPTS= -Ddatasource.url=jdbc:postgresql://db.openelis.org:5432/clinlims -Ddatasource.username=clinlims -Ddatasource.password=${OE_DB_PASSWORD:-clinlims} -Doe.ssl.truststorepath=${SSL_TRUSTSTORE_PATH:-/etc/openelis-global/truststore} -Doe.ssl.truststorepassword=${SSL_TRUSTSTORE_PASSWORD:-tspass} -Doe.ssl.keystorepath=${SSL_KEYSTORE_PATH:-/etc/openelis-global/keystore} -Doe.ssl.keystorepassword=${SSL_KEYSTORE_PASSWORD:-kspass}
@@ -254,6 +261,48 @@ services:
             retries: 5
             start_period: 20s
 
+    admin-init:
+        image: itechuw/openelis-global-2-database:develop@sha256:ead8e9bc52cf1fde57a9094fd7024eaeb4cd1b6c89a91ba0f86e5342b74ab92e
+        platform: linux/amd64
+        restart: "no"
+        entrypoint: ["/bin/sh", "/scripts/init-admin-password.sh"]
+        depends_on:
+            oe.openelis.org:
+                condition: service_healthy
+        environment:
+            PGHOST: db.openelis.org
+            PGDATABASE: clinlims
+            PGUSER: postgres
+            PGPASSWORD: ${ADMIN_PASSWORD:-superuser}
+            PGCONNECT_TIMEOUT: "10"
+            OE_ADMIN_PASSWORD: ${OE_ADMIN_PASSWORD:-adminADMIN!}
+        volumes:
+            - ./scripts:/scripts:ro
+            - installation-state:/installation-state
+        networks:
+            - openelis-network
+
+    admin-verify:
+        image: itechuw/openelis-global-2:develop@sha256:34e1a0b7df087c41d2e8f0f8f420bba8d51bc94296f5541bfc98e236eb490034
+        platform: linux/amd64
+        restart: "no"
+        entrypoint: ["/bin/sh", "/scripts/verify-admin-password.sh"]
+        depends_on:
+            admin-init:
+                condition: service_completed_successfully
+        environment:
+            OE_ADMIN_PASSWORD: ${OE_ADMIN_PASSWORD:-adminADMIN!}
+        volumes:
+            - ./scripts:/scripts:ro
+            - installation-state:/installation-state
+            - type: volume
+              source: key_trust-store-volume
+              target: /etc/openelis-global
+              read_only: true
+              volume: {nocopy: true}
+        networks:
+            - openelis-network
+
     proxy:
         image: itechuw/openelis-global-2-proxy:develop@sha256:47ba2e23699d2d27bd4273c9c22341a1e8719fbe8ce2701179208b124dbae75a
         container_name: openelisglobal-proxy
@@ -278,6 +327,8 @@ services:
             - openelis-network
         logging: *local-logging
         depends_on:
+            admin-verify:
+                condition: service_completed_successfully
             certs:
                 condition: service_completed_successfully
             oe.openelis.org:
@@ -364,6 +415,7 @@ networks:
         - subnet: 172.20.1.0/24
 
 volumes:
+  installation-state:
   key_trust-store-volume:
   certs-vol:
   keys-vol:

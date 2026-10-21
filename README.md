@@ -21,7 +21,7 @@ remediated by these fresh-target changes.
 - [What you need](#what-you-need)
 - [Choosing a version](#choosing-a-version)
 - [Installing a server](#installing-a-server)
-- [Set the admin password (mandatory)](#set-the-admin-password-mandatory)
+- [Administrator password](#administrator-password)
 - [HTTPS with Let's Encrypt](#https-with-lets-encrypt)
 - [Day-to-day operation](#day-to-day-operation)
 - [Loading the PNG test catalog](#loading-the-png-test-catalog)
@@ -36,10 +36,12 @@ remediated by these fresh-target changes.
 | Operating system | Ubuntu Server LTS (22.04 or 24.04), 64-bit x86 (`amd64`) |
 | CPU / memory | 4 cores and 8 GB RAM minimum |
 | Disk | 50 GB free to start; plan for growth in results and backups |
-| Software | Docker Engine with the Compose v2 plugin (`docker compose`), `git`, Python 3 |
+| Software | Docker Engine with the Compose v2 plugin (`docker compose`) and `git` |
 | Network | Internet access during install to pull images; ports 80 and 443 reachable by users |
 | Hostname | A DNS name for the server (for example `lab.health.gov.pg`) pointing at its public IP, for the Let's Encrypt certificate |
 | Access | A user with `sudo` rights |
+
+Python 3 is only needed for optional preflight and maintainer tools.
 
 Check Docker is ready before you start:
 
@@ -94,6 +96,7 @@ server cannot reach GitHub directly.
 ### 2. Set site passwords
 
 ```bash
+umask 077
 cp .env.example .env
 nano .env
 ```
@@ -113,98 +116,74 @@ rejected.
 
 `.env` holds passwords. Never commit it or copy it anywhere unprotected.
 
-### 3. Prepare folders
+### 3. Optional analyzer files
 
-```bash
-./scripts/fix-config-permissions.sh
-```
-
-Run it before the first start. It is safe to run again at any time.
-Skipping it makes OpenELIS log `Failed to save checksums file` and reload
-the whole catalog on every start.
-
-`configs/bridge-state` needs no manual step: the `bridge-state-init` service
-in `docker-compose.yml` claims it for UID 9257 on every `up`, before the
-analyzer bridge starts. `./scripts/init-bridge-state.sh` does the same thing
-by hand and is still the repair path after a restore (see
-[docs/backup-restore.md](docs/backup-restore.md)).
+Network-connected analyzers need no analyzer host folder. If instruments export
+files to a host directory, enable [File-based analyzers](#file-based-analyzers)
+first. An existing `ANALYZER_HOST_MOUNT` setting also requires that optional
+Compose file.
 
 ### 4. Start the stack
 
-Network-connected analyzers need no analyzer host folder. If your instruments
-export files to a host directory, complete [File-based analyzers](#file-based-analyzers)
-before starting. On upgrades, an existing `ANALYZER_HOST_MOUNT` setting now
-also requires the optional Compose file; it no longer creates a mount by itself.
-
-Check the analyzer mount configuration (requires Python 3):
-
 ```bash
-python3 scripts/check-analyzer-mounts.py
+docker compose up -d
+docker compose ps --all
 ```
 
-Then run the online installer:
+Compose handles configuration permissions, generates private installation keys,
+starts the application, sets the administrator password once, verifies it, and
+only then starts the browser proxy. The `certs`, `bridge-state-init`, `admin-init`
+and `admin-verify` jobs normally finish with exit code zero.
+
+The example passwords are deliberately refused before the database starts.
+Set all three site passwords in `.env` first. No separate install command or
+host permission script is required. `scripts/install.sh` remains an optional
+wrapper that also pulls images and runs the analyzer-mount preflight.
+
+First startup loads the PNG catalog and can take up to 30 minutes on a slow or
+emulated host. Follow progress with `docker compose logs -f oe.openelis.org`.
+A restart retains keys, administrator state, data and configuration checksums.
+This is a fresh-target flow; it does not migrate an existing server or adopt
+unknown security volumes. See [security and state](docs/target-state.md).
+
+### 5. Verify the administrator
+
+Compose has already verified the configured password and rejected the published
+default. To check again at any time:
 
 ```bash
-./scripts/install.sh
-docker compose ps
+./scripts/set-admin-password.sh --check
 ```
-
-It refuses default administrator/database passwords, pulls the exact images,
-generates this installation's private keys and independent encryption secret,
-waits for the application, changes and verifies the administrator password,
-and only then starts the browser proxy. Use it for a fresh target; it does not
-migrate an existing server. If initialization finds existing unrecognized keys,
-it stops without replacing them. See [security and state](docs/target-state.md).
-
-Wait until `oe.openelis.org` shows `healthy`. The first start takes several
-minutes while the database is created and the catalog is loaded. Allow up to
-30 minutes for a first boot on a slow host; readiness changes as soon as it
-finishes. A restart reuses configuration checksums.
-
-### 5. Set the admin password
-
-The installer has already applied and verified the password. For a manual
-installation, run `./scripts/set-admin-password.sh` before starting the proxy.
 
 ### 6. Set up HTTPS
 
 Follow [HTTPS with Let's Encrypt](#https-with-lets-encrypt) below. Until you
 do, the server uses a self-signed certificate and browsers show a warning.
 
-### 7. Pair the analyzer Bridge
+### 7. Log in and pair the analyzer Bridge
 
-Sign in as Global Admin, open Analyzers and enter the single-use pairing code
+Open `https://<your-hostname>/` and sign in as `admin` with the configured
+password. Open Analyzers and enter the single-use pairing code
 from `docker compose logs openelis-analyzer-bridge`. Keep that code private.
 Pair over the stack's private network. Saved analyzer connections determine
 allowed senders; logs can help identify addresses but do not authorize them.
 Pairing and one synthetic delivery must pass before accepting the installation.
 
-### 8. Log in
+## Administrator password
 
-Open `https://<your-hostname>/` and sign in as `admin` with the password you
-set.
+`docker compose up -d` initializes the administrator from `OE_ADMIN_PASSWORD`
+once and records success in the `installation-state` volume. Ordinary restarts
+do not reset it. The proxy waits for live verification: configured password
+accepted and published default rejected.
 
-## Set the admin password (mandatory)
+If you change the password in the application, update `OE_ADMIN_PASSWORD` in
+`.env` to match. A mismatch blocks proxy startup rather than silently resetting
+the account. The Bridge fallback credential also uses this value; paired
+forwarding uses certificate identity.
 
-Putting `OE_ADMIN_PASSWORD` in `.env` does **not** change the login password
-on its own. `scripts/install.sh` applies it before exposing the browser proxy.
-For a manual installation, keep the proxy stopped until you run:
-
-```bash
-./scripts/set-admin-password.sh
-```
-
-The script applies `OE_ADMIN_PASSWORD`, then confirms the new password works
-and the default no longer does. Check a site at any time with:
-
-```bash
-./scripts/set-admin-password.sh --check
-```
-
-If you later change the admin password in the application
-(Administration > Users), update `OE_ADMIN_PASSWORD` in `.env` to match. The
-Bridge fallback credential and installer checks use it; paired forwarding uses
-certificate identity.
+For an intentional password reset to the configured value, use
+`./scripts/set-admin-password.sh`. Retain `installation-state` with the database
+when restoring this target.
 
 ## HTTPS with Let's Encrypt
 
@@ -498,8 +477,9 @@ read the directory as both users:
 ```bash
 docker compose pull openelis-analyzer-bridge
 python3 scripts/check-analyzer-mounts.py
-docker compose up -d
 ```
+
+Then use the normal `docker compose up -d` startup command.
 
 The check runs disposable containers with no network and no application services.
 It uses the selected Docker context and the same Compose file selection as
@@ -556,13 +536,14 @@ git diff docker-compose.yml
 
 Test the resulting candidate and commit its pins before running Release.
 
-### Why the admin password needs a script
+### Why administrator initialization is needed
 
 OpenELIS creates the `admin` account on first start from a password hash
 built into the web application image (`ARG DEFAULT_PW` at image build time).
 A distro that uses published images cannot change that, so
-`scripts/set-admin-password.sh` sets the real password after start-up and
-verifies it through the login endpoint.
+the `admin-init` Compose job sets the real password after application startup.
+The `admin-verify` job checks it through the live login endpoint before the proxy
+starts. `scripts/set-admin-password.sh` remains an explicit operator reset tool.
 
 ### Catalog loading details
 

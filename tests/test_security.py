@@ -58,7 +58,8 @@ class SecurityTests(unittest.TestCase):
                 '--entrypoint', '/bin/sh']
         for volume, target in zip(volumes, ['/etc/openelis-global', '/etc/ssl/private', '/etc/ssl/certs']):
             args += ['--mount', f'type=volume,src={volume},dst={target},volume-nocopy']
-        args += ['--mount', f'type=bind,src={ROOT / "scripts/init-security.sh"},dst=/init-security.sh,readonly', self.image]
+        args += ['--mount', f'type=bind,src={ROOT / "scripts"},dst=/scripts,readonly',
+                 '--mount', f'type=bind,src={ROOT / "scripts/init-security.sh"},dst=/init-security.sh,readonly', self.image]
         args += ['-c', script] if script else ['/init-security.sh']
         return self.docker(*args, ok=ok)
 
@@ -84,6 +85,18 @@ class SecurityTests(unittest.TestCase):
         failed = self.run_image(first, password='WrongStore42', ok=False)
         self.assertNotEqual(failed.returncode, 0)
         self.assertEqual(before, self.fingerprint(first))
+
+    def test_compose_defaults_fail_before_writes_and_initialized_admin_is_not_reset(self):
+        volumes = self.fresh()
+        denied = self.run_image(volumes, 'sh /scripts/prepare-install.sh', ok=False)
+        self.assertNotEqual(denied.returncode, 0)
+        self.assertIn('Set a unique OE_ADMIN_PASSWORD', denied.stderr)
+        self.assertEqual('', self.run_image(volumes, 'ls -A /etc/openelis-global').stdout)
+        # No database access is available. An existing marker must skip reset.
+        retained = self.run_image(volumes,
+            'mkdir /installation-state && touch /installation-state/admin-initialized && '
+            'OE_ADMIN_PASSWORD=Synthetic42! sh /scripts/init-admin-password.sh')
+        self.assertIn('retaining its password', retained.stdout)
 
     def test_unknown_material_and_partial_state_fail_without_replacement(self):
         volumes = self.fresh()

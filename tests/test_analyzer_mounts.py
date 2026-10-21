@@ -53,6 +53,29 @@ class AnalyzerMountTests(unittest.TestCase):
             self.assertIn("/data/analyzer-imports", targets)
         self.assertFalse((self.root / "configs/analyzer-drops").exists())
 
+    def test_plain_compose_gates_database_and_proxy_on_initialization(self):
+        self.env["ADMIN_PASSWORD"] = "SyntheticDatabase42"
+        services = self.model()["services"]
+        self.assertEqual("service_completed_successfully", services["db.openelis.org"]["depends_on"]["certs"]["condition"])
+        self.assertEqual("SyntheticDatabase42", services["db.openelis.org"]["environment"]["POSTGRES_PASSWORD"])
+        self.assertEqual("service_healthy", services["admin-init"]["depends_on"]["oe.openelis.org"]["condition"])
+        self.assertEqual("service_completed_successfully", services["admin-verify"]["depends_on"]["admin-init"]["condition"])
+        self.assertEqual("service_completed_successfully", services["proxy"]["depends_on"]["admin-verify"]["condition"])
+        self.assertEqual(services["db.openelis.org"]["image"], services["admin-init"]["image"])
+        self.assertEqual(services["oe.openelis.org"]["image"], services["admin-verify"]["image"])
+
+    def test_administrator_policy_accepts_supported_values_and_rejects_defaults(self):
+        for password, allowed in [("Synthetic42!", True), ("Quoted$42#", True),
+                                  ("adminADMIN!", False), ("", False),
+                                  ("Short1", False), ("lowercaseonly", False),
+                                  ("Has-Hyphen42", False), ("Quote'42!", False)]:
+            result = subprocess.run(["sh", "-c", '. "$1"; validate_admin_password "$2"',
+                                     "policy-test", str(ROOT / "scripts/password-policy.sh"), password],
+                                    capture_output=True, text=True)
+            self.assertEqual(allowed, result.returncode == 0)
+            if password:
+                self.assertNotIn(password, result.stderr)
+
     def test_security_volumes_never_copy_image_private_keys(self):
         for files in ((), ("compose.letsencrypt.yaml",)):
             model = self.model(files)
@@ -60,7 +83,7 @@ class AnalyzerMountTests(unittest.TestCase):
                 for mount in service.get("volumes", []):
                     if mount.get("source") in {"key_trust-store-volume", "keys-vol", "certs-vol"}:
                         self.assertTrue(mount.get("volume", {}).get("nocopy"), (name, mount))
-                        if name in {"oe.openelis.org", "fhir.openelis.org", "openelis-analyzer-bridge"}:
+                        if name in {"oe.openelis.org", "fhir.openelis.org", "openelis-analyzer-bridge", "admin-verify"}:
                             self.assertTrue(mount["read_only"])
 
     def test_optional_mount_merges_with_browser_https(self):

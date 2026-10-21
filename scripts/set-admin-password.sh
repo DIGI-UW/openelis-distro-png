@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Set the in-app OpenELIS `admin` password to OE_ADMIN_PASSWORD from .env.
 #
-# MANDATORY on every new site. Run once, after the first
-# `docker compose up -d` has come up healthy.
+# Operator recovery helper. Compose initializes fresh installations itself.
+# Use this explicitly to reset the password, or --check for verification.
 #
-# Why a post-install step
+# Why initialization is needed
 # -----------------------
 # The admin account is created on first boot by CreateAdminUserTask, which
 # reads a bcrypt hash from adminPassword.txt *on the WAR classpath*. That
@@ -54,43 +54,8 @@ import json,sys
 print(json.load(sys.stdin)["services"]["openelis-analyzer-bridge"]["environment"]["ORG_ITECH_AHB_FORWARD_HTTP_SERVER_PASSWORD"])
 ')"
 
-if [ -z "${OE_ADMIN_PASSWORD:-}" ]; then
-    echo "ERROR: OE_ADMIN_PASSWORD is not set in .env or the environment." >&2
-    echo "       cp .env.example .env, set a strong OE_ADMIN_PASSWORD, re-run." >&2
-    exit 1
-fi
-
-# --- enforce OpenELIS's own password policy before we store anything -----
-# MinnPasswordValidation (the default; Property.PasswordRequirments is unset
-# in this distro): at least 8 characters, drawn ONLY from letters, digits,
-# underscore and % $ # ! -- every other character, hyphen included, is
-# rejected -- and covering at least 3 of the 4 classes lower / upper /
-# digit / special.
-policy_error() {
-    echo "ERROR: OE_ADMIN_PASSWORD does not satisfy the OpenELIS password policy." >&2
-    echo "       $1" >&2
-    echo "       Allowed characters: A-Z a-z 0-9 _ % \$ # !" >&2
-    echo "       Minimum length 8, and at least 3 of: lowercase, uppercase, digit, special." >&2
-    exit 1
-}
-
-[ "${#OE_ADMIN_PASSWORD}" -ge 8 ] || policy_error "It is shorter than 8 characters."
-case "$OE_ADMIN_PASSWORD" in
-    *[!A-Za-z0-9_%\$\#!]*) policy_error "It contains a character outside the allowed set (a hyphen '-' is the usual culprit)." ;;
-esac
-
-classes=0
-case "$OE_ADMIN_PASSWORD" in *[a-z]*) classes=$((classes + 1)) ;; esac
-case "$OE_ADMIN_PASSWORD" in *[A-Z]*) classes=$((classes + 1)) ;; esac
-case "$OE_ADMIN_PASSWORD" in *[0-9]*) classes=$((classes + 1)) ;; esac
-case "$OE_ADMIN_PASSWORD" in *[%\$\#!]*) classes=$((classes + 1)) ;; esac
-[ "$classes" -ge 3 ] || policy_error "It uses only ${classes} of the 4 character classes; 3 are required."
-
-if [ "$OE_ADMIN_PASSWORD" = "$DEFAULT_PW" ]; then
-    echo "ERROR: OE_ADMIN_PASSWORD is still the published default (${DEFAULT_PW})." >&2
-    echo "       Choose a site-specific password before going live." >&2
-    exit 1
-fi
+. "$ROOT/scripts/password-policy.sh"
+validate_admin_password "$OE_ADMIN_PASSWORD"
 
 if [ "$VALIDATE_ONLY" = true ]; then
     echo 'Administrator password configuration is valid.'
