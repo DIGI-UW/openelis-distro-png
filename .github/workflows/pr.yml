@@ -13,5 +13,18 @@ jobs:
 
       - name: Validate compose syntax + path resolution
         run: |
+          cp .env.example .env
           docker compose -f docker-compose.yml config > /dev/null
           docker compose -f docker-compose.yml -f compose.letsencrypt.yaml config > /dev/null
+
+      - name: Check optional analyzer mounts and overlay combinations
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Pull configured Bridge image for isolated mount probes
+        run: docker compose pull openelis-analyzer-bridge certs
+
+      - name: Check mounts and permission failures on Linux
+        env:
+          PNG_TEST_DOCKER_MOUNTS: "1"
+          PNG_TEST_SECURITY: "1"
+        run: python3 -m unittest discover -s tests -v

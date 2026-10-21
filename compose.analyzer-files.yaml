@@ -1,0 +1,20 @@
+# Opt in only for analyzers that deliver files to a host directory.
+# Add this file to COMPOSE_FILE in .env; see README "File-based analyzers".
+# Both services must see the same files at the same container path.
+services:
+  oe.openelis.org:
+    volumes:
+      - type: bind
+        source: ${ANALYZER_HOST_MOUNT:-./configs/analyzer-drops}
+        target: /data/analyzer-drops
+        read_only: true
+        bind:
+          create_host_path: false
+  openelis-analyzer-bridge:
+    volumes:
+      - type: bind
+        source: ${ANALYZER_HOST_MOUNT:-./configs/analyzer-drops}
+        target: /data/analyzer-drops
+        read_only: true
+        bind:
+          create_host_path: false

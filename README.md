@@ -8,6 +8,16 @@ bridge) with the PNG configuration already in place.
 It is written for the National Department of Health ICT staff who install and
 run OpenELIS servers. Developer and release notes are at the end.
 
+The current delivery targets a fresh **online, single-server PNG installation**.
+Minimum fresh-install security remains part of the target. Offline installation,
+a general certificate rotation/upgrade framework, existing-data re-encryption,
+standby qualification and migration automation are outside this work. The existing
+training server will be migrated separately by the operator. See the
+[target installation plan](docs/remediation-roadmap.md) for acceptance checks and
+the [persistent-state handoff](docs/target-state.md) and
+[validation record](docs/validation-2026-10-21.md). Existing installations are not
+remediated by these fresh-target changes.
+
 - [What you need](#what-you-need)
 - [Choosing a version](#choosing-a-version)
 - [Installing a server](#installing-a-server)
@@ -26,7 +36,7 @@ run OpenELIS servers. Developer and release notes are at the end.
 | Operating system | Ubuntu Server LTS (22.04 or 24.04), 64-bit x86 (`amd64`) |
 | CPU / memory | 4 cores and 8 GB RAM minimum |
 | Disk | 50 GB free to start; plan for growth in results and backups |
-| Software | Docker Engine with the Compose v2 plugin (`docker compose`), `git` |
+| Software | Docker Engine with the Compose v2 plugin (`docker compose`), `git`, Python 3 |
 | Network | Internet access during install to pull images; ports 80 and 443 reachable by users |
 | Hostname | A DNS name for the server (for example `lab.health.gov.pg`) pointing at its public IP, for the Let's Encrypt certificate |
 | Access | A user with `sudo` rights |
@@ -40,22 +50,23 @@ docker compose version
 
 ### Ports
 
-The stack publishes these ports on the host. Only 80 and 443 need to be
-reachable by lab users; firewall the rest.
+The application and management ports bind to localhost. Only 80 and 443 need
+to be reachable by lab users. Restrict port 12000 to the instrument network.
 
 | Port | Used by | Who needs it |
 |---|---|---|
 | 80, 443 | Web interface (HTTPS proxy); port 80 also answers Let's Encrypt checks | All users, and the internet for port 80 |
 | 12000 | Analyzer bridge, ASTM listener | Analyzers on the lab network only |
-| 8442 | Analyzer bridge API | Local only |
+| 8442 | Bridge API and HTTP instrument input | Local by default; set `BRIDGE_HTTPS_BIND_ADDRESS` to a lab-network interface only when HTTP instruments need it |
 | 8080, 8443 | Web application (behind the proxy) | Local only |
 | 8081, 8444 | FHIR API | Local only, or the consolidated server if connected |
 
 ## Choosing a version
 
 Always install from a **release tag**, not from `main`. The `main` branch
-follows the OpenELIS development build and changes every day; a tag is a
-fixed, tested snapshot that installs the same way every time.
+may contain an unvalidated candidate. Images in this candidate are pinned by
+digest, including those labelled `develop`; pinning fixes their bytes but does
+not establish that they passed acceptance. Check the release validation record.
 
 Find the current release on the
 [Releases page](https://github.com/DIGI-UW/openelis-distro-png/releases), or
@@ -120,25 +131,55 @@ by hand and is still the repair path after a restore (see
 
 ### 4. Start the stack
 
+Network-connected analyzers need no analyzer host folder. If your instruments
+export files to a host directory, complete [File-based analyzers](#file-based-analyzers)
+before starting. On upgrades, an existing `ANALYZER_HOST_MOUNT` setting now
+also requires the optional Compose file; it no longer creates a mount by itself.
+
+Check the analyzer mount configuration (requires Python 3):
+
 ```bash
-docker compose up -d
+python3 scripts/check-analyzer-mounts.py
+```
+
+Then run the online installer:
+
+```bash
+./scripts/install.sh
 docker compose ps
 ```
 
+It refuses default administrator/database passwords, pulls the exact images,
+generates this installation's private keys and independent encryption secret,
+waits for the application, changes and verifies the administrator password,
+and only then starts the browser proxy. Use it for a fresh target; it does not
+migrate an existing server. If initialization finds existing unrecognized keys,
+it stops without replacing them. See [security and state](docs/target-state.md).
+
 Wait until `oe.openelis.org` shows `healthy`. The first start takes several
-minutes while the database is created and the catalog is loaded.
+minutes while the database is created and the catalog is loaded. Allow up to
+30 minutes for a first boot on a slow host; readiness changes as soon as it
+finishes. A restart reuses configuration checksums.
 
 ### 5. Set the admin password
 
-Run `./scripts/set-admin-password.sh`. See the next section; this step is
-required.
+The installer has already applied and verified the password. For a manual
+installation, run `./scripts/set-admin-password.sh` before starting the proxy.
 
 ### 6. Set up HTTPS
 
 Follow [HTTPS with Let's Encrypt](#https-with-lets-encrypt) below. Until you
 do, the server uses a self-signed certificate and browsers show a warning.
 
-### 7. Log in
+### 7. Pair the analyzer Bridge
+
+Sign in as Global Admin, open Analyzers and enter the single-use pairing code
+from `docker compose logs openelis-analyzer-bridge`. Keep that code private.
+Pair over the stack's private network. Saved analyzer connections determine
+allowed senders; logs can help identify addresses but do not authorize them.
+Pairing and one synthetic delivery must pass before accepting the installation.
+
+### 8. Log in
 
 Open `https://<your-hostname>/` and sign in as `admin` with the password you
 set.
@@ -146,8 +187,8 @@ set.
 ## Set the admin password (mandatory)
 
 Putting `OE_ADMIN_PASSWORD` in `.env` does **not** change the login password
-on its own. Every new site starts with the published default
-`admin` / `adminADMIN!` until you run:
+on its own. `scripts/install.sh` applies it before exposing the browser proxy.
+For a manual installation, keep the proxy stopped until you run:
 
 ```bash
 ./scripts/set-admin-password.sh
@@ -162,7 +203,8 @@ and the default no longer does. Check a site at any time with:
 
 If you later change the admin password in the application
 (Administration > Users), update `OE_ADMIN_PASSWORD` in `.env` to match. The
-analyzer bridge signs in with it.
+Bridge fallback credential and installer checks use it; paired forwarding uses
+certificate identity.
 
 ## HTTPS with Let's Encrypt
 
@@ -192,6 +234,9 @@ LETSENCRYPT_CERT_NAME=lab.health.gov.pg
 
 COMPOSE_FILE=docker-compose.yml:compose.letsencrypt.yaml
 ```
+
+If `COMPOSE_FILE` is already set, append `:compose.letsencrypt.yaml` to it.
+Keep any analyzer-files or high-availability overlays enabled.
 
 Use a shared team mailbox for `LETSENCRYPT_EMAIL`; expiry warnings go there.
 To put more than one name on the certificate, list them in
@@ -294,6 +339,7 @@ Restoring the database as the wrong user takes the site down.
 
    ```bash
    docker compose pull
+   python3 scripts/check-analyzer-mounts.py
    docker compose up -d
    ```
 
@@ -312,6 +358,7 @@ step 1.
 | `admin` / `adminADMIN!` still works | `./scripts/set-admin-password.sh` |
 | Browser shows a certificate warning after an upgrade | `COMPOSE_FILE` line missing from `.env`; add it, then `docker compose up -d --force-recreate proxy` |
 | Let's Encrypt dry run fails | Check the DNS record points at this server and port 80 is open from the internet |
+| `Mounts denied` for an analyzer directory | Run `python3 scripts/check-analyzer-mounts.py`. For file-based analyzers, share the configured directory with Docker Desktop; `sudo` does not bypass file sharing. Without file-based analyzers, remove the analyzer-files overlay and obsolete `ANALYZER_HOST_MOUNT` setting. |
 | A service keeps restarting | `docker compose logs <service>` and read the last error |
 
 ## Loading the PNG test catalog
@@ -392,41 +439,113 @@ Administration.
 ## Analyzers
 
 The analyzer bridge is included. It listens for ASTM connections on port
-12000 and picks up result files dropped into its watched import folder.
-Ready-made profiles for common analyzers are in `configs/analyzer-profiles/`
-(ASTM, HL7 and file formats). Connecting an analyzer is done with the DIGI
-analyzer team; ICT staff only need to make sure the analyzer can reach the
-server on the lab network.
+12000. Network-connected analyzers require no host file mount. File-based
+analyzers can use the optional shared folder described below.
+Available profiles come from the pinned Bridge image and are shown in the
+application. The older files under `configs/analyzer-profiles/` do not establish
+which profiles are active in this image. The bounded acceptance test uses its
+Thermo QuantStudio file profile; other instruments need their own mapping and
+connection validation with the DIGI analyzer team. ICT staff must restrict
+instrument access to the lab network.
 
 `scripts/converters/` holds small tools that reshape some vendors' export
 files before the bridge reads them. See
 [scripts/converters/README.md](scripts/converters/README.md).
 
+### File-based analyzers
+
+Only enable this when instruments export results to a folder on the server
+(for example an NFS share or a USB drive). Uploaded files and the Bridge's
+internal persistent storage remain available without this host mount.
+
+For a folder inside the distribution, run from the distribution directory:
+
+```bash
+mkdir -p configs/analyzer-drops
+```
+
+Add these settings to `.env`:
+
+```dotenv
+COMPOSE_FILE=docker-compose.yml:compose.analyzer-files.yaml
+ANALYZER_HOST_MOUNT=./configs/analyzer-drops
+```
+
+If `COMPOSE_FILE` already enables other optional files, append
+`:compose.analyzer-files.yaml` to the existing value. For example, with
+Let's Encrypt:
+
+```dotenv
+COMPOSE_FILE=docker-compose.yml:compose.letsencrypt.yaml:compose.analyzer-files.yaml
+```
+
+For an existing external share, set `ANALYZER_HOST_MOUNT` to that directory
+instead. Ensure the share is mounted before starting Docker services; do not
+create an empty replacement folder for a missing network share. On Docker
+Desktop, the directory must be allowed under **Settings > Resources > File
+Sharing**. Production servers remain Ubuntu; macOS is a local validation option.
+
+Both OpenELIS and the Bridge see this directory at `/data/analyzer-drops`.
+Configure an instrument's watched folder using that container path, for example
+`/data/analyzer-drops/instrument-a`, not its host path. The mounts are read-only;
+neither service can move or delete the instrument's source files. Grant directory
+traversal and file read access to the service users (OpenELIS UID 8443 and Bridge
+UID 9257), using the site's access-control policy.
+
+Before starting, pull the selected Bridge image, then check Docker can mount and
+read the directory as both users:
+
+```bash
+docker compose pull openelis-analyzer-bridge
+python3 scripts/check-analyzer-mounts.py
+docker compose up -d
+```
+
+The check runs disposable containers with no network and no application services.
+It uses the selected Docker context and the same Compose file selection as
+`docker compose up`. It does not print resolved passwords or alter source files.
+It checks directory access, not every result file's permissions or a complete
+instrument workflow. Custom container user settings are used when supplied;
+otherwise the published service user IDs above are checked.
+
+**Upgrading a file-based installation:** retain its existing host directory,
+add `compose.analyzer-files.yaml` to `COMPOSE_FILE`, and run the check before
+recreating services. Confirm each configured instrument's watched path still
+matches. Setting `ANALYZER_HOST_MOUNT` alone is no longer enough. To stop using
+host file ingestion, first disable the affected instrument connections, then
+remove the optional file and the variable from `.env` and recreate services.
+This does not delete the directory or its files.
+
+For startup diagnosis, check `docker context show`, the `COMPOSE_FILE` setting,
+and any local `compose.yaml` or override files. Run `docker compose ps --all`
+and `docker compose logs bridge-state-init certs` to inspect initialization.
+An initializer exiting with code zero is normal; a running container alone does
+not prove the application is ready. Avoid sharing a full `docker compose config`
+dump because it contains credentials.
+
 ## For maintainers
 
 ### Versioning
 
-`main` tracks upstream `develop` images (`itechuw/openelis-global-2:develop`
+`main` may select upstream `develop` images (`itechuw/openelis-global-2:develop`
 and related). Releases are cut from `main` by the **Release** GitHub Actions
-workflow, which pins every image to an exact `tag@sha256:<digest>` so that a
-release tag always installs the same bytes. Distro release numbers are
+workflow, which requires every image to have a committed `tag@sha256:<digest>`
+reference so a release installs the tested candidate's image bytes. Distro release numbers are
 independent of upstream OpenELIS version numbers.
 
 To cut a release: **Actions > Release > Run workflow**, then fill in:
 
 - `distro_version`: the new tag; must not already exist
-- `oe_version`, `bridge_version`: upstream image tags to pin
+- `oe_version`, `bridge_version`: upstream tags already pinned in `base_ref`
+- `allow_develop_pins`: allow development labels for a candidate; digest pins
+  remain mandatory
 - `base_ref` (optional): branch or commit to release from; default `main`
-- `allow_develop_pins` (optional): leave off for real releases; the workflow
-  fails if any pin is `:develop`, `:latest` or missing a digest
 - `draft` (default on) and `prerelease` (optional)
 
-The workflow refreshes digests with `scripts/pin-versions.sh`, checks them
-with `scripts/check-release-pins.sh`, commits the pinned
-`docker-compose.yml` on the tag only, builds the tarball with
-`scripts/build-tarball.sh`, and drafts a GitHub Release with notes from the
-upstream releases plus the distro commit log. Review the draft, then
-publish.
+The workflow checks the committed pins and requested labels, tags the selected
+revision, builds the tarball and drafts a GitHub Release. It does not resolve
+image tags again during publication. Review the acceptance evidence before
+publishing; a digest proves image identity, not successful validation.
 
 To refresh pins by hand:
 
@@ -434,6 +553,8 @@ To refresh pins by hand:
 ./scripts/pin-versions.sh <oe-tag|develop> <bridge-tag|develop>
 git diff docker-compose.yml
 ```
+
+Test the resulting candidate and commit its pins before running Release.
 
 ### Why the admin password needs a script
 
@@ -454,6 +575,24 @@ starts. OpenELIS also supports instance-scoped overlays via
 this distro does not use them.
 
 ### Development and testing
+
+Validate optional analyzer mounts and their combinations with other Compose files:
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+To also run disposable Docker probes for both service users, pull the Bridge
+image for the architecture specified by the distro, then enable the runtime test:
+
+```bash
+docker compose pull openelis-analyzer-bridge certs
+PNG_TEST_SECURITY=1 PNG_TEST_DOCKER_MOUNTS=1 python3 -m unittest discover -s tests -v
+```
+
+The tests use the pinned images, temporary synthetic files and disposable
+security volumes. They do not start the application stack. Run on Linux to
+exercise native permission denial as well as key uniqueness and restart checks.
 
 Playwright end-to-end tests, a mock analyzer and development overlays live
 in the companion `openelis-png-test-harness` repository, which consumes this

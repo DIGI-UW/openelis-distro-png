@@ -8,11 +8,11 @@ org:
       #   hostName: astm-http-bridge2
       #   port: 12001
       forward-http-server:
-        # HttpForwardingRouter appends /astm, /hl7, /csv (CI harness pattern)
-        uri: https://openelisglobal-webapp:8443/OpenELIS-Global/analyzer
+        # Bridge appends /analyzer/fhir and /health (CI harness pattern)
+        uri: https://oe.openelis.org:8443/OpenELIS-Global
         username: admin
         password: adminADMIN!
-        healthUri: https://openelisglobal-webapp:8443/OpenELIS-Global/health
+        healthUri: https://oe.openelis.org:8443/OpenELIS-Global/health
         healthMethod: GET
 management:
   health:
@@ -20,10 +20,10 @@ management:
       enabled: true
 
 openelis:
-  url: https://openelisglobal-webapp:8443/OpenELIS-Global/analyzer
+  url: https://oe.openelis.org:8443/OpenELIS-Global
   timeout: 30000
   ssl:
-    verify: false  # Development only - uses self-signed certs
+    verify: true
 
 astm:
   # Must match container listen port (bridge listens on 12001 in published image)
@@ -32,7 +32,7 @@ astm:
   timeout: 30000
 
 logging:
-  level: DEBUG
+  level: INFO
 
 # =============================================================================
 # Analyzer-Specific RS232 Serial Configuration Reference

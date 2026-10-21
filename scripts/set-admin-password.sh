@@ -22,8 +22,8 @@
 # cost 12 matching install/createDefaultPassword.sh `htpasswd -bcBC 12`).
 #
 # The same value is read by the analyzer bridge
-# (ORG_ITECH_AHB_FORWARD_HTTP_SERVER_PASSWORD) to authenticate its REST
-# forwards, so .env stays the single source of truth for both.
+# (ORG_ITECH_AHB_FORWARD_HTTP_SERVER_PASSWORD) as a fallback credential.
+# Paired forwarding uses certificate identity.
 #
 # Usage:
 #   ./scripts/set-admin-password.sh              # use OE_ADMIN_PASSWORD from .env
@@ -36,24 +36,23 @@ cd "$ROOT"
 DEFAULT_PW='adminADMIN!'
 DB_SERVICE='db.openelis.org'
 CHECK_ONLY=false
+VALIDATE_ONLY=false
 
 while [ $# -gt 0 ]; do
     case "$1" in
         --check) CHECK_ONLY=true ;;
+        --validate-only) VALIDATE_ONLY=true ;;
         -h|--help) sed -n '2,31p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac
     shift
 done
 
-# --- load OE_ADMIN_PASSWORD from .env ------------------------------------
-if [ -z "${OE_ADMIN_PASSWORD:-}" ] && [ -f .env ]; then
-    # shellcheck disable=SC2046
-    OE_ADMIN_PASSWORD="$(sed -n 's/^[[:space:]]*OE_ADMIN_PASSWORD[[:space:]]*=[[:space:]]*//p' .env | tail -n 1)"
-    # strip one layer of surrounding quotes, if present
-    OE_ADMIN_PASSWORD="${OE_ADMIN_PASSWORD%\"}"; OE_ADMIN_PASSWORD="${OE_ADMIN_PASSWORD#\"}"
-    OE_ADMIN_PASSWORD="${OE_ADMIN_PASSWORD%\'}"; OE_ADMIN_PASSWORD="${OE_ADMIN_PASSWORD#\'}"
-fi
+# Use Compose's resolved value, including quoted .env values and selected overlays.
+OE_ADMIN_PASSWORD="$(docker compose config --format json | python3 -c '
+import json,sys
+print(json.load(sys.stdin)["services"]["openelis-analyzer-bridge"]["environment"]["ORG_ITECH_AHB_FORWARD_HTTP_SERVER_PASSWORD"])
+')"
 
 if [ -z "${OE_ADMIN_PASSWORD:-}" ]; then
     echo "ERROR: OE_ADMIN_PASSWORD is not set in .env or the environment." >&2
@@ -93,8 +92,13 @@ if [ "$OE_ADMIN_PASSWORD" = "$DEFAULT_PW" ]; then
     exit 1
 fi
 
+if [ "$VALIDATE_ONLY" = true ]; then
+    echo 'Administrator password configuration is valid.'
+    exit 0
+fi
+
 # --- the stack has to be up ----------------------------------------------
-compose() { docker compose -f docker-compose.yml "$@"; }
+compose() { docker compose "$@"; }
 
 if ! compose ps --status running --services 2>/dev/null | grep -qx "$DB_SERVICE"; then
     echo "ERROR: ${DB_SERVICE} is not running. Start the stack first:" >&2
@@ -123,17 +127,24 @@ fi
 # apiCall=true makes CustomAuthenticationFailureHandler answer 401 instead of
 # redirecting, so the status code alone is a reliable signal.
 login_status() {
-    curl -k -s -o /dev/null -w '%{http_code}' \
-        -X POST 'https://localhost:8443/OpenELIS-Global/ValidateLogin?apiCall=true' \
-        --data-urlencode 'loginName=admin' \
-        --data-urlencode "password=$1" \
+    # Run inside the webapp so port overrides and isolated test projects work.
+    # Pass the password on stdin, and verify the installation certificate.
+    printf '%s' "$1" | compose exec -T oe.openelis.org curl -s -o /dev/null -w '%{http_code}' \
+        --cacert /etc/openelis-global/internal.crt \
+        -X POST 'https://oe.openelis.org:8443/OpenELIS-Global/ValidateLogin?apiCall=true' \
+        --data-urlencode 'loginName=admin' --data-urlencode 'password@-' \
         --max-time 20 || echo 000
 }
 
 if [ "$CHECK_ONLY" = true ]; then
-    echo "Configured password: $(  [ "$(login_status "$OE_ADMIN_PASSWORD")" = 200 ] && echo ACCEPTED || echo REJECTED )"
-    echo "Default adminADMIN!: $( [ "$(login_status "$DEFAULT_PW")"        = 200 ] && echo ACCEPTED || echo REJECTED )"
-    exit 0
+    new_code="$(login_status "$OE_ADMIN_PASSWORD")"
+    old_code="$(login_status "$DEFAULT_PW")"
+    if [ "$new_code" = 200 ] && [ "$old_code" = 401 ]; then
+        echo 'OK: configured administrator password accepted; published default rejected.'
+        exit 0
+    fi
+    echo "FAILED: administrator verification (configured HTTP $new_code; default HTTP $old_code)." >&2
+    exit 1
 fi
 
 # --- rotate ---------------------------------------------------------------
@@ -202,7 +213,7 @@ else
     status=1
 fi
 
-if [ "$old_code" != "200" ]; then
+if [ "$old_code" = "401" ]; then
     echo "  OK      default 'adminADMIN!' is rejected (HTTP ${old_code})"
 else
     echo "  FAILED  default 'adminADMIN!' is still accepted" >&2

@@ -13,8 +13,14 @@
 services:
     proxy:
         volumes:
-            - certs-vol:/etc/nginx/certs/
-            - keys-vol:/etc/nginx/keys/
+            - type: volume
+              source: certs-vol
+              target: /etc/nginx/certs/
+              volume: {nocopy: true}
+            - type: volume
+              source: keys-vol
+              target: /etc/nginx/keys/
+              volume: {nocopy: true}
             - ./configs/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
             - ./configs/nginx/certbot:/var/www/certbot
             - ./configs/letsencrypt:/etc/letsencrypt:ro

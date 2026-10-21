@@ -61,3 +61,12 @@ test-artifacts/
 
 # HA state (scripts/ha): FENCED marker, standby-since
 configs/ha/
+
+# Analyzer result files can contain patient data; never package or commit them.
+configs/analyzer-drops/
+
+# Python preflight/test bytecode
+__pycache__/
+
+# Isolated fresh-install evidence and synthetic runtime state
+.local/

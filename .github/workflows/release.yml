@@ -1,16 +1,8 @@
 name: Release
 
-# Releases are driven by manual workflow_dispatch — the maintainer supplies
-# the distro version, OE version, and bridge version up front. The workflow
-# refreshes image digests in docker-compose.yml, validates that pins are
-# release-shaped, then tags the result and publishes a GitHub Release.
-#
-# docker-compose.yml carries literal `repo:tag@sha256:digest` image references on
-# every commit (including main), so a release tag is just a tag of the
-# canonical-state tree — no env-var substitution, no rewriting required.
-#
-# Pushes to main produce a 90-day workflow artifact for inspection but never
-# tag or publish a Release.
+# Release a committed candidate without resolving mutable image tags again.
+# Update pins, test them and commit before selecting base_ref. Pushes to main
+# produce an inspection artifact but never publish a release.
 
 on:
   workflow_dispatch:
@@ -20,11 +12,11 @@ on:
         required: true
         type: string
       oe_version:
-        description: "OpenELIS Global image tag (e.g. 3.2.1.6). Use 'develop' only with allow_develop_pins=true."
+        description: "OpenELIS Global tag already pinned in the tested base_ref."
         required: true
         type: string
       bridge_version:
-        description: "Analyzer Bridge image tag (e.g. 3.0.1). Use 'develop' only with allow_develop_pins=true."
+        description: "Analyzer Bridge tag already pinned in the tested base_ref."
         required: true
         type: string
       base_ref:
@@ -33,7 +25,7 @@ on:
         default: "main"
         type: string
       allow_develop_pins:
-        description: "Permit non-release pins (e.g. :develop). OFF by default — workflow fails if any pin is non-release."
+        description: "Allow development image labels for a prerelease candidate. Digests are always required."
         required: false
         default: false
         type: boolean
@@ -113,31 +105,37 @@ jobs:
           echo "value=${PREV_TAG}" >> "$GITHUB_OUTPUT"
           echo "Previous distro tag: ${PREV_TAG:-<none>}"
 
-      - name: Refresh image pins
-        run: ./scripts/pin-versions.sh "$OE_VERSION_INPUT" "$BRIDGE_VERSION_INPUT"
+      - name: Verify requested versions match the committed candidate
+        run: |
+          python3 - <<'PYTHON'
+          import os, re
+          from pathlib import Path
+          refs = re.findall(r'^\s+image:\s+(\S+)', Path('docker-compose.yml').read_text(), re.M)
+          for ref in refs:
+              repo, tag = ref.split('@')[0].rsplit(':', 1)
+              expected = (os.environ['BRIDGE_VERSION_INPUT'] if repo == 'itechuw/openelis-analyzer-bridge'
+                          else os.environ['OE_VERSION_INPUT'] if repo.startswith('itechuw/openelis-global-2') else tag)
+              if tag != expected:
+                  raise SystemExit('Requested tags differ from base_ref. Pin, test and commit the candidate before releasing.')
+          PYTHON
 
-      - name: Validate pin shape (release-mode)
-        if: ${{ inputs.allow_develop_pins != true }}
+      - name: Validate immutable image pins
         run: ./scripts/check-release-pins.sh
 
-      - name: Commit (if pins changed) and tag release
+      - name: Require release image labels unless explicitly allowed
+        if: ${{ inputs.allow_develop_pins != true }}
+        run: |
+          for tag in "$OE_VERSION_INPUT" "$BRIDGE_VERSION_INPUT"; do
+            case "$tag" in develop|latest|main|master|nightly)
+              echo "Development image label requires allow_develop_pins=true." >&2
+              exit 1 ;;
+            esac
+          done
+
+      - name: Tag the selected candidate
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docker-compose.yml
-          if ! git diff --staged --quiet; then
-            # Multi-line message uses bash variable expansion ($VAR), not
-            # template interpolation — keeps interpolation out of run: blocks.
-            git commit -m "release: ${DISTRO_VERSION}
-
-            OpenELIS Global: ${OE_VERSION_INPUT}
-            Analyzer Bridge:  ${BRIDGE_VERSION_INPUT}
-
-            Refreshed image digests in docker-compose.yml at release time. This
-            commit is reachable only via the ${DISTRO_VERSION} tag."
-          else
-            echo "No digest changes since ${BASE_REF}; tagging existing HEAD."
-          fi
           git tag -a "${DISTRO_VERSION}" -m "Release ${DISTRO_VERSION}"
           git push origin "refs/tags/${DISTRO_VERSION}"
 
