@@ -40,6 +40,14 @@ chmod 750 "$D/webapp/properties"
 chown -R "$BRIDGE_UID:$BRIDGE_UID" "$D/bridge" "$D/analyzer-imports"
 chmod 750 "$D/bridge"
 
+# A configured reference pin is prepared before OpenELIS can start. The webapp
+# sees only verified .zip files; previous versions stay available on upgrades.
+python3 /opt/openelis/prepare-amr-reference.py \
+    --pin /opt/openelis/reference-packages/amr.json \
+    --destination "$D/webapp/reference-packages"
+mkdir -p "$D/webapp/reference-packages"
+chown -R "$WEBAPP_UID" "$D/webapp/reference-packages"
+
 # --- this site's certificate -----------------------------------------------
 CERT="$D/tls/certs/apache-selfsigned.crt"
 KEY="$D/tls/keys/apache-selfsigned.key"

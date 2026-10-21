@@ -66,7 +66,10 @@ fi
 for image in $(docker compose config --images | sort -u); do
     id="$(docker image inspect -f '{{.Id}}' "$image" 2>/dev/null || true)"
     [ -n "$id" ] || continue
-    docker tag "$id" "${image%:*}:pre-update-${STAMP}"
+    # A digest reference is repo@sha256:...; @sha256 is not part of a tag name.
+    repository="${image%@*}"
+    if [[ "${repository##*/}" == *:* ]]; then repository="${repository%:*}"; fi
+    docker tag "$id" "${repository}:pre-update-${STAMP}"
     echo "$image $id" >> "$DEST/images-before.txt"
 done
 
@@ -93,5 +96,6 @@ while read -r image old; do
     if [ "$new" != "$old" ]; then changed=$((changed + 1)); log "  updated: $image"; fi
 done < "$DEST/images-before.txt"
 log "done: webapp healthy, ${changed} image(s) updated. Backup and image list: $DEST"
-log "rollback: restore $DEST/clinlims.dump (docs/backup-restore.md), then for each line"
-log "          of images-before.txt: docker tag <id> <image>; docker compose up -d"
+log "rollback: restore $DEST/clinlims.dump (docs/backup-restore.md) and the previous Compose image references."
+log "          images-before.txt records their exact references and local IDs; digest pins must not be retagged."
+log "          Run docker compose up -d after restoring the coherent previous pins."

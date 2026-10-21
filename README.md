@@ -413,6 +413,17 @@ workbook:
 >
 > `roles/png-lab-roles.csv` is empty; lab roles use the OpenELIS defaults.
 
+## AMR reference packages
+
+The existing initializer prepares a versioned AMR reference archive before the
+webapp starts. The distribution owns its release URL and SHA-256 pin; OpenELIS
+owns the transactional import. Verified packages are cached under
+`DATA_ROOT/webapp/reference-packages`, and restart can use that cache offline.
+See [the release-pin instructions](configs/reference-packages/README.md) for
+publication prerequisites, activation, and upgrade behavior. Until the reviewed
+package and compatible application images are published and pinned, AMR reference
+metadata remains unconfigured.
+
 ## PNG configuration included
 
 | Setting | Value | File |

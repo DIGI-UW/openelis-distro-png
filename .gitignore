@@ -67,3 +67,7 @@ test-artifacts/
 
 # HA state (scripts/ha): FENCED marker, standby-since
 configs/ha/
+
+# Local branch checkouts and Python test caches
+.worktrees/
+__pycache__/
