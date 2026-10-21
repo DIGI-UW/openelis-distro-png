@@ -426,3 +426,93 @@ See [the release-pin instructions](configs/configuration-packages/README.md) for
 the format and update procedure. No active package pin is included yet. Published
 metadata, compatible application image pins and a local distro acceptance run
 remain outstanding.
+
+## PNG configuration included
+
+| Setting | Value | File |
+|---|---|---|
+| Patient address | Province and District as dropdowns (22 provinces, 90 districts), then LLG and Village / Ward as free text | `address-hierarchy/png-levels.csv`, `png-values.csv` |
+| Phone numbers | Optional `+675`, then 8-digit mobile (`7XXX XXXX`, `8XXX XXXX`) or 7-digit fixed line (`XXX XXXX`); international numbers accepted in `+CC` form | `site-information/png-site-information.csv`, `configs/properties/SystemConfiguration.properties` |
+| Interface language | English (Papua New Guinea) as the default, plus English | `locales/png-locales.csv` |
+
+Address and phone settings can be adjusted later in the application under
+Administration.
+
+## Analyzers
+
+The analyzer bridge is included (`docker-compose.analyzers.yml`). Every TCP
+analyzer connects to the one shared ASTM listener on port 12000; the bridge
+tells them apart by source address and the name the instrument puts in its
+messages. It also picks up result files dropped into its watched import
+folder. OpenELIS and the bridge trust each other by certificate after pairing
+once with `ANALYZER_BRIDGE_PAIRING_CODE`.
+
+The analyzer types offered are the PNG set in
+[configs/analyzer-catalog](configs/analyzer-catalog/README.md) (GeneXpert,
+BD EpiCenter, Bruker MALDI Biotyper), in place of the bridge's built-in ones.
+Connecting an analyzer is done with the DIGI analyzer
+team; ICT staff only need to make sure the analyzer can reach the server.
+
+Moving a site from an `openelis-docker` folder to this distribution:
+[docs/migrating-from-allinone.md](docs/migrating-from-allinone.md).
+
+## For maintainers
+
+### Versioning
+
+`main` tracks upstream `develop` images (`itechuw/openelis-global-2:develop`
+and related). Releases are cut from `main` by the **Release** GitHub Actions
+workflow, which pins every image to an exact `tag@sha256:<digest>` so that a
+release tag always installs the same bytes. Distro release numbers are
+independent of upstream OpenELIS version numbers.
+
+To cut a release: **Actions > Release > Run workflow**, then fill in:
+
+- `distro_version`: the new tag; must not already exist
+- `oe_version`, `bridge_version`: upstream image tags to pin
+- `base_ref` (optional): branch or commit to release from; default `main`
+- `allow_develop_pins` (optional): leave off for real releases; the workflow
+  fails if any pin is `:develop`, `:latest` or missing a digest
+- `draft` (default on) and `prerelease` (optional)
+
+The workflow refreshes digests with `scripts/pin-versions.sh`, checks them
+with `scripts/check-release-pins.sh`, commits the pinned
+`docker-compose.yml` on the tag only, builds the tarball with
+`scripts/build-tarball.sh`, and drafts a GitHub Release with notes from the
+upstream releases plus the distro commit log. Review the draft, then
+publish.
+
+To refresh pins by hand:
+
+```bash
+./scripts/pin-versions.sh <oe-tag|develop> <bridge-tag|develop>
+git diff docker-compose.yml
+```
+
+### Why the admin password needs a script
+
+OpenELIS creates the `admin` account on first start from a password hash
+built into the web application image (`ARG DEFAULT_PW` at image build time).
+A distro that uses published images cannot change that, so
+`scripts/set-admin-password.sh` sets the real password after start-up and
+verifies it through the login endpoint.
+
+### Catalog loading details
+
+`ConfigurationInitializationService` loads every `*.csv` in each domain
+folder (the `png-` prefix is a naming convention, not a filter) and records a
+SHA-256 checksum per file name so unchanged files are skipped on later
+starts. OpenELIS also supports instance-scoped overlays via
+`OPENELIS_CONFIGURATION_INSTANCE_ID`
+([source](https://github.com/I-TECH-UW/OpenELIS-Global-2/blob/develop/src/main/java/org/openelisglobal/configuration/service/ConfigurationInitializationService.java#L125-L145));
+this distro does not use them.
+
+### Development and testing
+
+Playwright end-to-end tests, a mock analyzer and development overlays live
+in the companion `openelis-png-test-harness` repository, which consumes this
+distro at a tag.
+
+[docs/template-source-inventory.md](docs/template-source-inventory.md)
+classifies which files are generic and which are country-specific, for
+extracting a shared distro template.
