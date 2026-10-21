@@ -37,7 +37,18 @@
       "test_code": "ORGANISM",
       "loinc": "11475-1",
       "unit": "",
-      "result_type": "text"
+      "result_type": "text",
+      "run_failure_values": [
+        "no peaks found",
+        "No peaks found",
+        "NO PEAKS FOUND",
+        "no reliable identification",
+        "No reliable identification",
+        "NO RELIABLE IDENTIFICATION",
+        "not reliable identification",
+        "Not reliable identification",
+        "NOT RELIABLE IDENTIFICATION"
+      ]
     },
     {
       "test_code": "SCORE",
@@ -172,6 +183,6 @@
     "publishedAt": "2026-10-21T00:00:00Z",
     "publishedBy": "distribution",
     "recognitionFingerprint": "sha256:d8837de371ec4a97f10952d8fa21e1cd9d6a8853257a382193581b19d5221f50",
-    "revisionFingerprint": "sha256:56b8134d0fae2cfdb6bdbc50cfac388e1afa20a3d7ec120b546d1e959ffca811"
+    "revisionFingerprint": "sha256:aa7b43c207a2aa0d5c9c18ccaf3c0112bdda2f420a662944652c06e1bd5a80d0"
   }
 }

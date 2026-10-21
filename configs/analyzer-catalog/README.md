@@ -37,8 +37,11 @@ carries the same code. The PNG catalog gives its tests and answers these codes
 | `ORGANISM` | 11475-1 | Microbiology Culture Identification |
 
 `NEGATIVE` on the culture codes is "No growth" (LA21123-7). The GeneXpert's
-ERROR, INVALID and NO RESULT are run failures, held for review rather than
-saved as results. Codes with no OpenELIS test or answer yet (BD
+ERROR, INVALID and NO RESULT, and the MALDI's "no peaks found", "no reliable
+identification" and "not reliable identification" in place of an organism,
+are run failures, held for review rather than saved as results. The Bridge matches these
+exactly, so each is listed in the casings Bruker uses. The BD type declares
+no run failures; a value outside its declared ones is held for review. Codes with no OpenELIS test or answer yet (BD
 susceptibility results, MALDI `SCORE`, a culture `POSITIVE`, `IN PROGRESS`)
 are mapped or left out in each analyzer's setup. `MTB-XDR 2` covers the MTB
 detection result; the drug-resistance calls are not told apart yet.
