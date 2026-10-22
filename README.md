@@ -432,6 +432,12 @@ run must be verified against the selected application image before UAT.
 Append it after the core and analyzer Compose files in `COMPOSE_FILE`; keep
 site ports, certificates and data paths in the existing local override. This
 candidate is for local validation and is separate from the released PNG baseline.
+The first full standards import can take over 30 minutes under amd64 emulation;
+the candidate grants up to an hour before automatic unhealthy-container restarts.
+A successful health check ends that startup grace immediately. Subsequent starts
+skip unchanged configuration files. Imported standards remain inactive until an
+administrator selects the edition for testing in Microbiology reference data.
+Unsupported source rules remain explicitly unavailable for automatic interpretation.
 
 ## PNG configuration included
 
