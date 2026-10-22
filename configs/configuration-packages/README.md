@@ -2,7 +2,8 @@
 
 Metadata can be released independently of OpenELIS and selected by a deployment.
 Place one JSON pin per package here. There are no active pins yet: the AMR
-candidate is unpublished and the compatible application images are not pinned.
+candidate has not yet passed publication validation. `compose.amr.yaml` pins
+the receiving application candidate for local testing.
 
 Each pin has exactly four string fields: `id`, `version`, `url` and `sha256`.
 Use a GHCR URL `oci://ghcr.io/<owner>/<package>@sha256:<manifest digest>`

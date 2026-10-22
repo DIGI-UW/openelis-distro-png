@@ -416,7 +416,7 @@ workbook:
 ## External metadata packages
 
 The existing initializer can install independently released metadata from
-checksum-pinned HTTPS packages. It verifies the release and places ordinary
+digest-pinned GHCR artifacts or checksum-pinned HTTPS packages. It verifies the release and places ordinary
 files into the existing configuration tree; OE2 uses its normal catalog loading
 and import reporting. The adapter is shared across metadata publishers and does
 not require an application ZIP loader. Verified archives are cached under
@@ -424,8 +424,12 @@ not require an application ZIP loader. Verified archives are cached under
 
 See [the release-pin instructions](configs/configuration-packages/README.md) for
 the format and update procedure. No active package pin is included yet. Published
-metadata, compatible application image pins and a local distro acceptance run
-remain outstanding.
+metadata and a local distro acceptance run remain outstanding.
+
+`compose.amr.yaml` pins the application images for the AMR testing candidate.
+Append it after the core and analyzer Compose files in `COMPOSE_FILE`; keep
+site ports, certificates and data paths in the existing local override. This
+candidate is for local validation and is separate from the released PNG baseline.
 
 ## PNG configuration included
 

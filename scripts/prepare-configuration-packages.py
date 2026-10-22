@@ -19,7 +19,8 @@ import urllib.request
 import zipfile
 
 FORMAT = "openelis-configuration/v1"
-MAX_BYTES = 32 * 1024 * 1024
+# The two-edition package includes source evidence and interpretation vectors.
+MAX_BYTES = 128 * 1024 * 1024
 NAME = r"[A-Za-z0-9][A-Za-z0-9_.-]{0,79}"
 
 

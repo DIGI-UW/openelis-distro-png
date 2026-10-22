@@ -1,0 +1,18 @@
+# AMR testing candidate: OpenELIS 1d1e61f8b0e0b04f9288be363a4b4d8e014cca2f
+# Built by https://github.com/DIGI-UW/OpenELIS-Global-2/actions/runs/39723791475
+# Select after docker-compose.yml and docker-compose.analyzers.yml.
+services:
+  init:
+    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/certgen@sha256:b2762bce596b10c8d8782b684e35ae279eec7288d4dce83f646ca23dac9a8dd0
+  db.openelis.org:
+    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/openelisglobal-databse.build@sha256:dcc0cb892196963f46140876890b4367e87fc193118fffdbc58dc73352c5a14a
+  oe.openelis.org:
+    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/openelisglobal-webapp.build@sha256:18f13fc683805c29baa7eb17ee41437609f51f0481aa1f9fc325150915b09401
+  fhir.openelis.org:
+    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/external-fhir-api.build@sha256:5b882d80d2b500122ecae88d8f9d8425934b3d76b9d114a142f66619d5d2ba10
+  frontend.openelis.org:
+    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/frontend@sha256:3a68f752bf811358cdd10fcdbcf2cd351d03f193cbbced375167b7fc7777f2d7
+  proxy:
+    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/openelisglobal-proxy.build@sha256:a008cbe99f6b113dd7c49969076cd24077162ca14b830791bd773349b57f3f5f
+  openelis-analyzer-bridge:
+    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/openelis-analyzer-bridge.ci@sha256:75e650f9feb06fa31376bfb42db158e67b5cb5b7ab9ba3aaffcd3b6bb89e5528
