@@ -5,8 +5,13 @@ Place one JSON pin per package here. There are no active pins yet: the AMR
 candidate is unpublished and the compatible application images are not pinned.
 
 Each pin has exactly four string fields: `id`, `version`, `url` and `sha256`.
-Use an immutable HTTPS release URL and a reviewed SHA-256; no credentials belong
-in a pin. `id` and `version` must match the release manifest. The installer is
+Use a GHCR URL `oci://ghcr.io/<owner>/<package>@sha256:<manifest digest>`
+or an immutable HTTPS release URL, plus the ZIP SHA-256. No credentials belong
+in a pin. GHCR packages must have exactly one `application/zip` layer; the
+manifest digest, layer digest and ZIP checksum are all verified before installation.
+Private packages use `CONFIGURATION_REGISTRY_USERNAME` and
+`CONFIGURATION_REGISTRY_TOKEN` from the deployment environment, never the pin.
+The token needs read access to the selected package. `id` and `version` must match the release manifest. The installer is
 publisher-independent; multiple laboratory catalogs can use the same pattern.
 
 ## Release layout
@@ -62,7 +67,8 @@ installing files does not mean records were imported. New AMR breakpoint edition
 load inactive; activation is a separate laboratory decision. Keep old referenced
 editions when upgrading. Removing a pin does not delete installed files or data.
 
-The independent AMR exporter provides selected EUCAST 2025/2026 MIC data in this
-layout. Coverage is limited; this package is not the complete PNG test catalog.
+The independent AMR exporter targets EUCAST and CLSI 2025/2026 in separate
+packages. CLSI-derived packages must remain restricted. Each artifact reports
+its supported and blocked interpretation contexts.
 Application image pins, a published package pin and actual local distro workflow
 validation remain required before testing-server acceptance.
