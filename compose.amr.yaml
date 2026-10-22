@@ -1,22 +1,22 @@
-# AMR testing candidate: OpenELIS fe5af32a83
-# Built by https://github.com/DIGI-UW/OpenELIS-Global-2/actions/runs/39732855216
+# AMR testing candidate: OpenELIS 39638ca5e9
+# Built by https://github.com/DIGI-UW/OpenELIS-Global-2/actions/runs/39741779422
 # Select after docker-compose.yml and docker-compose.analyzers.yml.
 services:
   init:
-    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/certgen@sha256:ed8f40c785e95e3827eb1e3b7315d7b1cdbad15c847b1b3f00be8b7b4063f2e0
+    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/certgen@sha256:afbf9df41878413b6c870536ffe01b3c600384d3058f0bedcf819b41c0a9b248
   db.openelis.org:
-    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/openelisglobal-databse.build@sha256:7398e3bdbcc8551682330ad46686f8307f8aace117d8f76b963f9fd67531ae08
+    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/openelisglobal-databse.build@sha256:f8b7c04b26091a45ac521e9ddea6741faba8ca376fa5a1ba7bcb93f690cc0dcd
   oe.openelis.org:
-    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/openelisglobal-webapp.build@sha256:03e1625e56c36f49e8fc3307bbec5571bfb1bfc91e4c635747a9cff172d11a3e
+    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/openelisglobal-webapp.build@sha256:3711d63e17834c8b89cd4e5fb8335ca3474764fdf01c4917fd4a34037957d0c8
     healthcheck:
       # The first full standards import can exceed the base startup grace period,
       # especially under amd64 emulation. A successful check ends this grace.
       start_period: 3600s
   fhir.openelis.org:
-    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/external-fhir-api.build@sha256:786e2457c894dc6fe59ad71c322b9efd24b7693977caaff0de6281725497c385
+    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/external-fhir-api.build@sha256:2c0ccabdb35d9086cb93162ead9a33f66e50b04b5320a277764e4d70fdd8dcc3
   frontend.openelis.org:
-    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/frontend@sha256:187c324349bc3ac06708db7fff15e5e6a4c798ee23295d349bd1f43eec494782
+    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/frontend@sha256:c4314c66e036cb8c95e275dae09ca8cd6fd225a8438dc6be9ec4dc559915491c
   proxy:
-    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/openelisglobal-proxy.build@sha256:330bfe7d2ed4d2cf23dfc66b874bfca9613a289e533713fc28af6aea51b222f1
+    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/openelisglobal-proxy.build@sha256:a61711b6e2b9ac2ab535a779c8bc7fd01bdb5f5f6b6612f70a06858c369b439b
   openelis-analyzer-bridge:
-    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/openelis-analyzer-bridge.ci@sha256:c2fccdcfd603b63d2b63ca22f64a1a9907fc975a525570e8b9b491d741885675
+    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/openelis-analyzer-bridge.ci@sha256:2d7e7f01a2ef793ce1a8d6bc70cf6099113e452d02af05a567ead0269286ec21
