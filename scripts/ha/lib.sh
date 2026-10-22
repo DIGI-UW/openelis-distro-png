@@ -104,7 +104,7 @@ webapp_wait_healthy() {
 # Rebuild the Lucene search index (it lives in a Docker volume, not in the
 # database, so a promoted standby or a fresh snapshot starts without it).
 reindex() {
-  local c=${1:-$WEBAPP_CONTAINER} base=https://localhost:8443/OpenELIS-Global code
+  local c=${1:-$WEBAPP_CONTAINER} base=https://localhost:8443/api/OpenELIS-Global code
   docker exec "$c" sh -c "rm -f /tmp/ha.jar; curl -k -s -o /dev/null -c /tmp/ha.jar -X POST '$base/ValidateLogin?apiCall=true' \
       --data-urlencode loginName=admin --data-urlencode \"password=\$0\"" "$OE_ADMIN_PASSWORD"
   code=$(docker exec "$c" sh -c "curl -k -s -o /tmp/ha.out -w '%{http_code}' -b /tmp/ha.jar '$base/rest/reindex'; rm -f /tmp/ha.jar")

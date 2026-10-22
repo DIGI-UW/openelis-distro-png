@@ -124,7 +124,7 @@ fi
 # redirecting, so the status code alone is a reliable signal.
 login_status() {
     curl -k -s -o /dev/null -w '%{http_code}' \
-        -X POST 'https://localhost:8443/OpenELIS-Global/ValidateLogin?apiCall=true' \
+        -X POST 'https://localhost:8443/api/OpenELIS-Global/ValidateLogin?apiCall=true' \
         --data-urlencode 'loginName=admin' \
         --data-urlencode "password=$1" \
         --max-time 20 || echo 000

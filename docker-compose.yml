@@ -92,7 +92,7 @@ services:
             # Spring context fails to start (for example a wrong
             # OE_DB_PASSWORD), Tomcat still answers /health with a 302, and
             # `curl -f` alone would report the stack healthy.
-            test: ["CMD-SHELL", "curl -k -s -o /tmp/oe-health -w '%{http_code}' https://localhost:8443/OpenELIS-Global/health | grep -qx 200 && grep -q '\"UP\"' /tmp/oe-health"]
+            test: ["CMD-SHELL", "curl -k -s -o /tmp/oe-health -w '%{http_code}' https://localhost:8443/api/OpenELIS-Global/health | grep -qx 200 && grep -q '\"UP\"' /tmp/oe-health"]
             interval: 15s
             timeout: 10s
             retries: 8
