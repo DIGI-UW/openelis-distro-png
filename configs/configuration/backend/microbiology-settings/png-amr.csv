@@ -1,0 +1,3 @@
+name,value,domainName,valueType,description,instructionKey,group,encrypted,createOnly
+microbiologyDefaultBreakpointAuthority,EUCAST,resultConfiguration,text,Default breakpoint authority,,0,false,false
+microbiologyDefaultBreakpointVersion,2026-2026.1,resultConfiguration,text,Default breakpoint edition,,0,false,false

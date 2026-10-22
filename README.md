@@ -436,7 +436,16 @@ The first full standards import can take over 30 minutes under amd64 emulation;
 the candidate grants up to an hour before automatic unhealthy-container restarts.
 A successful health check ends that startup grace immediately. Subsequent starts
 skip unchanged configuration files. Imported standards remain inactive until an
-administrator selects the edition for testing in Microbiology reference data.
+administrator activates the edition for testing in Microbiology reference data.
+The testing default is EUCAST `2026-2026.1`, supplied by
+`configs/configuration/backend/microbiology-settings/png-amr.csv`. In **Admin →
+Microbiology reference data → Breakpoint standards**, activate that exact edition
+and use **Use as default** to change the preference later. Activation and default
+selection are separate; loading both publishers does not choose between them.
+The configuration file uses portable authority/version values and is reapplied
+only when its contents change; ordinary restarts preserve administrator changes.
+Existing tests retain their saved standard. This is a local testing policy, not
+a clinical PNG standard selection.
 Unsupported source rules remain explicitly unavailable for automatic interpretation.
 
 ## PNG configuration included
