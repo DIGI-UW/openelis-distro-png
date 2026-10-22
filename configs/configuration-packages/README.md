@@ -2,7 +2,7 @@
 
 Metadata can be released independently of OpenELIS and selected by a deployment.
 Place one JSON pin per package here. The checked-in AMR pins select version
-2026.1 of the EUCAST and restricted CLSI packages, covering human 2025/2026
+2026.1 of the public EUCAST and CLSI packages, covering human 2025/2026
 reference data from AMR for R. `compose.amr.yaml` pins the receiving application
 candidate for local testing. These are testing candidates, not a clinical
 approval or an instruction to activate a standard.
@@ -71,7 +71,9 @@ load inactive; activation is a separate laboratory decision. Keep old referenced
 editions when upgrading. Removing a pin does not delete installed files or data.
 
 The independent AMR exporter targets EUCAST and CLSI 2025/2026 in separate
-packages. CLSI-derived packages must remain restricted. Each artifact reports
+packages. Both checked-in packages are publicly downloadable without registry
+credentials. PR checks run the ordinary initializer with an empty cache and a
+clean environment to verify the exact pins. Each artifact reports
 its supported and blocked interpretation contexts.
 Application image pins, a published package pin and actual local distro workflow
 validation remain required before testing-server acceptance.
