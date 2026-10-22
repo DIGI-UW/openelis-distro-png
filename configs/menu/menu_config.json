@@ -139,6 +139,15 @@
       ]
     },
     {
+      "elementId": "menu_microbiology",
+      "childMenus": [
+        {
+          "elementId": "menu_microbiology_worklist",
+          "childMenus": []
+        }
+      ]
+    },
+    {
       "elementId": "menu_results",
       "childMenus": [
         {
@@ -166,6 +175,10 @@
     {
       "elementId": "menu_reports",
       "childMenus": [
+        {
+          "elementId": "menu_microbiology_whonet",
+          "childMenus": []
+        },
         {
           "elementId": "menu_reports_custom_data_export",
           "childMenus": []
@@ -272,5 +285,41 @@
         "childMenus": []
       }
     ]
-  }
+  },
+  "menus": [
+    {
+      "elementId": "menu_microbiology",
+      "displayKey": "sidenav.label.microbiology",
+      "presentationOrder": 6,
+      "isActive": true,
+      "hideInOldUI": true,
+      "childMenus": [
+        {
+          "elementId": "menu_microbiology_worklist",
+          "actionURL": "/Microbiology/worklist",
+          "displayKey": "sidenav.label.microbiology.worklist",
+          "toolTipKey": "sidenav.label.microbiology.worklist",
+          "presentationOrder": 1,
+          "isActive": true,
+          "hideInOldUI": true,
+          "childMenus": []
+        }
+      ]
+    },
+    {
+      "elementId": "menu_reports",
+      "childMenus": [
+        {
+          "elementId": "menu_microbiology_whonet",
+          "actionURL": "/Microbiology/whonet",
+          "displayKey": "sidenav.label.microbiology.whonet",
+          "toolTipKey": "sidenav.label.microbiology.whonet",
+          "presentationOrder": 1,
+          "isActive": true,
+          "hideInOldUI": true,
+          "childMenus": []
+        }
+      ]
+    }
+  ]
 }

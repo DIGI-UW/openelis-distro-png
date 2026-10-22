@@ -1,0 +1,6 @@
+{
+  "id": "amr-reference-eucast",
+  "version": "2026.1",
+  "url": "oci://ghcr.io/digi-uw/amr-reference-eucast@sha256:cce88f57456afaa7a1431c0b7644d06e5d5fa94abe235b859d1bfb25a35ba39c",
+  "sha256": "580a0ef3006ec236c11a9a6228df2cdc141246811f6970235f195992e8c8378b"
+}

@@ -1,0 +1,6 @@
+{
+  "id": "amr-reference-clsi",
+  "version": "2026.1",
+  "url": "oci://ghcr.io/digi-uw/amr-reference-clsi@sha256:b081e4cf9874303ae8b2262ff5fa77576ab3b14049202e5f1e42695b2a75d241",
+  "sha256": "b48b283602bbf9ee1948797c5760b9de24c94a7326a26cbd36086ce205b46d93"
+}

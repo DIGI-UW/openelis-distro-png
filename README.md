@@ -423,8 +423,10 @@ not require an application ZIP loader. Verified archives are cached under
 `DATA_ROOT/webapp/reference-packages` for offline reuse.
 
 See [the release-pin instructions](configs/configuration-packages/README.md) for
-the format and update procedure. No active package pin is included yet. Published
-metadata and a local distro acceptance run remain outstanding.
+the format and update procedure. The checked-in AMR 2026.1 pins cover human
+EUCAST and CLSI 2025/2026 metadata; private registry read credentials are required
+for the restricted CLSI package. Package loading and a local workflow acceptance
+run must be verified against the selected application image before UAT.
 
 `compose.amr.yaml` pins the application images for the AMR testing candidate.
 Append it after the core and analyzer Compose files in `COMPOSE_FILE`; keep

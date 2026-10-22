@@ -1,9 +1,11 @@
 # Pinned metadata packages
 
 Metadata can be released independently of OpenELIS and selected by a deployment.
-Place one JSON pin per package here. There are no active pins yet: the AMR
-candidate has not yet passed publication validation. `compose.amr.yaml` pins
-the receiving application candidate for local testing.
+Place one JSON pin per package here. The checked-in AMR pins select version
+2026.1 of the EUCAST and restricted CLSI packages, covering human 2025/2026
+reference data from AMR for R. `compose.amr.yaml` pins the receiving application
+candidate for local testing. These are testing candidates, not a clinical
+approval or an instruction to activate a standard.
 
 Each pin has exactly four string fields: `id`, `version`, `url` and `sha256`.
 Use a GHCR URL `oci://ghcr.io/<owner>/<package>@sha256:<manifest digest>`
