@@ -11,7 +11,21 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
+      - name: Test AMR package preparation
+        run: python3 -m unittest discover -s tests -p 'test_*.py' -v
+
+      - name: Verify pinned metadata downloads anonymously from an empty cache
+        run: |
+          proof=$(mktemp -d)
+          trap 'rm -rf "$proof"' EXIT
+          env -i PATH="$PATH" HOME="$proof/home" DOCKER_CONFIG="$proof/docker" \
+            python3 scripts/prepare-configuration-packages.py \
+              --pins configs/configuration-packages \
+              --cache "$proof/cache" --configuration "$proof/configuration"
+
       - name: Validate compose syntax + path resolution
         run: |
           docker compose -f docker-compose.yml config > /dev/null
           docker compose -f docker-compose.yml -f compose.letsencrypt.yaml config > /dev/null
+          docker compose -f docker-compose.yml -f docker-compose.analyzers.yml config > /dev/null
+          docker compose -f docker-compose.yml -f docker-compose.analyzers.yml -f compose.letsencrypt.yaml config > /dev/null

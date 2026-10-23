@@ -1,0 +1,22 @@
+# AMR testing candidate: OpenELIS ef33d0e839 (build source 1fb2aa0385)
+# Built by https://github.com/DIGI-UW/OpenELIS-Global-2/actions/runs/39897413021
+# Select after docker-compose.yml and docker-compose.analyzers.yml.
+services:
+  init:
+    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/certgen@sha256:9bf4d2f915471e92a0b8df700fa14dc003d746e7c7b6587a4d6898b368867e07
+  db.openelis.org:
+    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/openelisglobal-databse.build@sha256:4536338bc56a74088c5c7eb18a97c7efb5683e45d8fb00b0f4fea3fe38b9f18d
+  oe.openelis.org:
+    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/openelisglobal-webapp.build@sha256:2cfa507ee85cd5b90af97d3e8919b0f08b19a55ac3725b9ea9744146a19f86cf
+    healthcheck:
+      # The first full standards import can exceed the base startup grace period,
+      # especially under amd64 emulation. A successful check ends this grace.
+      start_period: 3600s
+  fhir.openelis.org:
+    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/external-fhir-api.build@sha256:3db6898cea52e7af8df6c9eda2a5ea6626162b8b97c430734c0f917b3af5efe9
+  frontend.openelis.org:
+    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/frontend@sha256:8f2b694d7355f3f19772a01ecf018e0cd3e686e332b5383017419b5c2e979494
+  proxy:
+    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/openelisglobal-proxy.build@sha256:13f4189bea8cbb638911102d09e0f65dcdd1ad23dae8d9826cb95020c67e1f10
+  openelis-analyzer-bridge:
+    image: ghcr.io/digi-uw/openelis-global-2/e2e-cache/openelis-analyzer-bridge.ci@sha256:f3525ac394a97093106cedf115cbbbe633bbb01a9f1da4586fdc7c90a79f67cc

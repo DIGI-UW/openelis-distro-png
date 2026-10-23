@@ -1,3 +1,17 @@
+# OpenELIS Global: Papua New Guinea distribution, core services.
+#
+# Layout (mirrors OpenELIS-Global-2 `develop`):
+#   docker-compose.yml            core: database, webapp, FHIR, front end, proxy
+#   docker-compose.analyzers.yml  Analyzer Bridge (pairs with OpenELIS by code)
+#   compose.letsencrypt.yaml      optional: Let's Encrypt certificate for the proxy
+#   compose.ha.yaml               optional: streaming-replication failover
+#   docker-compose.site.yml       optional, gitignored: this server's own overrides
+# COMPOSE_FILE in .env selects the set, so plain `docker compose ...` works.
+#
+# Persistence: everything a site must keep lives on the host under DATA_ROOT
+# (default ./data, gitignored). No named volumes: losing Docker's volume store
+# loses nothing. Tracked configuration under ./configs is the PNG baseline.
+
 x-logging:
   &local-logging
   driver: "local"
@@ -5,67 +19,34 @@ x-logging:
     max-size: "20m"
     max-file: "50"
 
-x-loki-logging:
-  &loki-logging
-  driver: "loki"
-  options:
-    max-size: "20m"
-    max-file: "50"
-    loki-url: "[% loki_url %]"
-    loki-external-labels: "container_name={{.Name}},hostname=[% host_name %]"
-    loki-pipeline-stages: |
-          - multiline:
-              firstline: '^\d{4}-\d{2}-\d{2}[T ]?\d{2}:\d{2}:\d{2}.\d{3}'
-          - labeldrop:
-              - compose_project
-              - compose_service
-              - filename
-              - source
-              - stream
-              - swarm_service
-              - swarm_stack
 services:
-    certs:
-        container_name: oe-certs
+    # Runs as root once per `up`, before anything else: creates the DATA_ROOT
+    # tree with the owners each service runs as, and makes this site's own
+    # internal TLS material (keystore, truststore, proxy fallback
+    # certificate) the first time. See scripts/init-data.sh.
+    init:
+        container_name: oe-init
+        # Only for its JDK keytool and openssl; the stores it ships are not used.
         image: itechuw/certgen:main
         platform: linux/amd64
         restart: "no"
-        environment:
-            - KEYSTORE_PW="kspass"
-            - TRUSTSTORE_PW="tspass"
-        networks:
-            - openelis-network
-        volumes:
-            -  key_trust-store-volume:/etc/openelis-global
-            -  keys-vol:/etc/ssl/private/
-            -  certs-vol:/etc/ssl/certs/
-
-    bridge-state-init:
-        container_name: oe-bridge-state-init
-        # Reuses the bridge image purely so no extra image has to be pulled;
-        # it never runs the bridge itself (entrypoint is overridden).
-        image: itechuw/openelis-analyzer-bridge:develop
-        platform: linux/amd64
-        restart: "no"
-        # Runs as root on purpose -- it exists only to hand the bind mount to
-        # the unprivileged account the bridge actually runs as.
         user: "0:0"
-        # Docker creates a missing bind-mount source on the host as root:root.
-        # The bridge runs as UID 9257 (`astm`) and then cannot create
-        # state.db, failing at boot with:
-        #   java.sql.SQLException: opening db: '...': Permission denied
-        # That crash-loop also blocks oe.openelis.org (service_started) and so
-        # the proxy, which gates on the webapp being healthy -- the whole stack
-        # stalls on one wrong directory owner. Fixing it here makes a clean
-        # `docker compose up` self-sufficient on a fresh clone.
-        # Mirrors scripts/init-bridge-state.sh, which stays the repair path for
-        # a restore that extracted configs/ without `tar --numeric-owner`.
-        entrypoint: ["sh", "-c"]
-        command:
-            - chown -R ${BRIDGE_UID:-9257}:${BRIDGE_GID:-9257} /data/openelis-analyzer-bridge
-              && chmod 750 /data/openelis-analyzer-bridge
+        entrypoint: ["bash", "/opt/openelis/init-data.sh"]
+        environment:
+            - KEYSTORE_PW=${SSL_KEYSTORE_PASSWORD:-kspass}
+            - TRUSTSTORE_PW=${SSL_TRUSTSTORE_PASSWORD:-tspass}
+            - TLS_SUBJECT=${OE_TLS_SUBJECT:-/O=OpenELIS Global/OU=Papua New Guinea/CN=oe.openelis.org}
+            - OE_CONFIGURATION_AUTOCREATE=${OE_CONFIGURATION_AUTOCREATE:-true}
+            - CONFIGURATION_REGISTRY_USERNAME=${CONFIGURATION_REGISTRY_USERNAME:-}
+            - CONFIGURATION_REGISTRY_TOKEN=${CONFIGURATION_REGISTRY_TOKEN:-}
+            - WEBAPP_UID=8443
+            - BRIDGE_UID=${BRIDGE_UID:-9257}
         volumes:
-            - ${BRIDGE_STATE_HOST_DIR:-./configs/bridge-state}:/data/openelis-analyzer-bridge
+            - ./scripts/init-data.sh:/opt/openelis/init-data.sh:ro
+            - ./scripts/prepare-configuration-packages.py:/opt/openelis/prepare-configuration-packages.py:ro
+            - ./configs/configuration-packages:/opt/openelis/configuration-packages:ro
+            - ./configs/configuration:/opt/openelis/configuration
+            - ${DATA_ROOT:-./data}:/data
         networks:
             - openelis-network
 
@@ -79,10 +60,10 @@ services:
         environment:
             - DB_PASSWORD=${OE_DB_PASSWORD:-clinlims}
             - DB_SUPERUSER_PASSWORD=${ADMIN_PASSWORD:-superuser}
+            - TZ=${TZ:-Pacific/Port_Moresby}
         volumes:
-              # preserves the database between containers
-            - ${DB_VOLUME_MOUNT:-./configs/database/data}:/var/lib/postgresql/data
-
+            # DB_VOLUME_MOUNT stays as an override for scripts/ha.
+            - ${DB_VOLUME_MOUNT:-${DATA_ROOT:-./data}/db}:/var/lib/postgresql/data
         logging: *local-logging
         networks:
             - openelis-network
@@ -97,85 +78,83 @@ services:
         image: itechuw/openelis-global-2:develop
         platform: linux/amd64
         depends_on:
+            init:
+                condition: service_completed_successfully
             db.openelis.org:
                 condition: service_healthy
-            certs:
-                condition: service_completed_successfully
-            openelis-analyzer-bridge:
-                condition: service_started
         ports:
-            - "8080:8080"
-            - "8443:8443"
+            # Behind the proxy; reachable from this host only.
+            - "${LOCAL_BIND:-127.0.0.1}:8080:8080"
+            - "${LOCAL_BIND:-127.0.0.1}:8443:8443"
         restart: always
         healthcheck:
-            # Must assert HTTP 200 *and* {"status":"UP"} in the body.
-            #
-            # `curl -sf` alone is not enough: -f only fails on >=400, so a
-            # 3xx counts as success. When the Spring context fails to start
-            # (e.g. a wrong OE_DB_PASSWORD -> "FATAL: password
-            # authentication failed for user clinlims") Tomcat is still
-            # listening and answers /health with a 302. That reported the
-            # stack healthy, and `proxy` -- which gates on
-            # service_healthy -- started on top of an app nobody can log
-            # into. HealthController only returns {"status":"UP"} once the
-            # webapp context is actually up.
-            test: ["CMD-SHELL", "curl -k -s -o /tmp/oe-health -w '%{http_code}' https://localhost:8443/OpenELIS-Global/health | grep -qx 200 && grep -q '\"UP\"' /tmp/oe-health"]
+            # Must assert HTTP 200 *and* {"status":"UP"} in the body: when the
+            # Spring context fails to start (for example a wrong
+            # OE_DB_PASSWORD), Tomcat still answers /health with a 302, and
+            # `curl -f` alone would report the stack healthy.
+            test: ["CMD-SHELL", "curl -k -s -o /tmp/oe-health -w '%{http_code}' https://localhost:8443/api/OpenELIS-Global/health | grep -qx 200 && grep -q '\"UP\"' /tmp/oe-health"]
             interval: 15s
             timeout: 10s
             retries: 8
-            # First boot (Liquibase + config loading) has been observed at
-            # ~6 min on a small host. Failures inside start_period don't
-            # count, and health flips as soon as a probe passes, so a long
-            # window costs nothing on fast hosts.
-            start_period: 600s
+            # First boot (Liquibase + catalog loading) has taken ~6 min on a
+            # small host; failures inside start_period don't count, and the
+            # first passing check ends it. Kept long so autoheal never
+            # restarts OpenELIS in the middle of a database migration.
+            start_period: 1200s
+        labels:
+            # Restarted by the autoheal service when unhealthy.
+            - autoheal=true
+            - autoheal.stop.timeout=60
         networks:
           openelis-network:
               ipv4_address: 172.20.1.121
         logging: *local-logging
         environment:
-            # NOTE: do not add DEFAULT_PW here. Upstream consumes it as a
-            # *build* ARG (Dockerfile:19 -> install/createDefaultPassword.sh),
-            # which bakes a bcrypt hash into the WAR as adminPassword.txt.
-            # CreateAdminUserTask reads that baked hash from the classpath on
-            # first boot, so setting DEFAULT_PW as a runtime environment
-            # variable silently does nothing and every site came up on the
-            # public default admin/adminADMIN!.
-            # The admin password is set post-install instead:
-            #   ./scripts/set-admin-password.sh
-            # See .env.example (OE_ADMIN_PASSWORD) and README "Quickstart".
-            - TZ=Pacific/Port_Moresby
-              # Config variables loaded through Tomacat server.xml
-            - CATALINA_OPTS= -Ddatasource.url=jdbc:postgresql://db.openelis.org:5432/clinlims -Ddatasource.username=clinlims -Ddatasource.password=${OE_DB_PASSWORD:-clinlims} -Doe.ssl.truststorepath=${SSL_TRUSTSTORE_PATH:-/etc/openelis-global/truststore} -Doe.ssl.truststorepassword=${SSL_TRUSTSTORE_PASSWORD:-tspass} -Doe.ssl.keystorepath=${SSL_KEYSTORE_PATH:-/etc/openelis-global/keystore} -Doe.ssl.keystorepassword=${SSL_KEYSTORE_PASSWORD:-kspass}
-             # Env variables passed to the common properties file
+            # NOTE: no DEFAULT_PW here. Upstream reads it only at image BUILD
+            # time, so the admin password is set post-install with
+            # ./scripts/set-admin-password.sh (see .env.example).
+            - TZ=${TZ:-Pacific/Port_Moresby}
+            # Tomcat server.xml settings. configuration.autocreate is passed as
+            # a system property so a site can switch catalog loading off from
+            # .env (OE_CONFIGURATION_AUTOCREATE=false) without editing the
+            # tracked common.properties: system properties win over it.
+            # ExitOnOutOfMemoryError: a JVM out of memory stays up but stops
+            # working; exiting lets `restart: always` bring it back.
+            - CATALINA_OPTS= -XX:+ExitOnOutOfMemoryError -Ddatasource.url=jdbc:postgresql://db.openelis.org:5432/clinlims -Ddatasource.username=clinlims -Ddatasource.password=${OE_DB_PASSWORD:-clinlims} -Doe.ssl.truststorepath=${SSL_TRUSTSTORE_PATH:-/etc/openelis-global/truststore} -Doe.ssl.truststorepassword=${SSL_TRUSTSTORE_PASSWORD:-tspass} -Doe.ssl.keystorepath=${SSL_KEYSTORE_PATH:-/etc/openelis-global/keystore} -Doe.ssl.keystorepassword=${SSL_KEYSTORE_PASSWORD:-kspass} -Dorg.openelisglobal.configuration.autocreate=${OE_CONFIGURATION_AUTOCREATE:-true}
+            # Read by common.properties placeholders.
             - SSL_KEYSTORE_PATH=${SSL_KEYSTORE_PATH:-/etc/openelis-global/keystore}
             - SSL_KEYSTORE_PASSWORD=${SSL_KEYSTORE_PASSWORD:-kspass}
             - SSL_TRUSTSTORE_PATH=${SSL_TRUSTSTORE_PATH:-/etc/openelis-global/truststore}
             - SSL_TRUSTSTORE_PASSWORD=${SSL_TRUSTSTORE_PASSWORD:-tspass}
-            # Bridge HTTPS API (same Docker network). OE pushes analyzer bindings here at startup.
-            - ANALYZER_BRIDGE_URL=https://bridge.openelis.org:8443
+            # Key for secrets OpenELIS encrypts in the database (external
+            # connection passwords, encrypted site settings, the Analyzer
+            # Bridge pairing key...). Independent of the keystore password:
+            # changing it makes existing encrypted values unreadable.
+            - OE_ENCRYPTION_PASSWORD=${OE_ENCRYPTION_PASSWORD:-${SSL_KEYSTORE_PASSWORD:-kspass}}
         volumes:
-            -  key_trust-store-volume:/etc/openelis-global
-            -  lucene_index-vol:/var/lib/lucene_index
-            - ./configs/plugins/:/var/lib/openelis-global/plugins
-            - ./configs/logs/oeLogs:/var/lib/openelis-global/logs
-            - ./configs/logs/tomcatLogs/:/usr/local/tomcat/logs
-            - ./configs/properties:/var/lib/openelis-global/properties
-            # Sourced by catalina.sh before the JVM starts. Turns off
-            # VersionLoggerListener argument logging, which otherwise prints
-            # every -D flag -- including -Ddatasource.password -- in clear
-            # text at each boot. See configs/tomcat/setenv.sh.
+            - ${DATA_ROOT:-./data}/tls/stores:/etc/openelis-global
+            - ${DATA_ROOT:-./data}/webapp/lucene:/var/lib/lucene_index
+            # OpenELIS writes TotalSystemConfiguration.properties and
+            # ChangedSystemConfiguration.properties here; the tracked baseline
+            # SystemConfiguration.properties is mounted read-only inside it.
+            - ${DATA_ROOT:-./data}/webapp/properties:/var/lib/openelis-global/properties
+            - ./configs/properties/SystemConfiguration.properties:/var/lib/openelis-global/properties/SystemConfiguration.properties:ro
+            - ${DATA_ROOT:-./data}/webapp/branding:/var/lib/openelis-global/branding
+            - ${DATA_ROOT:-./data}/webapp/nce-attachments:/var/lib/openelis-global/nce-attachments
+            - ${DATA_ROOT:-./data}/webapp/reporting:/var/lib/openelis-global/reporting
+            - ${DATA_ROOT:-./data}/logs/oe:/var/lib/openelis-global/logs
+            - ${DATA_ROOT:-./data}/logs/tomcat:/usr/local/tomcat/logs
+            # Sourced by catalina.sh before the JVM starts: stops Tomcat
+            # printing every -D flag, including -Ddatasource.password, at boot.
             - ./configs/tomcat/setenv.sh:/usr/local/tomcat/bin/setenv.sh:ro
-            - ./configs/analyzer/analyzer-test-map.csv:/var/lib/openelis-global/analyzer/analyzer-test-map.csv
+            - ./configs/plugins/:/var/lib/openelis-global/plugins
             - ./configs/odoo/odoo-test-product-mapping.csv:/var/lib/openelis-global/odoo/odoo-test-product-mapping.csv
             - ./configs/programs/:/var/lib/openelis-global/programs
+            # Catalog CSVs (baseline) plus the checksums OpenELIS writes back.
             - ./configs/configuration:/var/lib/openelis-global/configuration
-            - ./configs/menu/menu_config.json:/var/lib/openelis-global/menu/menu_config.json
-            - ./configs/analyzer-profiles:/data/analyzer-profiles:ro
-            - analyzer-imports:/data/analyzer-imports
-            # Host filesystem for real analyzer file drops (NFS, USB, etc.).
-            # Read-only: the bridge must never delete or move source files
-            - ${ANALYZER_HOST_MOUNT:-./configs/analyzer-drops}:/data/analyzer-drops:ro
-
+            - ./configs/menu/menu_config.json:/var/lib/openelis-global/menu/menu_config.json:ro
+            # Translation overrides; the printed patient report reads them here.
+            - ./configs/translation:/var/lib/openelis-global/translation:ro
         secrets:
             - source: common.properties
 
@@ -184,54 +163,61 @@ services:
         platform: linux/amd64
         image: itechuw/openelis-global-2-fhir:develop
         ports:
-            - "8081:8080"
-            - "8444:8443"
+            - "${LOCAL_BIND:-127.0.0.1}:8081:8080"
+            - "${LOCAL_BIND:-127.0.0.1}:8444:8443"
         depends_on:
+            init:
+                condition: service_completed_successfully
             db.openelis.org:
                 condition: service_healthy
-            certs:
-                condition: service_completed_successfully
         networks:
             - openelis-network
         restart: always
         healthcheck:
-            # HAPI on 8443 requires client-cert TLS for HTTPS handshakes; a
-            # TCP-only probe is enough to verify the server is listening
-            # (OE talks to it via the truststore, not curl).
+            # HAPI on 8443 requires client-certificate TLS; a TCP probe is
+            # enough to show it is listening.
             test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/8443'"]
             interval: 15s
             timeout: 5s
             retries: 6
             start_period: 60s
+        labels:
+            - autoheal=true
+            - autoheal.stop.timeout=30
         environment:
-          TZ: America/New_York
-
-          JAVA_OPTS: "-Djavax.net.ssl.trustStore=${SSL_TRUSTSTORE_PATH:-/etc/openelis-global/truststore}
+          TZ: ${TZ:-Pacific/Port_Moresby}
+          JAVA_OPTS: "-XX:+ExitOnOutOfMemoryError
+                      -Djavax.net.ssl.trustStore=${SSL_TRUSTSTORE_PATH:-/etc/openelis-global/truststore}
                       -Djavax.net.ssl.trustStorePassword=${SSL_TRUSTSTORE_PASSWORD:-tspass}
                       -Djavax.net.ssl.trustStoreType=pkcs12
                       -Djavax.net.ssl.keyStore=${SSL_KEYSTORE_PATH:-/etc/openelis-global/keystore}
                       -Djavax.net.ssl.keyStorePassword=${SSL_KEYSTORE_PASSWORD:-kspass}
                       -Djavax.net.ssl.keyStoreType=pkcs12"
-          # Config variables loaded through Tomacat server.xml
           CATALINA_OPTS: "-Dhapi.ssl.truststorepath=${SSL_TRUSTSTORE_PATH:-/etc/openelis-global/truststore} -Dhapi.ssl.truststorepassword=${SSL_TRUSTSTORE_PASSWORD:-tspass} -Dhapi.ssl.keystorepath=${SSL_KEYSTORE_PATH:-/etc/openelis-global/keystore} -Dhapi.ssl.keystorepassword=${SSL_KEYSTORE_PASSWORD:-kspass}"
-          # Config variables loaded through Hapi application.yml
           FHIR_DATASOURCE_URL : "jdbc:postgresql://db.openelis.org:5432/clinlims?currentSchema=clinlims"
           FHIR_DATASOURCE_USERNAME: "clinlims"
           FHIR_DATASOURCE_PASSWORD: ${OE_DB_PASSWORD:-clinlims}
           FHIR_SERVER_ADRESS: "http://fhir.openelis.org:8080/fhir/"
-
         logging: *local-logging
         volumes:
-            -  key_trust-store-volume:/etc/openelis-global
+            - ${DATA_ROOT:-./data}/tls/stores:/etc/openelis-global
 
     frontend.openelis.org:
         image: itechuw/openelis-global-2-frontend:develop
         container_name: openelisglobal-front-end
         platform: linux/amd64
+        # Without a restart policy the front end stays down after a reboot and
+        # the proxy has no upstream.
+        restart: always
         networks:
             - openelis-network
         environment:
             - CHOKIDAR_USEPOLLING=true
+            - TZ=${TZ:-Pacific/Port_Moresby}
+        volumes:
+            # Translation overrides, served at /translation/<locale>.json. See
+            # configs/translation/README.md.
+            - ./configs/translation:/usr/share/nginx/html/translation:ro
         logging: *local-logging
         tty: true
         healthcheck:
@@ -249,17 +235,20 @@ services:
             - 80:80
             - 443:443
         volumes:
-            - certs-vol:/etc/nginx/certs/
-            - keys-vol:/etc/nginx/keys/
+            # This site's own self-signed certificate (made by init); replaced
+            # by a Let's Encrypt one with compose.letsencrypt.yaml.
+            - ${DATA_ROOT:-./data}/tls/certs:/etc/nginx/certs/
+            - ${DATA_ROOT:-./data}/tls/keys:/etc/nginx/keys/
             - ./configs/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-            # ACME HTTP-01 webroot; used by scripts/generate-letsencrypt-certs.sh and compose.letsencrypt.yaml
-            - ./configs/nginx/certbot:/var/www/certbot
+            # ACME HTTP-01 webroot (scripts/generate-letsencrypt-certs.sh, or
+            # the host's certbot when CERTBOT_WEBROOT points at its webroot).
+            - ${CERTBOT_WEBROOT:-./configs/nginx/certbot}:/var/www/certbot
         restart: unless-stopped
         networks:
             - openelis-network
         logging: *local-logging
         depends_on:
-            certs:
+            init:
                 condition: service_completed_successfully
             oe.openelis.org:
                 condition: service_healthy
@@ -272,58 +261,26 @@ services:
             retries: 5
             start_period: 30s
 
-    openelis-analyzer-bridge:
-        container_name: openelis-analyzer-bridge
-        image: itechuw/openelis-analyzer-bridge:develop
-        platform: linux/amd64
-        depends_on:
-            certs:
-                condition: service_completed_successfully
-            bridge-state-init:
-                condition: service_completed_successfully
-        ports:
-            - "8442:8443" # HTTPS API port
-            - "12000:12001" # ASTM listen port
-        volumes:
-            - ./configs/astm/configuration.yml:/app/configuration.yml:ro
-            -  key_trust-store-volume:/etc/openelis-global
-            - analyzer-imports:/data/analyzer-imports
-            # Host filesystem for real analyzer file drops (NFS, USB, etc.).
-            # Read-only: the bridge must never delete or move source files.
-            - ${ANALYZER_HOST_MOUNT:-./configs/analyzer-drops}:/data/analyzer-drops:ro
-            # Durable state store for the bridge's FileStateStore (SQLite, WAL mode).
-            # Bind-mounted from the host (instead of a named volume) so ownership
-            # can be controlled. The bridge process runs as UID 9257 (`astm`)
-            # inside the container; a bind-mount target that Docker has to
-            # create itself is owned by root, and SQLite then fails with
-            # "Permission denied" trying to create state.db.
-            # The host directory must be owned by UID:GID 9257:9257. The
-            # bridge-state-init service above guarantees that on every
-            # `up`; scripts/init-bridge-state.sh does the same by hand.
-            - ${BRIDGE_STATE_HOST_DIR:-./configs/bridge-state}:/data/openelis-analyzer-bridge
+    # Docker restarts a container that exits, never one that is running but
+    # unhealthy. This restarts containers labelled autoheal=true (the webapp
+    # and FHIR) once their healthcheck reports unhealthy. The database is left
+    # out on purpose: a failing pg_isready usually means recovery or load, which
+    # a restart makes worse, and a crashed Postgres exits and is restarted anyway.
+    autoheal:
+        container_name: autoheal-oe
+        image: willfarrell/autoheal:1.2.0
+        restart: always
         environment:
-            SPRING_PROFILES_ACTIVE: dev
-            BRIDGE_FILE_ENABLED: "true"
-            # Point the bridge at the bind mount. Must match the
-            # volume mount path above. Spring Boot maps this env var to the
-            # bridge.file.state-store-path config property.
-            BRIDGE_FILE_STATE_STORE_PATH: /data/openelis-analyzer-bridge/state.db
-            LOGGING_LEVEL_ORG_ITECH: TRACE
-            # Align with CI harness: HttpForwardingRouter appends /astm, /hl7, /csv
-            ORG_ITECH_AHB_FORWARD_HTTP_SERVER_URI: https://openelisglobal-webapp:8443/OpenELIS-Global/analyzer
-            ORG_ITECH_AHB_FORWARD_HTTP_SERVER_USERNAME: ${ORG_ITECH_AHB_FORWARD_HTTP_SERVER_USERNAME:-admin}
-            ORG_ITECH_AHB_FORWARD_HTTP_SERVER_PASSWORD: ${OE_ADMIN_PASSWORD:-adminADMIN!}
-            ORG_ITECH_AHB_FORWARD_HTTP_SERVER_INSECURE_TLS: "true"
-            JDK_JAVA_OPTIONS: -Djdk.internal.httpclient.disableHostnameVerification=true
-            JAVA_OPTS: |
-                -Djavax.net.ssl.trustStore=${SSL_TRUSTSTORE_PATH:-/etc/openelis-global/truststore}
-                -Djavax.net.ssl.trustStorePassword=${SSL_TRUSTSTORE_PASSWORD:-tspass}
-                -Djavax.net.ssl.trustStoreType=pkcs12
-        networks:
-            openelis-network:
-                aliases:
-                    - bridge.openelis.org
-        restart: unless-stopped
+            - AUTOHEAL_CONTAINER_LABEL=autoheal
+            - TZ=${TZ:-Pacific/Port_Moresby}
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+        # The image's own healthcheck can sit at "starting" and stall
+        # `docker compose down`; nothing depends on it.
+        healthcheck:
+            disable: true
+        network_mode: none
+        logging: *local-logging
 
 secrets:
   common.properties:
@@ -336,10 +293,3 @@ networks:
     ipam:
       config:
         - subnet: 172.20.1.0/24
-
-volumes:
-  key_trust-store-volume:
-  certs-vol:
-  keys-vol:
-  lucene_index-vol:
-  analyzer-imports:

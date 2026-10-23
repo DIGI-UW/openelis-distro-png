@@ -20,7 +20,7 @@ Produces:
 | File | What it is |
 |---|---|
 | `clinlims.dump` | `pg_dump -Fc --no-owner --no-acl`, taken as the `clinlims` role |
-| `configs.tar.gz` | `configs/` with numeric ownership preserved, minus `configs/database/data` and `configs/logs` |
+| `configs.tar.gz` | `configs/` and `data/` (DATA_ROOT) with numeric ownership preserved, minus `data/db` and `data/logs` |
 | `env.backup` | copy of `.env`, mode 0600 — **contains `OE_DB_PASSWORD` and `OE_ADMIN_PASSWORD`** |
 | `MANIFEST.txt` | hostname, timestamp, distro ref, resolved image pins |
 | `SHA256SUMS` | checksums of the above |
@@ -33,15 +33,15 @@ and treat the backup as credential material wherever you copy it.
 `scripts/backup.sh` refuses to run unprivileged, and this is the reason:
 
 ```
-$ tar -czf configs.tar.gz ./configs          # as the host user
-tar: ./configs/bridge-state: Cannot open: Permission denied
+$ tar -czf configs.tar.gz ./configs ./data   # as the host user
+tar: ./data/bridge: Cannot open: Permission denied
 tar: Exiting with failure status due to previous errors
 $ echo $?
 2
 ```
 
-`configs/bridge-state` is mode `750` owned by UID `9257` — the analyzer
-bridge's `astm` account (see `scripts/init-bridge-state.sh`) — and
+`data/bridge` is mode `750` owned by UID `9257` (the analyzer bridge's
+`astm` account), `data/tls/keys` is root-only, and
 `configs/configuration` is owned by UID `8443` after
 `scripts/fix-config-permissions.sh`. `tar` exits 2 but **still leaves a
 tarball behind**, so an unprivileged backup looks like it worked and is
@@ -51,14 +51,13 @@ archive.
 
 ### What is deliberately not backed up
 
-- `configs/database/data` — a file-level copy of a running PostgreSQL data
-  directory is not a consistent backup. `clinlims.dump` is the database
-  backup.
-- `configs/logs` — runtime logs, not state.
+- `data/db`: a file-level copy of a running PostgreSQL data directory is
+  not a consistent backup. `clinlims.dump` is the database backup.
+- `data/logs`: runtime logs, not state.
 
 ## Restoring
 
-### 1. Restore `configs/` and `.env`
+### 1. Restore `configs/`, `data/` and `.env`
 
 ```bash
 cd /path/to/openelis-distro-png
@@ -69,12 +68,13 @@ cp /path/to/backup/env.backup .env && chmod 600 .env
 
 `--numeric-owner` is not optional. UID `8443` must own
 `configs/configuration` or the webapp cannot write its checksum files, and
-UID `9257` must own `configs/bridge-state` or the bridge's SQLite store will
-not open. If you extracted without it, run both repair scripts:
+UID `9257` must own `data/bridge` or the bridge's SQLite store will not
+open. If you extracted without it, run the repair script and let the init
+service re-assert the rest:
 
 ```bash
 ./scripts/fix-config-permissions.sh
-./scripts/init-bridge-state.sh
+docker compose up -d init
 ```
 
 ### 2. Bring up the database only

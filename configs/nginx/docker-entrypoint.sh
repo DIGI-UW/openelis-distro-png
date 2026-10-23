@@ -17,6 +17,11 @@ LETSENCRYPT_KEY="/etc/letsencrypt/live/${CERT_NAME}/privkey.pem"
 NGINX_CERT="/etc/nginx/certs/apache-selfsigned.crt"
 NGINX_KEY="/etc/nginx/keys/apache-selfsigned.key"
 
+# This site's own self-signed pair (made by the init service), mounted
+# read-only by compose.letsencrypt.yaml. Copied, never linked or rewritten.
+FALLBACK_CERT="/etc/nginx/selfsigned/certs/apache-selfsigned.crt"
+FALLBACK_KEY="/etc/nginx/selfsigned/keys/apache-selfsigned.key"
+
 mkdir -p "$(dirname "$NGINX_CERT")" "$(dirname "$NGINX_KEY")"
 
 file_exists() {
@@ -32,6 +37,11 @@ if file_exists "$LETSENCRYPT_CERT" && file_exists "$LETSENCRYPT_KEY"; then
     echo "✓ Symlinks created:"
     echo "  $NGINX_CERT -> $LETSENCRYPT_CERT"
     echo "  $NGINX_KEY -> $LETSENCRYPT_KEY"
+elif file_exists "$FALLBACK_CERT" && file_exists "$FALLBACK_KEY"; then
+    echo "✓ No Let's Encrypt certificate for ${CERT_NAME}; using this site's self-signed certificate"
+    rm -f "$NGINX_CERT" "$NGINX_KEY"
+    cp "$FALLBACK_CERT" "$NGINX_CERT"
+    cp "$FALLBACK_KEY" "$NGINX_KEY"
 elif file_exists "$NGINX_CERT" && file_exists "$NGINX_KEY"; then
     echo "✓ Using existing self-signed certificates from certs service"
 else

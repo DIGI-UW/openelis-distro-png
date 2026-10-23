@@ -13,13 +13,15 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-COMPOSE=docker-compose.yml
+COMPOSE_FILES=(docker-compose.yml docker-compose.analyzers.yml)
 fail=0
 
 # Extract every `image: <ref>` line as "<line-number>:<ref>" pairs and
 # iterate via a while-read loop (portable to bash 3.2 / macOS — avoids
 # `mapfile`, which is bash 4+ only).
 while IFS= read -r entry; do
+  file="${entry%%:*}"
+  entry="${entry#*:}"
   line="${entry%%:*}"
   ref="${entry#*:}"
   repo="${ref%%:*}"
@@ -30,23 +32,23 @@ while IFS= read -r entry; do
   if [[ "$repo" != "itechuw/certgen" ]]; then
     case "$tag" in
       develop|latest|main|master|nightly|"")
-        echo "FAIL: ${COMPOSE}:${line} tag '${tag}' is a moving label —" >&2
+        echo "FAIL: ${file}:${line} tag '${tag}' is a moving label:" >&2
         echo "      release pins must use a versioned upstream tag" >&2
         fail=1
         ;;
     esac
   fi
 done < <(
-  grep -nE '^[[:space:]]+image:[[:space:]]+' "$COMPOSE" \
-    | sed -E 's|^([0-9]+):[[:space:]]+image:[[:space:]]+|\1:|'
+  grep -nE '^[[:space:]]+image:[[:space:]]+' "${COMPOSE_FILES[@]}" \
+    | sed -E 's|^([^:]+:[0-9]+):[[:space:]]+image:[[:space:]]+|\1:|'
 )
 
 if (( fail )); then
   echo "" >&2
   echo "Release pins are not fully resolved. Re-run pin-versions.sh with" >&2
   echo "release tags before retrying, e.g.:" >&2
-  echo "  ./scripts/pin-versions.sh 3.2.1.7 3.0.2" >&2
+  echo "  ./scripts/pin-versions.sh 3.3.0" >&2
   exit 1
 fi
 
-echo "OK: all ${COMPOSE} image refs use versioned tags."
+echo "OK: all image refs in ${COMPOSE_FILES[*]} use versioned tags."

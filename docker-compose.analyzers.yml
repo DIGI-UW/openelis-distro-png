@@ -1,0 +1,74 @@
+# Analyzer Bridge. Mirrors OpenELIS-Global-2 `docker-compose.analyzers.yml`.
+#
+# The Bridge image is published with the OpenELIS images under the same tags.
+# OpenELIS and the Bridge trust each other by certificate after pairing once
+# with ANALYZER_BRIDGE_PAIRING_CODE (same value on both); no passwords.
+#
+# One shared ASTM LIS1-A listener serves every TCP analyzer. The Bridge tells
+# instruments apart by source address and the sender name in the message
+# (ASTM H.5 / HL7 MSH-3), so analyzers need no port of their own. Set `host`
+# or `senderId` on each saved connection when two analyzers of the same kind
+# share the listener.
+
+services:
+    openelis-analyzer-bridge:
+        container_name: openelis-analyzer-bridge
+        image: itechuw/openelis-global-2-analyzer-bridge:develop
+        platform: linux/amd64
+        depends_on:
+            init:
+                condition: service_completed_successfully
+        ports:
+            - "${LOCAL_BIND:-127.0.0.1}:8442:8443" # HTTPS API, this host only
+            - "${ANALYZER_ASTM_PORT:-12000}:12001" # shared ASTM LIS1-A listener
+        volumes:
+            # Durable state: delivery outbox (results OpenELIS has not accepted
+            # yet), saved connections, profile revisions, the Bridge's own key
+            # pair and pairing record. Owned by UID 9257 (init sees to it).
+            - ${DATA_ROOT:-./data}/bridge:/data/openelis-analyzer-bridge
+            # The stack's trust store, so the Bridge trusts OpenELIS's HTTPS
+            # certificate before pairing and after it is regenerated.
+            - ${DATA_ROOT:-./data}/tls/stores:/etc/openelis-global:ro
+            - ${DATA_ROOT:-./data}/analyzer-imports:/data/analyzer-imports
+            # Host directory for real analyzer file drops (NFS, USB...).
+            # Read-only: the Bridge must never delete or move source files.
+            - ${ANALYZER_HOST_MOUNT:-./configs/analyzer-drops}:/data/analyzer-drops:ro
+            # The PNG analyzer types (configs/analyzer-catalog/README.md).
+            - ./configs/analyzer-catalog:/etc/openelis-analyzer-catalog:ro
+        environment:
+            - TZ=${TZ:-Pacific/Port_Moresby}
+            # OpenELIS pairs with this code. Without one, the Bridge logs a
+            # generated code for a Global Admin to enter on the Analyzers page.
+            - BRIDGE_PAIRING_CODE=${ANALYZER_BRIDGE_PAIRING_CODE:-}
+            - BRIDGE_FILE_ENABLED=true
+            - BRIDGE_FILE_STATE_STORE_PATH=/data/openelis-analyzer-bridge/state.db
+            - BRIDGE_OUTBOX_DB_PATH=/data/openelis-analyzer-bridge/outbox.db
+            - LOGGING_LEVEL_ORG_ITECH=${BRIDGE_LOG_LEVEL:-INFO}
+            # Analyzer types offered for setup: the PNG set in place of the
+            # Bridge's built-in ones. Types a site creates on Admin > Analyzer
+            # types are kept in DATA_ROOT/bridge either way. Set
+            # BRIDGE_SHIPPED_PROFILES=classpath*:/analyzer-profiles/**/*.json
+            # to offer the Bridge's built-in types instead.
+            - BRIDGE_PROFILECATALOG_SHIPPEDPATTERN=${BRIDGE_SHIPPED_PROFILES:-file:/etc/openelis-analyzer-catalog/*/*.json}
+            # OpenELIS base URL: results go to {uri}/analyzer/fhir and the
+            # forwarding health check reads {uri}/health.
+            - ORG_ITECH_AHB_FORWARD_HTTP_SERVER_URI=https://oe.openelis.org:8443/api/OpenELIS-Global
+            - JDK_JAVA_OPTIONS=-XX:+ExitOnOutOfMemoryError -Djavax.net.ssl.trustStore=/etc/openelis-global/truststore -Djavax.net.ssl.trustStorePassword=${SSL_TRUSTSTORE_PASSWORD:-tspass} -Djavax.net.ssl.trustStoreType=PKCS12
+        networks:
+            openelis-network:
+                aliases:
+                    - bridge.openelis.org
+        logging:
+            driver: "local"
+            options:
+                max-size: "20m"
+                max-file: "50"
+        restart: unless-stopped
+
+    oe.openelis.org:
+        depends_on:
+            openelis-analyzer-bridge:
+                condition: service_started
+        environment:
+            - ANALYZER_BRIDGE_URL=https://bridge.openelis.org:8443
+            - ANALYZER_BRIDGE_PAIRING_CODE=${ANALYZER_BRIDGE_PAIRING_CODE:-}
