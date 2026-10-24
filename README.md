@@ -484,6 +484,13 @@ To check before go-live:
 - **Package version.** Interpreting zones and assigning group defaults needs
   reference packages 2026.2 or later and an application image with disk
   content support. The 2026.1 packages pinned here interpret MIC results only.
+  The edition name carries the package version, so moving the pins to 2026.2
+  also changes the default in `microbiology-settings/png-amr.csv` to
+  `2026-2026.2`.
+- **Organisms in two groups.** The reference package places some species,
+  such as *Streptococcus anginosus* and *S. sanguinis*, in both the
+  beta-haemolytic and the viridans groups. They get no default panel; the
+  technologist chooses one when starting AST.
 - **Culture tests.** Only Blood culture opens a microbiology case. The existing
   "Microbiology Culture Result" test does not.
 
