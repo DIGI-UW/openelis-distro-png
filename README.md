@@ -437,7 +437,7 @@ the candidate grants up to an hour before automatic unhealthy-container restarts
 A successful health check ends that startup grace immediately. Subsequent starts
 skip unchanged configuration files. Imported standards remain inactive until an
 administrator activates the edition for testing in Microbiology reference data.
-The testing default is EUCAST `2026-2026.1`, supplied by
+The testing default is CLSI `2026-2026.1`, supplied by
 `configs/configuration/backend/microbiology-settings/png-amr.csv`. In **Admin →
 Microbiology reference data → Breakpoint standards**, activate that exact edition
 and use **Use as default** to change the preference later. Activation and default
@@ -447,6 +447,45 @@ only when its contents change; ordinary restarts preserve administrator changes.
 Existing tests retain their saved standard. This is a local testing policy, not
 a clinical PNG standard selection.
 Unsupported source rules remain explicitly unavailable for automatic interpretation.
+
+### Microbiology setup
+
+The distribution ships:
+
+| File | Contents |
+|---|---|
+| `microbiology-ast-panels/png-ast-panels.csv` | The 16 CPHL AST panels, one row per drug, with each disk drug's CLSI disk content and the organisms each panel is the default for |
+| `tests/zz-png-amr-workflow.csv` | A **Blood culture** test that opens a microbiology case and is collected in sets |
+| `dictionaries/png-amr-containers.csv` | Aerobic and anaerobic blood culture bottles as sample containers |
+
+A panel's default organisms are a species, a genus or an organism group; the
+most specific match wins, so *Staphylococcus aureus* gets "AST - STAPH S.aureus"
+and other staphylococci get "AST-Staph other". "AST-B.cepacia cx" and
+"AST-MDR GN" are not defaults for any organism and are added by hand.
+
+Do these once per laboratory, in the admin screens:
+
+1. **Breakpoints**: activate the CLSI 2026 edition (Admin → Microbiology
+   reference data → Breakpoint standards).
+2. **Media**: in Inventory, add each culture medium (for example the aerobic
+   and anaerobic blood culture bottles) as a Microbiology medium that tracks
+   lots, receive its lots, and link it to the Blood culture test in the Test
+   Catalog with its incubation defaults.
+3. **Gram stain**: choose the Gram stain test for the Microbiology lab unit
+   (Admin → Lab Units Editor).
+
+To check before go-live:
+
+- **Disk content.** Zone diameters are interpreted only against breakpoints for
+  the same disk content. The panels use CLSI disk contents (for example
+  ceftriaxone 30 mcg). CPHL must confirm these match the disks in use.
+  Amoxicillin has no CLSI disk breakpoint, so its zone results show No
+  breakpoint.
+- **Package version.** Interpreting zones and assigning group defaults needs
+  reference packages 2026.2 or later and an application image with disk
+  content support. The 2026.1 packages pinned here interpret MIC results only.
+- **Culture tests.** Only Blood culture opens a microbiology case. The existing
+  "Microbiology Culture Result" test does not.
 
 ## PNG configuration included
 
