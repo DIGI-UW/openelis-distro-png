@@ -81,7 +81,7 @@ cp .env.example .env
 nano .env
 ```
 
-Set these three values for every real site:
+Set these four values for every real site:
 
 | Variable | What it is |
 |---|---|
@@ -122,8 +122,9 @@ docker compose up -d
 docker compose ps
 ```
 
-Wait until `oe.openelis.org` shows `healthy`. The first start takes several
-minutes while the database is created and the catalog is loaded. OpenELIS
+Wait until `oe.openelis.org` shows `healthy`. The first start can take more than
+20 minutes on a slower host while the database is created and the full PNG catalog is loaded. The health check allows
+30 minutes for startup; do not restart a progressing catalog import. OpenELIS
 pairs with the analyzer bridge by itself on that first start, using
 `ANALYZER_BRIDGE_PAIRING_CODE`.
 

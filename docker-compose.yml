@@ -103,11 +103,11 @@ services:
             interval: 15s
             timeout: 10s
             retries: 8
-            # First boot (Liquibase + catalog loading) has taken ~6 min on a
-            # small host; failures inside start_period don't count, and the
-            # first passing check ends it. Kept long so autoheal never
-            # restarts OpenELIS in the middle of a database migration.
-            start_period: 1200s
+            # Empty-database validation with the full PNG catalog exceeded
+            # 20 minutes under amd64 emulation. Allow 30 minutes before
+            # counting failures; the first passing check ends this grace.
+            # This avoids autoheal interrupting normal first-start imports.
+            start_period: 1800s
         labels:
             # Restarted by the autoheal service when unhealthy.
             - png-autoheal=true
