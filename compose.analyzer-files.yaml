@@ -1,0 +1,12 @@
+# Optional host FILE input. Only the Bridge reads analyzer files.
+services:
+  openelis-analyzer-bridge:
+    environment:
+      BRIDGE_FILE_ENABLED: "true"
+    volumes:
+      - type: bind
+        source: ${ANALYZER_HOST_MOUNT:?Set an existing analyzer file directory}
+        target: /data/analyzer-drops
+        read_only: true
+        bind:
+          create_host_path: false

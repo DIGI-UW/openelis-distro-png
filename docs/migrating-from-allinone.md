@@ -1,5 +1,10 @@
 # Moving a site from openelis-docker to this distribution
 
+> Historical migration outline, not validated for the fresh-install candidate.
+> The current initializer refuses older or partial TLS directories and does not
+> convert encrypted database secrets. Do not follow these steps against a live
+> site until a separate migration plan covers its database and retained keys.
+
 For a server that runs OpenELIS from an `openelis-docker` ("allinone")
 folder and should run from this distribution instead, keeping its data.
 

@@ -1,54 +1,16 @@
 #!/usr/bin/env bash
-# Assert docker-compose.yml's image: lines use a versioned upstream tag —
-# no `:develop`/`:latest`/`:main` floats. Exits 0 on success, 1 with a
-# per-line failure report otherwise.
-#
-# Used by .github/workflows/release.yml as a gate before tagging — fails
-# the release if a maintainer triggered the workflow without first running
-# `pin-versions.sh <release> <release>`.
-#
-# itechuw/certgen is allowed to track `:main` because it has no release
-# versioning — `:main` is the convention everywhere in this repo.
+# Every published target must retain the exact images that were tested.
 set -euo pipefail
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$ROOT"
-
-COMPOSE_FILES=(docker-compose.yml docker-compose.analyzers.yml)
-fail=0
-
-# Extract every `image: <ref>` line as "<line-number>:<ref>" pairs and
-# iterate via a while-read loop (portable to bash 3.2 / macOS — avoids
-# `mapfile`, which is bash 4+ only).
-while IFS= read -r entry; do
-  file="${entry%%:*}"
-  entry="${entry#*:}"
-  line="${entry%%:*}"
-  ref="${entry#*:}"
-  repo="${ref%%:*}"
-  rest="${ref#*:}"
-  # Strip any optional @sha256:digest suffix (allowed but not required).
-  tag="${rest%@*}"
-
-  if [[ "$repo" != "itechuw/certgen" ]]; then
-    case "$tag" in
-      develop|latest|main|master|nightly|"")
-        echo "FAIL: ${file}:${line} tag '${tag}' is a moving label:" >&2
-        echo "      release pins must use a versioned upstream tag" >&2
-        fail=1
-        ;;
-    esac
-  fi
-done < <(
-  grep -nE '^[[:space:]]+image:[[:space:]]+' "${COMPOSE_FILES[@]}" \
-    | sed -E 's|^([^:]+:[0-9]+):[[:space:]]+image:[[:space:]]+|\1:|'
-)
-
-if (( fail )); then
-  echo "" >&2
-  echo "Release pins are not fully resolved. Re-run pin-versions.sh with" >&2
-  echo "release tags before retrying, e.g.:" >&2
-  echo "  ./scripts/pin-versions.sh 3.3.0" >&2
-  exit 1
-fi
-
-echo "OK: all image refs in ${COMPOSE_FILES[*]} use versioned tags."
+cd "$(dirname "$0")/.."
+python3 - "$@" <<'PYCODE'
+import pathlib,re,sys
+files=sys.argv[1:] or ['docker-compose.yml','docker-compose.analyzers.yml']
+errors=[]
+for name in files:
+    refs=re.findall(r'^\s+image:\s+(\S+)',pathlib.Path(name).read_text(),re.M)
+    if not refs: errors.append(name+': no images found')
+    for ref in refs:
+        if not re.fullmatch(r'[^\s@]+@sha256:[a-f0-9]{64}',ref):errors.append(name+': image requires an immutable digest: '+ref)
+if errors:sys.exit('\n'.join(errors))
+print('All target images have immutable digests.')
+PYCODE

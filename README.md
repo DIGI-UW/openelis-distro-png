@@ -11,7 +11,7 @@ run OpenELIS servers. Developer and release notes are at the end.
 - [What you need](#what-you-need)
 - [Choosing a version](#choosing-a-version)
 - [Installing a server](#installing-a-server)
-- [Set the admin password (mandatory)](#set-the-admin-password-mandatory)
+- [Administrator initialization](#administrator-initialization)
 - [HTTPS with Let's Encrypt](#https-with-lets-encrypt)
 - [Day-to-day operation](#day-to-day-operation)
 - [Loading the PNG test catalog](#loading-the-png-test-catalog)
@@ -53,20 +53,14 @@ reachable by lab users; firewall the rest.
 
 ## Choosing a version
 
-Always install from a **release tag**, not from `main`. The `main` branch
-follows the OpenELIS development build and changes every day; a tag is a
-fixed, tested snapshot that installs the same way every time.
+The Compose files pin exact image digests. Pulling again cannot silently change
+what a checkout installs. This branch is a candidate until its fresh-install
+validation and review are complete; there is no published PNG release yet.
 
-Find the current release on the
-[Releases page](https://github.com/DIGI-UW/openelis-distro-png/releases), or
-list tags from the command line:
-
-```bash
-git ls-remote --tags https://github.com/DIGI-UW/openelis-distro-png
-```
-
-In the commands below, replace `<release-tag>` with the tag you chose. Record
-which tag each server runs; you need it for upgrades and rollbacks.
+For a released installation, select a reviewed tag from the
+[Releases page](https://github.com/DIGI-UW/openelis-distro-png/releases).
+Record the tag or commit used by each server. The instructions below describe
+an **empty target**, not an in-place upgrade of an existing database.
 
 ## Installing a server
 
@@ -94,7 +88,6 @@ Set these three values for every real site:
 | `OE_DB_PASSWORD` | Database password for the OpenELIS schema |
 | `ADMIN_PASSWORD` | PostgreSQL superuser password (used at first start) |
 | `OE_ADMIN_PASSWORD` | Password for the OpenELIS `admin` login |
-| `OE_ENCRYPTION_PASSWORD` | Key OpenELIS encrypts database secrets with. Set once; never change it on a site with data |
 | `ANALYZER_BRIDGE_PAIRING_CODE` | One-time code OpenELIS and the analyzer bridge pair with. Generate one: `openssl rand -hex 16` |
 
 `OE_ADMIN_PASSWORD` must meet the OpenELIS password policy: at least 8
@@ -117,7 +110,10 @@ the whole catalog on every start.
 Everything else is prepared automatically: the `init` service runs before
 the other services on every `up` and creates `./data` (see
 [Where the data lives](#where-the-data-lives)) with the right owners, and the
-first time it generates this site's own internal certificate and keystores.
+first time it generates this site's private internal certificate, keystores
+and a separate random database-secret encryption key. Back up `data/tls` with
+the database. The initializer never adopts an old database key or replaces
+unknown TLS material; migration is a separate operation.
 
 ### 4. Start the stack
 
@@ -131,41 +127,30 @@ minutes while the database is created and the catalog is loaded. OpenELIS
 pairs with the analyzer bridge by itself on that first start, using
 `ANALYZER_BRIDGE_PAIRING_CODE`.
 
-### 5. Set the admin password
+### 5. Confirm startup and set up HTTPS
 
-Run `./scripts/set-admin-password.sh`. See the next section; this step is
-required.
+`init-admin` applies the configured administrator password once. `verify-admin`
+must confirm that it works and that the published default is rejected before
+the proxy starts. Both services should show `Exited (0)` in `docker compose ps -a`.
 
-### 6. Set up HTTPS
+Follow [HTTPS with Let's Encrypt](#https-with-lets-encrypt). Until then the
+proxy uses the site's private self-signed certificate and browsers show a
+warning. Sign in at `https://<your-hostname>/` as `admin` with the password
+configured in `.env`.
 
-Follow [HTTPS with Let's Encrypt](#https-with-lets-encrypt) below. Until you
-do, the server uses a self-signed certificate and browsers show a warning.
+## Administrator initialization
 
-### 7. Log in
-
-Open `https://<your-hostname>/` and sign in as `admin` with the password you
-set.
-
-## Set the admin password (mandatory)
-
-Putting `OE_ADMIN_PASSWORD` in `.env` does **not** change the login password
-on its own. Every new site starts with the published default
-`admin` / `adminADMIN!` until you run:
-
-```bash
-./scripts/set-admin-password.sh
-```
-
-The script applies `OE_ADMIN_PASSWORD`, then confirms the new password works
-and the default no longer does. Check a site at any time with:
+Plain `docker compose up -d` initializes and verifies the administrator on a
+fresh target. Later starts retain its password. Check it at any time with:
 
 ```bash
 ./scripts/set-admin-password.sh --check
 ```
 
-If you later change the admin password in the application
-(Administration > Users), update `OE_ADMIN_PASSWORD` in `.env` to match. The
-analyzer bridge signs in with it.
+If you change the password in Administration > Users, update `OE_ADMIN_PASSWORD`
+in `.env` to match. To deliberately reset it to the configured value, run
+`./scripts/set-admin-password.sh`. The Bridge uses its paired identity and
+does not use the administrator's password.
 
 ## HTTPS with Let's Encrypt
 
@@ -288,17 +273,14 @@ Everything the site must keep is in `./data` (the `DATA_ROOT` setting in
 
 Never delete `./data`. `docker compose down` (even with `-v`) leaves it alone.
 
-### Following the development build
+### Updating the pinned installation
 
-On the `main` branch the images track OpenELIS `develop`. One command takes
-a database dump, pulls the newest images, restarts and waits until the site
-is healthy:
+`./scripts/update.sh` fast-forwards the checkout when possible, backs up the
+database, pulls the committed image digests and restarts. It does not resolve
+new images behind moving tags. Review the target revision before updating.
 
-```bash
-./scripts/update.sh
-```
-
-See the comments at the top of the script for rollback.
+This fresh-target candidate refuses unrecognized older TLS directories.
+Do not use it as an automatic migration of a running installation.
 
 ### Backups
 
@@ -507,62 +489,58 @@ Administration.
 
 ## Analyzers
 
-The analyzer bridge is included (`docker-compose.analyzers.yml`). Every TCP
-analyzer connects to the one shared ASTM listener on port 12000; the bridge
-tells them apart by source address and the name the instrument puts in its
-messages. It also picks up result files dropped into its watched import
-folder. OpenELIS and the bridge trust each other by certificate after pairing
-once with `ANALYZER_BRIDGE_PAIRING_CODE`.
+The released Bridge is included and pinned independently from OpenELIS.
+It reads analyzer messages, interprets values and controls, and sends an
+unambiguous FHIR bundle. OpenELIS owns local test/answer mapping, specimen
+placement, review and import. PNG adds no second parser or hash gate.
 
-The analyzer types offered are the PNG set in
-[configs/analyzer-catalog](configs/analyzer-catalog/README.md) (GeneXpert,
-BD EpiCenter, Bruker MALDI Biotyper), in place of the bridge's built-in ones.
-Connecting an analyzer is done with the DIGI analyzer
-team; ICT staff only need to make sure the analyzer can reach the server.
+TCP analyzers share port 12000. It is bound to loopback until the operator sets
+`ANALYZER_LISTEN_ADDRESS` to the server's analyzer-network address and
+`ANALYZER_ALLOWED_SOURCES` to the instruments' source IPs or CIDRs. A saved
+connection's host or sender name selects the instrument; it does not grant
+network access. Start with observed source addresses and confirm admission
+with a test message before connecting instruments for routine use.
 
-Moving a site from an `openelis-docker` folder to this distribution:
-[docs/migrating-from-allinone.md](docs/migrating-from-allinone.md).
+The shipped [PNG catalog](configs/analyzer-catalog/README.md) contains GeneXpert,
+BD EpiCenter and Bruker MALDI Biotyper types, with results upload only. Pair
+through the one-time `ANALYZER_BRIDGE_PAIRING_CODE`, or enter the Bridge's
+generated code in OpenELIS. Saved connections and the pairing identity remain
+under `data/bridge` across restarts.
+
+File-based analyzers are optional. For one, set `ANALYZER_HOST_MOUNT` to an
+existing absolute directory and append `compose.analyzer-files.yaml` to
+`COMPOSE_FILE`. Only the Bridge sees this read-only directory. The ordinary
+TCP setup needs no `/mnt` sharing or host file-drop directory.
+
+Clinical mapping gaps and instrument acceptance remain explicit in the
+[catalog notes](configs/analyzer-catalog/README.md). Synthetic tests verify
+software behavior; they do not certify a physical instrument.
 
 ## For maintainers
 
 ### Versioning
 
-`main` tracks upstream `develop` images (`itechuw/openelis-global-2:develop`
-and related). Releases are cut from `main` by the **Release** GitHub Actions
-workflow, which pins every image to an exact `tag@sha256:<digest>` so that a
-release tag always installs the same bytes. Distro release numbers are
-independent of upstream OpenELIS version numbers.
-
-To cut a release: **Actions > Release > Run workflow**, then fill in:
-
-- `distro_version`: the new tag; must not already exist
-- `oe_version`, `bridge_version`: upstream image tags to pin
-- `base_ref` (optional): branch or commit to release from; default `main`
-- `allow_develop_pins` (optional): leave off for real releases; the workflow
-  fails if any pin is `:develop`, `:latest` or missing a digest
-- `draft` (default on) and `prerelease` (optional)
-
-The workflow refreshes digests with `scripts/pin-versions.sh`, checks them
-with `scripts/check-release-pins.sh`, commits the pinned
-`docker-compose.yml` on the tag only, builds the tarball with
-`scripts/build-tarball.sh`, and drafts a GitHub Release with notes from the
-upstream releases plus the distro commit log. Review the draft, then
-publish.
-
-To refresh pins by hand:
+Every default image reference includes its registry digest. The application
+and Bridge have independent versions. Resolve a proposed set before review:
 
 ```bash
-./scripts/pin-versions.sh <oe-tag|develop> <bridge-tag|develop>
-git diff docker-compose.yml
+./scripts/pin-versions.sh <oe-tag> <bridge-tag>
+./scripts/check-release-pins.sh
+git diff docker-compose.yml docker-compose.analyzers.yml
 ```
 
-### Why the admin password needs a script
+Update [image provenance](docs/image-provenance.md), validate the proposed set,
+and commit it. With no arguments, `pin-versions.sh` only checks existing pins.
 
-OpenELIS creates the `admin` account on first start from a password hash
-built into the web application image (`ARG DEFAULT_PW` at image build time).
-A distro that uses published images cannot change that, so
-`scripts/set-admin-password.sh` sets the real password after start-up and
-verifies it through the login endpoint.
+The Release workflow takes `distro_version`, `base_ref`, `draft` and
+`prerelease`. It validates and tags exactly that commit, builds its archive
+and prepares notes containing the exact images. It never refreshes pins or
+creates an unreviewed release-only commit.
+
+The separate `compose.amr.yaml` is an older AMR testing candidate, not a
+combined AMR/analyzer release. Its temporary CI-cache images are unsuitable
+for a durable installation. Keep it separate until the upstream AMR stack
+contains the merged analyzer baseline and a coherent image set is validated.
 
 ### Catalog loading details
 
@@ -576,9 +554,20 @@ this distro does not use them.
 
 ### Development and testing
 
-Playwright end-to-end tests, a mock analyzer and development overlays live
-in the companion `openelis-png-test-harness` repository, which consumes this
-distro at a tag.
+Run the distro checks locally (Docker and Java 21 are required for runtime checks):
+
+```bash
+python3 -m unittest discover -s tests -p 'test_*.py' -v
+PNG_TEST_SECURITY=1 python3 -m unittest discover -s tests -p test_install_security.py -v
+./scripts/check-analyzer-profiles.sh
+./scripts/check-release-pins.sh
+```
+
+The profile check executes the exact pinned Bridge's catalog, parser and FHIR
+renderer against synthetic normal, control and failed-run messages. The
+security checks create isolated temporary Docker volumes and remove them
+afterward. Full fresh-install acceptance additionally requires startup,
+administrator verification, pairing, result delivery and restart retention.
 
 [docs/template-source-inventory.md](docs/template-source-inventory.md)
 classifies which files are generic and which are country-specific, for

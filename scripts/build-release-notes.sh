@@ -12,8 +12,6 @@
 #
 # Required env vars:
 #   DISTRO_VERSION   — e.g. 3.2.2.0
-#   OE_VERSION       — e.g. 3.2.1.6
-#   BRIDGE_VERSION   — e.g. 3.0.1
 #   PREVIOUS_TAG     — previous distro tag (may be empty for first release)
 #   GH_TOKEN         — for gh api authentication
 #
@@ -22,6 +20,10 @@ set -euo pipefail
 
 OE_REPO="${OE_REPO:-DIGI-UW/OpenELIS-Global-2}"
 BRIDGE_REPO="${BRIDGE_REPO:-DIGI-UW/openelis-analyzer-bridge}"
+
+# Read the versions actually committed in the release tree.
+OE_VERSION=$(sed -n 's|^[[:space:]]*image: itechuw/openelis-global-2:\([^@]*\)@.*|\1|p' docker-compose.yml | head -n1)
+BRIDGE_VERSION=$(sed -n 's|^[[:space:]]*image: itechuw/openelis-analyzer-bridge:\([^@]*\)@.*|\1|p' docker-compose.analyzers.yml | head -n1)
 
 oe_release_url="https://github.com/${OE_REPO}/releases/tag/${OE_VERSION}"
 bridge_release_url="https://github.com/${BRIDGE_REPO}/releases/tag/${BRIDGE_VERSION}"
@@ -65,6 +67,10 @@ else
 _First tagged release — no previous distro tag for diff._
 EOF
 fi
+
+printf '\n## Exact image references\n\n```text\n'
+grep -hE '^[[:space:]]*image:' docker-compose.yml docker-compose.analyzers.yml | sed 's/^[[:space:]]*image: //' | sort -u
+printf '```\n'
 
 printf '\n## OpenELIS Global %s\n\n' "$OE_VERSION"
 fetch_upstream_body "$OE_REPO" "$OE_VERSION"

@@ -1,3 +1,5 @@
+# Separate historical AMR candidate; not the merged analyzer baseline.
+# Temporary CI-cache images may expire. Do not use for a durable PNG installation.
 # AMR testing candidate: OpenELIS 5f4ebe44db (build source 50e5ea4, DIGI-UW/OpenELIS-Global-2#4819)
 # Built by https://github.com/DIGI-UW/OpenELIS-Global-2/actions/runs/40109481819
 # Select after docker-compose.yml and docker-compose.analyzers.yml.

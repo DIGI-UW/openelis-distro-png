@@ -11,8 +11,23 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Test AMR package preparation
+      - name: Generate disposable validation credentials
+        run: |
+          for name in OE_ADMIN_PASSWORD OE_DB_PASSWORD ADMIN_PASSWORD; do
+            printf '%s=Png9!%s\n' "$name" "$(openssl rand -hex 16)" >> "$GITHUB_ENV"
+          done
+
+      - name: Validate immutable image pins
+        run: ./scripts/check-release-pins.sh
+
+      - name: Test distro configuration and metadata
         run: python3 -m unittest discover -s tests -p 'test_*.py' -v
+
+      - name: Test fresh private identity and retained keys
+        run: PNG_TEST_SECURITY=1 python3 -m unittest discover -s tests -p test_install_security.py -v
+
+      - name: Validate PNG profiles using the released Bridge
+        run: JAVA_HOME="$JAVA_HOME_21_X64" ./scripts/check-analyzer-profiles.sh
 
       - name: Verify pinned metadata downloads anonymously from an empty cache
         run: |

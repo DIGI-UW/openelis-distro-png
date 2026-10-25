@@ -1,6 +1,6 @@
 {
   "$schema": "https://openelis-global.org/contracts/analyzer/v1/analyzer-profile.schema.json",
-  "schemaVersion": "1.0",
+  "schemaVersion": "2.0",
   "profileMeta": {
     "id": "png-cepheid-genexpert-astm",
     "version": "1.0.0",
@@ -29,7 +29,7 @@
   },
   "capabilities": {
     "inboundResults": true,
-    "outboundOrders": true,
+    "outboundOrders": false,
     "connectionTest": true
   },
   "default_test_mappings": [
@@ -89,6 +89,14 @@
       "resultRecordSelection": {
         "mode": "FIELD_NON_BLANK",
         "targetField": "R.3.5"
+      },
+      "resultParts": {
+        "testCode": "R.3.4",
+        "call": "R.4",
+        "unit": "R.5",
+        "status": "R.9",
+        "started": "R.12",
+        "completed": "R.13"
       }
     },
     "flagMappings": {},
@@ -104,10 +112,6 @@
         {
           "value": "RESULTS_ONLY",
           "labelKey": "analyzer.setup.connect.dataFlow.resultsOnly"
-        },
-        {
-          "value": "TWO_WAY",
-          "labelKey": "analyzer.setup.connect.dataFlow.twoWay"
         }
       ]
     },
@@ -117,10 +121,6 @@
       "inputKind": "SELECT",
       "required": true,
       "choices": [
-        {
-          "value": "RS-232",
-          "labelKey": "analyzer.connection.transport.RS-232"
-        },
         {
           "value": "TCP/IP",
           "labelKey": "analyzer.connection.transport.TCP/IP"
@@ -180,9 +180,9 @@
       "required": true,
       "choices": [],
       "visibleWhen": {
-        "fieldKey": "transport",
+        "fieldKey": "connectionRole",
         "operator": "EQUALS",
-        "value": "TCP/IP"
+        "value": "CLIENT"
       }
     }
   ],
@@ -201,8 +201,6 @@
     "source": "SHIPPED",
     "status": "ACTIVE",
     "publishedAt": "2026-10-21T00:00:00Z",
-    "publishedBy": "distribution",
-    "recognitionFingerprint": "sha256:68a4cf6c695d3a23662a7a5dc97983bbc78e38726f932517d09238d47aad701e",
-    "revisionFingerprint": "sha256:04da87e19adf60ee574fb9dda10247796b33bab78dfb18ebea200e701570bd85"
+    "publishedBy": "distribution"
   }
 }

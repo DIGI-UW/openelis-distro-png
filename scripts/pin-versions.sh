@@ -1,64 +1,34 @@
 #!/usr/bin/env bash
-# Rewrite docker-compose.yml image tags to a target release version.
-#
-# Usage:
-#   ./scripts/pin-versions.sh                # no-op, current pins reported
-#   ./scripts/pin-versions.sh 3.3.0          # pin every OpenELIS image, the
-#                                            # Analyzer Bridge included, to 3.3.0
-#   ./scripts/pin-versions.sh develop        # back to develop
-#
-# The Analyzer Bridge image (itechuw/openelis-global-2-analyzer-bridge) is
-# published with the OpenELIS images under the same tags, so it takes the
-# OpenELIS version. A second argument is accepted for compatibility and
-# ignored.
-#
-# This script only rewrites the human-readable tag (`repo:tag`); it does
-# NOT append `@sha256:<digest>`. Tags like `3.2.1.6` are treated as fixed
-# releases by upstream convention. Implementers wanting cryptographic
-# pinning can resolve digests at deploy time.
-#
-# After running, review:  git diff docker-compose.yml  →  commit.
+# Resolve a proposed image set, then review and test the diff before committing.
+# No arguments: validate existing pins without changing them.
+# Usage: scripts/pin-versions.sh OE_TAG BRIDGE_TAG
 set -euo pipefail
-
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "$ROOT"
-
-COMPOSE_FILES=(docker-compose.yml docker-compose.analyzers.yml)
-
-# Read the current tag for a given image repo from the compose files' image: lines.
-get_current_tag() {
-  local repo="$1"
-  grep -hE "image:[[:space:]]*${repo}:" "${COMPOSE_FILES[@]}" \
-    | head -n1 \
-    | sed -E "s|.*${repo}:([^@[:space:]]+).*|\1|"
-}
-
-OE_REPOS=(
-  itechuw/openelis-global-2
-  itechuw/openelis-global-2-frontend
-  itechuw/openelis-global-2-database
-  itechuw/openelis-global-2-fhir
-  itechuw/openelis-global-2-proxy
-  itechuw/openelis-global-2-analyzer-bridge
-)
-CERTGEN_REPO=itechuw/certgen
-
-CUR_OE="$(get_current_tag "${OE_REPOS[0]}")"
-OE_VERSION="${1:-${CUR_OE:-develop}}"
-CERTGEN_TAG="main"
-
-update_image() {
-  local repo="$1" new_tag="$2" file
-  for file in "${COMPOSE_FILES[@]}"; do
-    sed -i.bak -E "s|(image:[[:space:]]+)${repo}:[^[:space:]]+|\1${repo}:${new_tag}|" "$file"
-    rm -f "${file}.bak"
-  done
-}
-
-for repo in "${OE_REPOS[@]}"; do
-  update_image "$repo" "$OE_VERSION"
-done
-update_image "$CERTGEN_REPO" "$CERTGEN_TAG"
-
-echo "Pinned every OpenELIS image (Analyzer Bridge included) to ${OE_VERSION}."
-echo "Review:  git diff ${COMPOSE_FILES[*]}  ->  commit."
+cd "$(dirname "$0")/.."
+if [[ $# == 0 ]]; then exec scripts/check-release-pins.sh; fi
+if [[ $# != 2 ]]; then echo 'Usage: pin-versions.sh OE_TAG BRIDGE_TAG' >&2; exit 2; fi
+python3 - "$1" "$2" <<'PY'
+import pathlib, re, subprocess, sys
+for tag in sys.argv[1:]:
+    if not re.fullmatch(r'[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}',tag):
+        sys.exit('Invalid image tag')
+files=[pathlib.Path(n) for n in ('docker-compose.yml','docker-compose.analyzers.yml')]
+original={p:p.read_text() for p in files}
+refs=set(re.findall(r'^\s+image:\s+(\S+)', '\n'.join(original.values()), re.M))
+replacements={}
+for ref in sorted(refs):
+    tagged=ref.split('@')[0]
+    repo,tag=tagged.rsplit(':',1)
+    if repo=='itechuw/openelis-analyzer-bridge': tag=sys.argv[2]
+    elif repo=='itechuw/openelis-global-2' or repo.startswith('itechuw/openelis-global-2-'):tag=sys.argv[1]
+    else: continue  # certgen and autoheal are reviewed separately
+    proposed=repo+':'+tag
+    output=subprocess.check_output(['docker','buildx','imagetools','inspect',proposed],text=True)
+    found=re.search(r'^Digest:\s+(sha256:[a-f0-9]{64})$',output,re.M)
+    if not found:sys.exit('No registry digest for '+proposed)
+    replacements[ref]=proposed+'@'+found[1]
+# Resolve all references successfully before touching either file.
+for p,text in original.items():
+    for old,new in replacements.items():text=text.replace('image: '+old,'image: '+new)
+    p.write_text(text)
+print('Resolved immutable image set. Review both Compose files, update image provenance and validate before committing.')
+PY

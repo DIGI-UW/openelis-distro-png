@@ -27,15 +27,17 @@ services:
     init:
         container_name: oe-init
         # Only for its JDK keytool and openssl; the stores it ships are not used.
-        image: itechuw/certgen:main
+        image: itechuw/certgen:main@sha256:b769aba3465e921239e8cb732e47406e38a5ee2ef40853e34f794433d96bf5fe
         platform: linux/amd64
         restart: "no"
         user: "0:0"
         entrypoint: ["bash", "/opt/openelis/init-data.sh"]
         environment:
+            - OE_ADMIN_PASSWORD=${OE_ADMIN_PASSWORD:?Set a unique administrator password}
+            - OE_DB_PASSWORD=${OE_DB_PASSWORD:?Set a unique database password}
+            - ADMIN_PASSWORD=${ADMIN_PASSWORD:?Set a unique database superuser password}
             - KEYSTORE_PW=${SSL_KEYSTORE_PASSWORD:-kspass}
             - TRUSTSTORE_PW=${SSL_TRUSTSTORE_PASSWORD:-tspass}
-            - TLS_SUBJECT=${OE_TLS_SUBJECT:-/O=OpenELIS Global/OU=Papua New Guinea/CN=oe.openelis.org}
             - OE_CONFIGURATION_AUTOCREATE=${OE_CONFIGURATION_AUTOCREATE:-true}
             - CONFIGURATION_REGISTRY_USERNAME=${CONFIGURATION_REGISTRY_USERNAME:-}
             - CONFIGURATION_REGISTRY_TOKEN=${CONFIGURATION_REGISTRY_TOKEN:-}
@@ -43,6 +45,7 @@ services:
             - BRIDGE_UID=${BRIDGE_UID:-9257}
         volumes:
             - ./scripts/init-data.sh:/opt/openelis/init-data.sh:ro
+            - ./scripts:/scripts:ro
             - ./scripts/prepare-configuration-packages.py:/opt/openelis/prepare-configuration-packages.py:ro
             - ./configs/configuration-packages:/opt/openelis/configuration-packages:ro
             - ./configs/configuration:/opt/openelis/configuration
@@ -52,14 +55,18 @@ services:
 
     db.openelis.org:
         container_name: openelisglobal-database
-        image: itechuw/openelis-global-2-database:develop
+        image: itechuw/openelis-global-2-database:develop@sha256:0e989fb19f3e8c68cec00c1ec24593ec454c97f6fef643b82986e93f1da2509a
         platform: linux/amd64
         restart: always
+        depends_on:
+            init:
+                condition: service_completed_successfully
         env_file:
             - ./configs/database/database.env
         environment:
             - DB_PASSWORD=${OE_DB_PASSWORD:-clinlims}
-            - DB_SUPERUSER_PASSWORD=${ADMIN_PASSWORD:-superuser}
+            - DB_SUPERUSER_PASSWORD=${ADMIN_PASSWORD:?Set ADMIN_PASSWORD}
+            - POSTGRES_PASSWORD=${ADMIN_PASSWORD:?Set ADMIN_PASSWORD}
             - TZ=${TZ:-Pacific/Port_Moresby}
         volumes:
             # DB_VOLUME_MOUNT stays as an override for scripts/ha.
@@ -75,7 +82,7 @@ services:
 
     oe.openelis.org:
         container_name: openelisglobal-webapp
-        image: itechuw/openelis-global-2:develop
+        image: itechuw/openelis-global-2:develop@sha256:80d2c589f59d4b912f5c625ccb5cea91e7f6706134a97882942187022d3c4b2d
         platform: linux/amd64
         depends_on:
             init:
@@ -103,7 +110,7 @@ services:
             start_period: 1200s
         labels:
             # Restarted by the autoheal service when unhealthy.
-            - autoheal=true
+            - png-autoheal=true
             - autoheal.stop.timeout=60
         networks:
           openelis-network:
@@ -111,8 +118,8 @@ services:
         logging: *local-logging
         environment:
             # NOTE: no DEFAULT_PW here. Upstream reads it only at image BUILD
-            # time, so the admin password is set post-install with
-            # ./scripts/set-admin-password.sh (see .env.example).
+            # time. init-admin sets the site password and verify-admin checks
+            # it before Compose starts the proxy.
             - TZ=${TZ:-Pacific/Port_Moresby}
             # Tomcat server.xml settings. configuration.autocreate is passed as
             # a system property so a site can switch catalog loading off from
@@ -126,11 +133,6 @@ services:
             - SSL_KEYSTORE_PASSWORD=${SSL_KEYSTORE_PASSWORD:-kspass}
             - SSL_TRUSTSTORE_PATH=${SSL_TRUSTSTORE_PATH:-/etc/openelis-global/truststore}
             - SSL_TRUSTSTORE_PASSWORD=${SSL_TRUSTSTORE_PASSWORD:-tspass}
-            # Key for secrets OpenELIS encrypts in the database (external
-            # connection passwords, encrypted site settings, the Analyzer
-            # Bridge pairing key...). Independent of the keystore password:
-            # changing it makes existing encrypted values unreadable.
-            - OE_ENCRYPTION_PASSWORD=${OE_ENCRYPTION_PASSWORD:-${SSL_KEYSTORE_PASSWORD:-kspass}}
         volumes:
             - ${DATA_ROOT:-./data}/tls/stores:/etc/openelis-global
             - ${DATA_ROOT:-./data}/webapp/lucene:/var/lib/lucene_index
@@ -147,6 +149,7 @@ services:
             # Sourced by catalina.sh before the JVM starts: stops Tomcat
             # printing every -D flag, including -Ddatasource.password, at boot.
             - ./configs/tomcat/setenv.sh:/usr/local/tomcat/bin/setenv.sh:ro
+            - ./configs/tomcat/quiet-startup.sh:/usr/local/tomcat/bin/png-quiet-startup.sh:ro
             - ./configs/plugins/:/var/lib/openelis-global/plugins
             - ./configs/odoo/odoo-test-product-mapping.csv:/var/lib/openelis-global/odoo/odoo-test-product-mapping.csv
             - ./configs/programs/:/var/lib/openelis-global/programs
@@ -159,9 +162,10 @@ services:
             - source: common.properties
 
     fhir.openelis.org:
+        group_add: ["8443"]
         container_name: external-fhir-api
         platform: linux/amd64
-        image: itechuw/openelis-global-2-fhir:develop
+        image: itechuw/openelis-global-2-fhir:develop@sha256:3f063dc5512a15e4c07902068db9e84ed8a73f8967987805e8d47e384fceb044
         ports:
             - "${LOCAL_BIND:-127.0.0.1}:8081:8080"
             - "${LOCAL_BIND:-127.0.0.1}:8444:8443"
@@ -182,7 +186,7 @@ services:
             retries: 6
             start_period: 60s
         labels:
-            - autoheal=true
+            - png-autoheal=true
             - autoheal.stop.timeout=30
         environment:
           TZ: ${TZ:-Pacific/Port_Moresby}
@@ -200,10 +204,11 @@ services:
           FHIR_SERVER_ADRESS: "http://fhir.openelis.org:8080/fhir/"
         logging: *local-logging
         volumes:
-            - ${DATA_ROOT:-./data}/tls/stores:/etc/openelis-global
+            - ${DATA_ROOT:-./data}/tls/stores:/etc/openelis-global:ro
+            - ./configs/tomcat/quiet-startup.sh:/usr/local/tomcat/bin/setenv.sh:ro
 
     frontend.openelis.org:
-        image: itechuw/openelis-global-2-frontend:develop
+        image: itechuw/openelis-global-2-frontend:develop@sha256:1f026f5de04c3f480e74fc25923e6e9995f8ddffcb91d0360c1ac0672bc3d517
         container_name: openelisglobal-front-end
         platform: linux/amd64
         # Without a restart policy the front end stays down after a reboot and
@@ -228,7 +233,7 @@ services:
             start_period: 20s
 
     proxy:
-        image: itechuw/openelis-global-2-proxy:develop
+        image: itechuw/openelis-global-2-proxy:develop@sha256:713b7aaa22f2eb55d54b6cbf21e35f729e5e81fd82a72f9d410bc7bf6f62c790
         container_name: openelisglobal-proxy
         platform: linux/amd64
         ports:
@@ -239,6 +244,7 @@ services:
             # by a Let's Encrypt one with compose.letsencrypt.yaml.
             - ${DATA_ROOT:-./data}/tls/certs:/etc/nginx/certs/
             - ${DATA_ROOT:-./data}/tls/keys:/etc/nginx/keys/
+            - ${DATA_ROOT:-./data}/tls/stores/internal.crt:/etc/nginx/png-internal.crt:ro
             - ./configs/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
             # ACME HTTP-01 webroot (scripts/generate-letsencrypt-certs.sh, or
             # the host's certbot when CERTBOT_WEBROOT points at its webroot).
@@ -248,6 +254,8 @@ services:
             - openelis-network
         logging: *local-logging
         depends_on:
+            verify-admin:
+                condition: service_completed_successfully
             init:
                 condition: service_completed_successfully
             oe.openelis.org:
@@ -262,16 +270,16 @@ services:
             start_period: 30s
 
     # Docker restarts a container that exits, never one that is running but
-    # unhealthy. This restarts containers labelled autoheal=true (the webapp
+    # unhealthy. This restarts containers labelled png-autoheal=true (the webapp
     # and FHIR) once their healthcheck reports unhealthy. The database is left
     # out on purpose: a failing pg_isready usually means recovery or load, which
     # a restart makes worse, and a crashed Postgres exits and is restarted anyway.
     autoheal:
         container_name: autoheal-oe
-        image: willfarrell/autoheal:1.2.0
+        image: willfarrell/autoheal:1.2.0@sha256:31f580ef0279eaced5b38d631b08c474d70d8403c1c2fdd6ddcf2e879d5f3f7c
         restart: always
         environment:
-            - AUTOHEAL_CONTAINER_LABEL=autoheal
+            - AUTOHEAL_CONTAINER_LABEL=png-autoheal
             - TZ=${TZ:-Pacific/Port_Moresby}
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
@@ -281,6 +289,41 @@ services:
             disable: true
         network_mode: none
         logging: *local-logging
+
+    init-admin:
+        image: itechuw/openelis-global-2-database:develop@sha256:0e989fb19f3e8c68cec00c1ec24593ec454c97f6fef643b82986e93f1da2509a
+        platform: linux/amd64
+        restart: "no"
+        entrypoint: ["sh", "/scripts/init-admin-password.sh"]
+        depends_on:
+            oe.openelis.org:
+                condition: service_healthy
+        environment:
+            PGHOST: db.openelis.org
+            PGUSER: postgres
+            PGDATABASE: clinlims
+            PGPASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD}
+            OE_ADMIN_PASSWORD: ${OE_ADMIN_PASSWORD:?Set OE_ADMIN_PASSWORD}
+        volumes:
+            - ./scripts:/scripts:ro
+            - ${DATA_ROOT:-./data}/installation:/installation-state
+        networks: [openelis-network]
+
+    verify-admin:
+        image: itechuw/certgen:main@sha256:b769aba3465e921239e8cb732e47406e38a5ee2ef40853e34f794433d96bf5fe
+        platform: linux/amd64
+        restart: "no"
+        entrypoint: ["sh", "/scripts/verify-admin-password.sh"]
+        depends_on:
+            init-admin:
+                condition: service_completed_successfully
+        environment:
+            OE_ADMIN_PASSWORD: ${OE_ADMIN_PASSWORD:?Set OE_ADMIN_PASSWORD}
+        volumes:
+            - ./scripts:/scripts:ro
+            - ${DATA_ROOT:-./data}/installation:/installation-state
+            - ${DATA_ROOT:-./data}/tls/stores/internal.crt:/etc/openelis-global/internal.crt:ro
+        networks: [openelis-network]
 
 secrets:
   common.properties:

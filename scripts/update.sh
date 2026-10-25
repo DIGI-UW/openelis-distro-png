@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# Update this site to the newest images for the tags in the compose files
-# (`develop` on the main branch, a fixed version on a release tag), in one go:
+# Update this site to the exact image digests committed in the checkout:
 #
 #   ./scripts/update.sh              fast-forward this checkout, back up the
 #                                    database, pull, restart, wait until healthy
-#   ./scripts/update.sh --no-git     leave the checkout alone (images only)
+#   ./scripts/update.sh --no-git     leave the checkout alone (restore its pinned images)
 #   ./scripts/update.sh --no-backup  skip the database dump (not recommended)
 #
 # Every update on `develop` can run database migrations that cannot be undone
