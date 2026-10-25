@@ -19,6 +19,10 @@ for ref in sorted(refs):
     tagged=ref.split('@')[0]
     repo,tag=tagged.rsplit(':',1)
     if repo=='itechuw/openelis-analyzer-bridge': tag=sys.argv[2]
+    elif repo in ('ghcr.io/digi-uw/openelis-global-2', 'ghcr.io/digi-uw/openelis-global-2-frontend'):
+        # A combined candidate can later be replaced with a published OE release.
+        repo = 'itechuw/' + repo.rsplit('/', 1)[1]
+        tag = sys.argv[1]
     elif repo=='itechuw/openelis-global-2' or repo.startswith('itechuw/openelis-global-2-'):tag=sys.argv[1]
     else: continue  # certgen and autoheal are reviewed separately
     proposed=repo+':'+tag

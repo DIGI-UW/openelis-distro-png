@@ -124,7 +124,7 @@ docker compose ps
 
 Wait until `oe.openelis.org` shows `healthy`. The first start can take more than
 20 minutes on a slower host while the database is created and the full PNG catalog is loaded. The health check allows
-30 minutes for startup; do not restart a progressing catalog import. OpenELIS
+one hour for the first full standards import; do not restart a progressing import. OpenELIS
 pairs with the analyzer bridge by itself on that first start, using
 `ANALYZER_BRIDGE_PAIRING_CODE`.
 
@@ -403,24 +403,21 @@ digest-pinned GHCR artifacts or checksum-pinned HTTPS packages. It verifies the 
 files into the existing configuration tree; OE2 uses its normal catalog loading
 and import reporting. The adapter is shared across metadata publishers and does
 not require an application ZIP loader. Verified archives are cached under
-`DATA_ROOT/webapp/reference-packages` for offline reuse.
+`DATA_ROOT/webapp/reference-packages` for reuse on subsequent starts.
 
 See [the release-pin instructions](configs/configuration-packages/README.md) for
-the format and update procedure. The checked-in AMR 2026.1 pins cover human
+the format and update procedure. The checked-in AMR 2026.2 pins cover human
 EUCAST and CLSI 2025/2026 metadata and download anonymously from public GHCR
 packages. Package loading and a local workflow acceptance
 run must be verified against the selected application image before UAT.
 
-`compose.amr.yaml` pins the application images for the AMR testing candidate.
-Append it after the core and analyzer Compose files in `COMPOSE_FILE`; keep
-site ports, certificates and data paths in the existing local override. This
-candidate is for local validation and is separate from the released PNG baseline.
-The first full standards import can take over 30 minutes under amd64 emulation;
-the candidate grants up to an hour before automatic unhealthy-container restarts.
-A successful health check ends that startup grace immediately. Subsequent starts
-skip unchanged configuration files. Imported standards remain inactive until an
+The default image set includes AMR on top of the merged analyzer baseline.
+No separate AMR Compose overlay is needed. The first full standards import can
+exceed 30 minutes under amd64 emulation, so the application has a one-hour
+startup grace period. A successful health check ends that grace immediately.
+Subsequent starts skip unchanged configuration files. Imported standards remain inactive until an
 administrator activates the edition for testing in Microbiology reference data.
-The testing default is CLSI `2026-2026.1`, supplied by
+The testing default is CLSI `2026-2026.2`, supplied by
 `configs/configuration/backend/microbiology-settings/png-amr.csv`. In **Admin →
 Microbiology reference data → Breakpoint standards**, activate that exact edition
 and use **Use as default** to change the preference later. Activation and default
@@ -459,17 +456,15 @@ Do these once per laboratory, in the admin screens:
 
 To check before go-live:
 
-- **Disk content.** Zone diameters are interpreted only against breakpoints for
-  the same disk content. The panels use CLSI disk contents (for example
+- **Disk content.** A disk-specific zone breakpoint requires matching disk content.
+  A breakpoint without a disk constraint remains general. The panels use CLSI disk contents (for example
   ceftriaxone 30 mcg). CPHL must confirm these match the disks in use.
   Amoxicillin has no CLSI disk breakpoint, so its zone results show No
   breakpoint.
-- **Package version.** Interpreting zones and assigning group defaults needs
-  reference packages 2026.2 or later and an application image with disk
-  content support. The 2026.1 packages pinned here interpret MIC results only.
-  The edition name carries the package version, so moving the pins to 2026.2
-  also changes the default in `microbiology-settings/png-amr.csv` to
-  `2026-2026.2`.
+- **Package version.** The pinned 2026.2 packages include disk content and supported
+  zone breakpoints, and the combined application supports both. Unsupported
+  contexts still show No breakpoint. The default edition in
+  `microbiology-settings/png-amr.csv` matches the package: `2026-2026.2`.
 - **Organisms in two groups.** The reference package places some species,
   such as *Streptococcus anginosus* and *S. sanguinis*, in both the
   beta-haemolytic and the viridans groups. They get no default panel; the
@@ -510,8 +505,10 @@ under `data/bridge` across restarts.
 
 File-based analyzers are optional. For one, set `ANALYZER_HOST_MOUNT` to an
 existing absolute directory and append `compose.analyzer-files.yaml` to
-`COMPOSE_FILE`. Only the Bridge sees this read-only directory. The ordinary
-TCP setup needs no `/mnt` sharing or host file-drop directory.
+`COMPOSE_FILE`, then configure a FILE-capable profile and connection to read
+`/data/analyzer-drops`. The three shipped PNG profiles use TCP/IP. Only the
+Bridge sees this read-only directory. The ordinary TCP setup needs no `/mnt`
+sharing or host file-drop directory.
 
 Clinical mapping gaps and instrument acceptance remain explicit in the
 [catalog notes](configs/analyzer-catalog/README.md). Synthetic tests verify
@@ -522,7 +519,9 @@ software behavior; they do not certify a physical instrument.
 ### Versioning
 
 Every default image reference includes its registry digest. The application
-and Bridge have independent versions. Resolve a proposed set before review:
+and Bridge have independent versions. To move to a published Docker Hub release,
+resolve a proposed set before review (this replaces both combined candidate
+application images as well as the support-service pins):
 
 ```bash
 ./scripts/pin-versions.sh <oe-tag> <bridge-tag>
@@ -537,11 +536,6 @@ The Release workflow takes `distro_version`, `base_ref`, `draft` and
 `prerelease`. It validates and tags exactly that commit, builds its archive
 and prepares notes containing the exact images. It never refreshes pins or
 creates an unreviewed release-only commit.
-
-The separate `compose.amr.yaml` is an older AMR testing candidate, not a
-combined AMR/analyzer release. Its temporary CI-cache images are unsuitable
-for a durable installation. Keep it separate until the upstream AMR stack
-contains the merged analyzer baseline and a coherent image set is validated.
 
 ### Catalog loading details
 

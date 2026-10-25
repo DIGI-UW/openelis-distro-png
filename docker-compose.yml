@@ -82,7 +82,7 @@ services:
 
     oe.openelis.org:
         container_name: openelisglobal-webapp
-        image: itechuw/openelis-global-2:develop@sha256:80d2c589f59d4b912f5c625ccb5cea91e7f6706134a97882942187022d3c4b2d
+        image: ghcr.io/digi-uw/openelis-global-2:png-amr-908d3ce335@sha256:68a690ee056da168cd84780c86abe38a293aaa1ab513f43bbf30a9416522fdf7
         platform: linux/amd64
         depends_on:
             init:
@@ -103,11 +103,10 @@ services:
             interval: 15s
             timeout: 10s
             retries: 8
-            # Empty-database validation with the full PNG catalog exceeded
-            # 20 minutes under amd64 emulation. Allow 30 minutes before
-            # counting failures; the first passing check ends this grace.
-            # This avoids autoheal interrupting normal first-start imports.
-            start_period: 1800s
+            # The full AMR standards import can exceed 30 minutes under amd64
+            # emulation. Preserve its one-hour startup grace in the combined
+            # target; the first passing check ends this grace immediately.
+            start_period: 3600s
         labels:
             # Restarted by the autoheal service when unhealthy.
             - png-autoheal=true
@@ -208,7 +207,7 @@ services:
             - ./configs/tomcat/quiet-startup.sh:/usr/local/tomcat/bin/setenv.sh:ro
 
     frontend.openelis.org:
-        image: itechuw/openelis-global-2-frontend:develop@sha256:1f026f5de04c3f480e74fc25923e6e9995f8ddffcb91d0360c1ac0672bc3d517
+        image: ghcr.io/digi-uw/openelis-global-2-frontend:png-amr-908d3ce335@sha256:c5a0e1627aa64d22ffea2a23f9dea21a1cf8340682ee6de55186cd793fdef843
         container_name: openelisglobal-front-end
         platform: linux/amd64
         # Without a restart policy the front end stays down after a reboot and

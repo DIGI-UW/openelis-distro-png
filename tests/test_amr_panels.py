@@ -1,5 +1,6 @@
 """The shipped AST panels stay in step with the CPHL panel catalog."""
 import csv
+import json
 from pathlib import Path
 import unittest
 
@@ -19,6 +20,16 @@ def configured_panels():
 
 
 class AstPanelConfigurationTest(unittest.TestCase):
+    def test_default_standard_matches_its_pinned_package_version(self):
+        with (ROOT / "microbiology-settings/png-amr.csv").open() as source:
+            settings = {row["name"]: row["value"] for row in csv.DictReader(source)}
+        authority = settings["microbiologyDefaultBreakpointAuthority"].lower()
+        pin_path = ROOT.parents[1] / "configuration-packages" / ("amr-reference-" + authority + ".json")
+        pin = json.loads(pin_path.read_text())
+        edition = settings["microbiologyDefaultBreakpointVersion"]
+        self.assertTrue(edition.endswith("-" + pin["version"]),
+                        "The default edition must be supplied by the pinned reference package")
+
     def test_every_catalog_ast_panel_is_configured_with_its_drugs(self):
         catalog, configured = catalog_panels(), configured_panels()
         self.assertEqual(set(catalog), set(configured))

@@ -1,6 +1,6 @@
 {
   "id": "amr-reference-clsi",
-  "version": "2026.1",
-  "url": "oci://ghcr.io/digi-uw/amr-reference-clsi@sha256:b081e4cf9874303ae8b2262ff5fa77576ab3b14049202e5f1e42695b2a75d241",
-  "sha256": "b48b283602bbf9ee1948797c5760b9de24c94a7326a26cbd36086ce205b46d93"
+  "version": "2026.2",
+  "url": "oci://ghcr.io/digi-uw/amr-reference-clsi@sha256:605f536110d16f0b2bcf3971756d59b075ad068a1ac152d478b6187f589bd8f0",
+  "sha256": "fb9e38684f84934b709a530d0f137e033562c2ab04696e81babc7165709a8286"
 }

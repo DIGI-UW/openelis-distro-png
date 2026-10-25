@@ -10,6 +10,7 @@ for name in files:
     refs=re.findall(r'^\s+image:\s+(\S+)',pathlib.Path(name).read_text(),re.M)
     if not refs: errors.append(name+': no images found')
     for ref in refs:
+        if '/e2e-cache/' in ref:errors.append(name+': temporary CI-cache image cannot be a deployment pin: '+ref)
         if not re.fullmatch(r'[^\s@]+@sha256:[a-f0-9]{64}',ref):errors.append(name+': image requires an immutable digest: '+ref)
 if errors:sys.exit('\n'.join(errors))
 print('All target images have immutable digests.')

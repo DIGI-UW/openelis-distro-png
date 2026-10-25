@@ -2,9 +2,9 @@
 
 Metadata can be released independently of OpenELIS and selected by a deployment.
 Place one JSON pin per package here. The checked-in AMR pins select version
-2026.1 of the public EUCAST and CLSI packages, covering human 2025/2026
-reference data from AMR for R. `compose.amr.yaml` pins the receiving application
-candidate for local testing. These are testing candidates, not a clinical
+2026.2 of the public EUCAST and CLSI packages, covering human 2025/2026
+reference data from AMR for R. The default Compose image set includes the
+receiving AMR application and merged analyzer baseline. These are testing candidates, not a clinical
 approval or an instruction to activate a standard.
 
 Each pin has exactly four string fields: `id`, `version`, `url` and `sha256`.
