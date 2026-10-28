@@ -232,7 +232,7 @@ services:
             start_period: 20s
 
     proxy:
-        image: itechuw/openelis-global-2-proxy:develop@sha256:713b7aaa22f2eb55d54b6cbf21e35f729e5e81fd82a72f9d410bc7bf6f62c790
+        image: nginx:1.30.6-alpine@sha256:47928bf67eb62a1863cb08d9ecb52d3e704304ba614eaee17884204677702951
         container_name: openelisglobal-proxy
         platform: linux/amd64
         ports:

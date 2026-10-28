@@ -40,6 +40,7 @@ if [ -f "$S/png-initialized" ]; then
     echo 'PNG private identity and encryption key retained.'
     exit 0
 fi
+[ ! -s "$D/db/PG_VERSION" ] || fail 'Existing database without initialized security material; restore its matching keys or complete the explicit encryption upgrade before startup.'
 [ -z "$(ls -A "$S")" ] && [ -z "$(ls -A "$C")" ] && [ -z "$(ls -A "$K")" ] || fail 'Unrecognized or partial TLS state. Use an empty fresh target or restore its complete security directory; migration is separate.'
 mkdir "$S/.initializing"
 # Keep the marker on failure so the next start cannot silently create another key.

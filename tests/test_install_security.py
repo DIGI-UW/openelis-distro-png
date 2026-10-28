@@ -71,6 +71,12 @@ class InstallSecurityTest(unittest.TestCase):
         self.assertEqual(before, self.run_script(b, "sha256sum /data/tls/stores/keystore"))
         self.run_script(b, "test ! -e /data/tls/stores/encryption.key")
 
+    def test_existing_database_without_keys_is_not_treated_as_fresh(self):
+        a = self.volume()
+        self.run_script(a, "mkdir -p /data/db; echo 14 > /data/db/PG_VERSION")
+        self.run_script(a, succeeds=False)
+        self.run_script(a, "test ! -e /data/tls/stores/encryption.key; test ! -e /data/tls/keys/apache-selfsigned.key")
+
     def test_readable_but_unrelated_truststore_is_rejected(self):
         a = self.volume()
         self.run_script(a)

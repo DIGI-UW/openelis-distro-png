@@ -1,189 +1,104 @@
 # Backup and restore
 
-Covers the two things a site cannot be rebuilt without: the `clinlims`
-database and the on-disk `configs/` tree. Both are captured by
-`scripts/backup.sh`.
+Back up the database, installation keys, Bridge state, application files and
+configuration together. Keep the backup private: it includes credentials and
+may include patient data. A database dump alone is not a complete site backup.
 
-> **Read [Restoring](#restoring) before you restore.** Restoring the dump as
-> `-U postgres` leaves every table owned by `postgres` and takes the site
-> down. That mistake is recoverable, but only by re-restoring correctly.
-
-## Taking a backup
+## Take a backup
 
 ```bash
-sudo ./scripts/backup.sh                  # -> ./backups/<UTC timestamp>/
-sudo ./scripts/backup.sh /srv/oe-backups  # explicit destination root
+sudo ./scripts/backup.sh
+# Or choose a destination outside the checkout:
+sudo ./scripts/backup.sh /srv/oe-backups
 ```
 
-Produces:
+Run during a maintenance window. The helper stops this Compose project's running
+services except PostgreSQL, takes the snapshot, and restarts those services even
+if an archive fails. It does not start services that were already stopped.
+The destination is private before any data is written. Require exit status zero
+and a complete `SHA256SUMS`; a partial directory is not a completed backup.
 
-| File | What it is |
-|---|---|
-| `clinlims.dump` | `pg_dump -Fc --no-owner --no-acl`, taken as the `clinlims` role |
-| `configs.tar.gz` | `configs/` and `data/` (DATA_ROOT) with numeric ownership preserved, minus `data/db` and `data/logs` |
-| `env.backup` | copy of `.env`, mode 0600 — **contains `OE_DB_PASSWORD` and `OE_ADMIN_PASSWORD`** |
-| `MANIFEST.txt` | hostname, timestamp, distro ref, resolved image pins |
-| `SHA256SUMS` | checksums of the above |
+| File | Contents |
+| --- | --- |
+| `clinlims.dump` | Full logical database dump retaining object ownership, without access grants |
+| `configs.tar.gz` | Configuration tree, excluding database files and logs |
+| `data.tar.gz` | Contents of `DATA_ROOT`, including keys, Bridge state and uploads, excluding live PostgreSQL files and logs |
+| `data-root.txt` | Resolved original data-directory path |
+| `env.backup` | Private installation settings |
+| `compose.backup.json` | Resolved Compose configuration, including credentials and actual paths |
+| `MANIFEST.txt` | Distro revision, configured images and deployed container image IDs |
+| `SHA256SUMS` | Checksums of the completed backup files |
 
-The output directory is mode 0700 because of `env.backup`. Keep it that way,
-and treat the backup as credential material wherever you copy it.
+The data archive has paths relative to `DATA_ROOT`. An absolute data path does
+not become a nested host path when extracted. Retain numeric ownership; the
+application and Bridge run as different users.
 
-### Why it must run as root
+## Restore into an empty replacement installation
 
-`scripts/backup.sh` refuses to run unprivileged, and this is the reason:
+Do not run these steps against the active site's database or data directory.
+Use a separate host or an isolated Compose project with distinct container names,
+network, ports and storage. Select the distro revision and exact images recorded
+in the backup. Ensure the original installation remains available for rollback.
 
-```
-$ tar -czf configs.tar.gz ./configs ./data   # as the host user
-tar: ./data/bridge: Cannot open: Permission denied
-tar: Exiting with failure status due to previous errors
-$ echo $?
-2
-```
+1. Verify `sha256sum -c SHA256SUMS` inside the backup directory. Stop on any
+   missing or mismatched file.
+2. Restore `env.backup` as `.env` with mode `0600`. Review `DATA_ROOT`, host paths,
+   ports and Compose overlays for the replacement. The resolved Compose backup
+   is evidence of the source configuration; do not start its original host paths
+   blindly on the same server.
+3. Extract `configs.tar.gz` into the replacement checkout. Create the selected
+   empty `DATA_ROOT` and extract `data.tar.gz` directly into it. For example:
 
-`data/bridge` is mode `750` owned by UID `9257` (the analyzer bridge's
-`astm` account), `data/tls/keys` is root-only, and
-`configs/configuration` is owned by UID `8443` after
-`scripts/fix-config-permissions.sh`. `tar` exits 2 but **still leaves a
-tarball behind**, so an unprivileged backup looks like it worked and is
-silently missing the bridge's SQLite state store. `scripts/backup.sh` fails
-closed instead, and verifies both subtrees are present in the finished
-archive.
+   ```bash
+   sudo tar --numeric-owner -xzf /path/to/backup/configs.tar.gz -C /path/to/replacement
+   sudo mkdir -p /srv/replacement-data
+   sudo tar --numeric-owner -xzf /path/to/backup/data.tar.gz -C /srv/replacement-data
+   ```
 
-### What is deliberately not backed up
+4. Start only PostgreSQL and its initializer:
 
-- `data/db`: a file-level copy of a running PostgreSQL data directory is
-  not a consistent backup. `clinlims.dump` is the database backup.
-- `data/logs`: runtime logs, not state.
+   ```bash
+   docker compose up -d db.openelis.org
+   docker compose exec -T db.openelis.org pg_isready -U clinlims -d clinlims
+   ```
 
-## Restoring
+5. Replace only this new target's initialized database with an empty database
+   owned by the application role, then restore with administrator privileges while
+   retaining the object ownership recorded in the dump:
 
-### 1. Restore `configs/`, `data/` and `.env`
+   ```bash
+   docker compose exec -T db.openelis.org dropdb -U postgres clinlims
+   docker compose exec -T db.openelis.org createdb -U postgres -O clinlims -T template0 clinlims
+   docker compose exec -T db.openelis.org \
+     pg_restore -U postgres -d clinlims --no-acl --exit-on-error \
+     < /path/to/backup/clinlims.dump
+   ```
 
-```bash
-cd /path/to/openelis-distro-png
-docker compose down
-sudo tar --numeric-owner -xzf /path/to/backup/configs.tar.gz -C .
-cp /path/to/backup/env.backup .env && chmod 600 .env
-```
+   Require a successful restore. Permission errors, missing extensions and large
+   object failures are not acceptable noise. Do not start the application after
+   a failed restore. This dump retains ownership: application objects return to `clinlims`, while
+   administrator-owned functions keep their original owners. The privileged
+   restore is needed for older C-language functions. Do not add `--no-owner`: it
+   would instead assign every object to `postgres`. Confirm application table
+   ownership before starting services.
 
-`--numeric-owner` is not optional. UID `8443` must own
-`configs/configuration` or the webapp cannot write its checksum files, and
-UID `9257` must own `data/bridge` or the bridge's SQLite store will not
-open. If you extracted without it, run the repair script and let the init
-service re-assert the rest:
+6. Start the remaining services using ordinary `docker compose up -d`. Verify
+   application health, login, clinical record counts, stored encrypted settings,
+   Bridge pairing and queued-result delivery where applicable. Confirm private
+   keys were retained and public HTTPS works before cutover.
 
-```bash
-./scripts/fix-config-permissions.sh
-docker compose up -d init
-```
+Keep the backup and original installation until acceptance is complete.
+A rollback after database migrations restores the matching database, keys and
+configuration together; selecting an older application image alone is unsafe.
 
-### 2. Bring up the database only
+## Existing databases and older backups
 
-```bash
-docker compose up -d db.openelis.org
-docker compose ps        # wait for it to report healthy
-```
+Restoring a backup from this distro retains its encryption key. Moving an older
+installation into this distro can require OE2's explicit encrypted-secret
+upgrade before the new application starts. That is separate from a fresh install
+or ordinary restore. Never generate a replacement key just to make existing
+data start, and never delete Bridge pairing or queued data to bypass an error.
 
-### 3. Restore the dump **as `clinlims`**
-
-```bash
-docker compose exec -T db.openelis.org \
-  pg_restore -U clinlims -d clinlims --clean --if-exists --no-owner \
-  < /path/to/backup/clinlims.dump
-```
-
-### 4. Start the rest of the stack
-
-```bash
-docker compose up -d
-docker compose ps        # oe.openelis.org must report healthy
-./scripts/set-admin-password.sh --check   # confirm the admin credential
-```
-
-## Expected `pg_restore` noise
-
-A correct restore **exits 1** and prints roughly 150 errors. This is normal
-and the restore is complete. They all look like this:
-
-```
-pg_restore: error: could not execute query: ERROR:  must be owner of function tablefunc_crosstab_2
-pg_restore: error: could not execute query: ERROR:  must be owner of type public.tablefunc_crosstab_2
-pg_restore: error: could not execute query: ERROR:  must be owner of large object 16456
-```
-
-They come from extension-owned objects in `public` (the `tablefunc`
-extension and its large objects) that belong to `postgres`, not to
-`clinlims`. `--clean` asks `clinlims` to drop them, `clinlims` is not their
-owner, and each refusal is counted as an error. Nothing in the `clinlims`
-schema — the application's actual data — is affected.
-
-Two ways to deal with it, in order of preference:
-
-**Restrict the restore to the application schema.** This is the quieter
-option: `public` holds only extension objects here, so there is nothing to
-restore in it.
-
-```bash
-docker compose exec -T db.openelis.org \
-  pg_restore -U clinlims -d clinlims --clean --if-exists --no-owner -n clinlims \
-  < /path/to/backup/clinlims.dump
-```
-
-Verify afterwards rather than trusting the exit code:
-
-```bash
-# expect ~ the same counts as the source site
-docker compose exec -T db.openelis.org psql -U clinlims -d clinlims -c \
-  "SELECT count(*) FROM clinlims.sample;"
-docker compose exec -T db.openelis.org psql -U clinlims -d clinlims -c \
-  "SELECT login_name, is_admin FROM clinlims.login_user;"
-```
-
-**Or accept the noise.** If you restore the whole dump, check that every
-error names `must be owner of` and a `public.tablefunc_*` object or a large
-object, and that nothing names a `clinlims.*` table:
-
-```bash
-pg_restore ... 2>&1 | grep -v 'must be owner of' | grep '^pg_restore: error'
-```
-
-That filter should print nothing. If it prints anything mentioning a
-`clinlims` object, the restore is genuinely broken — do not put the site
-into service.
-
-## Never restore as `-U postgres`
-
-```bash
-# DO NOT DO THIS
-pg_restore -U postgres -d clinlims --clean --if-exists --no-owner < clinlims.dump
-```
-
-It looks better, because it exits 0 with no ownership errors. What it
-actually does is make `postgres` the owner of every restored table:
-`--no-owner` means "assign ownership to the connecting role", and the
-connecting role is `postgres`.
-
-The webapp connects as `clinlims`, so the site comes back up and then fails
-on the first query:
-
-```
-ERROR: permission denied for schema clinlims
-```
-
-The stack may even report healthy for a moment before the webapp context
-gives up. Recovery is to re-restore correctly as `clinlims` per
-[step 3](#3-restore-the-dump-as-clinlims); there is no partial fix worth
-attempting.
-
-## Restoring onto a different host
-
-The distro is a versioned artifact, so check out the same tag the backup was
-taken from before restoring — `MANIFEST.txt` records the distro ref and the
-resolved image digests:
-
-```bash
-grep -A10 'distro ref' /path/to/backup/MANIFEST.txt
-git clone --branch <ref> https://github.com/DIGI-UW/openelis-distro-png
-```
-
-Then follow [Restoring](#restoring) from step 1.
+Earlier backups used a combined `configs.tar.gz` archive. Inspect their manifest
+and archive paths and use the matching distro revision's procedure; do not assume
+they contain the separate `data.tar.gz` described here.

@@ -12,6 +12,7 @@
 # restore the dump (docs/backup-restore.md) and run those images again (see the
 # message printed at the end).
 set -euo pipefail
+umask 077
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
@@ -52,31 +53,31 @@ mkdir -p "$DEST"; chmod 0700 "$DEST"
 if [ "$DO_BACKUP" -eq 1 ]; then
     if docker compose ps --status running --services 2>/dev/null | grep -qx db.openelis.org; then
         log "dumping the database..."
-        docker compose exec -T db.openelis.org pg_dump -U clinlims -d clinlims -Fc --no-owner --no-acl > "$DEST/clinlims.dump"
-        [ "$(stat -c %s "$DEST/clinlims.dump")" -gt 1024 ] || die "database dump looks empty: $DEST/clinlims.dump"
+        docker compose exec -T db.openelis.org pg_dump -U clinlims -d clinlims -Fc --no-acl > "$DEST/clinlims.dump"
+        [ "$(wc -c < "$DEST/clinlims.dump")" -gt 1024 ] || die "database dump looks empty: $DEST/clinlims.dump"
         log "  $(du -h "$DEST/clinlims.dump" | cut -f1)  $DEST/clinlims.dump"
     else
-        log "database is not running; no dump taken"
+        die "database is not running; no update performed because a backup is required"
     fi
 fi
 
 # --- 3. remember the running images -----------------------------------------
 : > "$DEST/images-before.txt"
-for image in $(docker compose config --images | sort -u); do
-    id="$(docker image inspect -f '{{.Id}}' "$image" 2>/dev/null || true)"
-    [ -n "$id" ] || continue
-    # A digest reference is repo@sha256:...; @sha256 is not part of a tag name.
-    repository="${image%@*}"
-    if [[ "${repository##*/}" == *:* ]]; then repository="${repository%:*}"; fi
-    docker tag "$id" "${repository}:pre-update-${STAMP}"
-    echo "$image $id" >> "$DEST/images-before.txt"
+# Inspect deployed containers, not the new checkout's desired image references.
+for cid in $(docker compose ps -a -q); do
+    image="$(docker inspect -f '{{.Config.Image}}' "$cid")"
+    id="$(docker inspect -f '{{.Image}}' "$cid")"
+    service="$(docker inspect -f '{{index .Config.Labels "com.docker.compose.service"}}' "$cid")"
+    docker tag "$id" "local/png-rollback-${service//./-}:pre-update-${STAMP}"
+    printf '%s %s %s\n' "$service" "$image" "$id" >> "$DEST/images-before.txt"
 done
+[ -s "$DEST/images-before.txt" ] || die "no deployed images found; use docker compose up for a fresh install"
 
 # --- 4. pull and restart ----------------------------------------------------
 log "pulling images..."
 docker compose pull --quiet
 log "restarting changed services..."
-docker compose up -d --remove-orphans
+docker compose up -d
 
 # --- 5. wait for the webapp --------------------------------------------------
 log "waiting for the webapp to report healthy (first start after a migration can take ~10 min)..."
@@ -90,11 +91,16 @@ while :; do
 done
 
 changed=0
-while read -r image old; do
-    new="$(docker image inspect -f '{{.Id}}' "$image" 2>/dev/null || true)"
-    if [ "$new" != "$old" ]; then changed=$((changed + 1)); log "  updated: $image"; fi
+while read -r service image old; do
+    cid="$(docker compose ps -a -q "$service")"
+    new="$(docker inspect -f '{{.Image}}' "$cid" 2>/dev/null || true)"
+    if [ "$new" != "$old" ]; then changed=$((changed + 1)); log "  updated: $service"; fi
 done < "$DEST/images-before.txt"
 log "done: webapp healthy, ${changed} image(s) updated. Backup and image list: $DEST"
-log "rollback: restore $DEST/clinlims.dump (docs/backup-restore.md) and the previous Compose image references."
+if [ "$DO_BACKUP" -eq 1 ]; then
+    log "rollback requires $DEST/clinlims.dump plus the matching configuration and security backup."
+else
+    log "No database backup was requested. Use a verified matching backup before rollback."
+fi
 log "          images-before.txt records their exact references and local IDs; digest pins must not be retagged."
 log "          Run docker compose up -d after restoring the coherent previous pins."
