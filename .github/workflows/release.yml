@@ -1,16 +1,6 @@
 name: Release
 
-# Releases are driven by manual workflow_dispatch — the maintainer supplies
-# the distro version, OE version, and bridge version up front. The workflow
-# refreshes image digests in docker-compose.yml, validates that pins are
-# release-shaped, then tags the result and publishes a GitHub Release.
-#
-# docker-compose.yml carries literal `repo:tag@sha256:digest` image references on
-# every commit (including main), so a release tag is just a tag of the
-# canonical-state tree — no env-var substitution, no rewriting required.
-#
-# Pushes to main produce a 90-day workflow artifact for inspection but never
-# tag or publish a Release.
+# Publish exactly the reviewed, tested pins from base_ref; never refresh at release time.
 
 on:
   workflow_dispatch:
@@ -19,24 +9,11 @@ on:
         description: "Distro release version (e.g. 3.2.2.0). Must not collide with an existing tag."
         required: true
         type: string
-      oe_version:
-        description: "OpenELIS Global image tag (e.g. 3.2.1.6). Use 'develop' only with allow_develop_pins=true."
-        required: true
-        type: string
-      bridge_version:
-        description: "Analyzer Bridge image tag (e.g. 3.0.1). Use 'develop' only with allow_develop_pins=true."
-        required: true
-        type: string
       base_ref:
         description: "Branch or commit SHA to release from."
         required: false
         default: "main"
         type: string
-      allow_develop_pins:
-        description: "Permit non-release pins (e.g. :develop). OFF by default — workflow fails if any pin is non-release."
-        required: false
-        default: false
-        type: boolean
       draft:
         description: "Create the GitHub Release as a draft for review before publishing."
         required: false
@@ -83,8 +60,6 @@ jobs:
       # them via $VAR (bash) rather than ${{ … }} template interpolation —
       # avoids shell-injection risk surfaced by the GHA workflow security guide.
       DISTRO_VERSION: ${{ inputs.distro_version }}
-      OE_VERSION_INPUT: ${{ inputs.oe_version }}
-      BRIDGE_VERSION_INPUT: ${{ inputs.bridge_version }}
       BASE_REF: ${{ inputs.base_ref }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -113,31 +88,14 @@ jobs:
           echo "value=${PREV_TAG}" >> "$GITHUB_OUTPUT"
           echo "Previous distro tag: ${PREV_TAG:-<none>}"
 
-      - name: Refresh image pins
-        run: ./scripts/pin-versions.sh "$OE_VERSION_INPUT" "$BRIDGE_VERSION_INPUT"
-
-      - name: Validate pin shape (release-mode)
-        if: ${{ inputs.allow_develop_pins != true }}
+      - name: Validate committed image pins
         run: ./scripts/check-release-pins.sh
 
-      - name: Commit (if pins changed) and tag release
+      - name: Tag the reviewed commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docker-compose.yml
-          if ! git diff --staged --quiet; then
-            # Multi-line message uses bash variable expansion ($VAR), not
-            # template interpolation — keeps interpolation out of run: blocks.
-            git commit -m "release: ${DISTRO_VERSION}
-
-            OpenELIS Global: ${OE_VERSION_INPUT}
-            Analyzer Bridge:  ${BRIDGE_VERSION_INPUT}
-
-            Refreshed image digests in docker-compose.yml at release time. This
-            commit is reachable only via the ${DISTRO_VERSION} tag."
-          else
-            echo "No digest changes since ${BASE_REF}; tagging existing HEAD."
-          fi
+          git diff --exit-code
           git tag -a "${DISTRO_VERSION}" -m "Release ${DISTRO_VERSION}"
           git push origin "refs/tags/${DISTRO_VERSION}"
 
@@ -160,8 +118,6 @@ jobs:
       - name: Build release notes
         env:
           DISTRO_VERSION: ${{ env.DISTRO_VERSION }}
-          OE_VERSION: ${{ env.OE_VERSION_INPUT }}
-          BRIDGE_VERSION: ${{ env.BRIDGE_VERSION_INPUT }}
           PREVIOUS_TAG: ${{ steps.prev_tag.outputs.value }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./scripts/build-release-notes.sh > release-notes.md

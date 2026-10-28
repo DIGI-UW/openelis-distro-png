@@ -48,9 +48,9 @@ s = open(src).read()
 inject = ('location / {\n            proxy_set_header Accept-Encoding "";\n'
           '            sub_filter_once on;\n'
           f"            sub_filter '<body>' '<body>{banner}';\n")
-assert "location / {\n            proxy_pass http://frontend.openelis.org;" in s, "nginx.conf layout changed; update snapshot-refresh.sh"
-s = s.replace("location / {\n            proxy_pass http://frontend.openelis.org;",
-              inject + "            proxy_pass http://frontend.openelis.org;", 1)
+anchor = "location / {\n            set $frontend_upstream http://frontend.openelis.org;"
+assert anchor in s, "nginx.conf layout changed; update snapshot-refresh.sh"
+s = s.replace(anchor, inject + "            set $frontend_upstream http://frontend.openelis.org;", 1)
 open(dst, "w").write(s)
 PY
 cat > "$SNAP/compose.snapshot.yaml" <<YAML
@@ -87,8 +87,8 @@ services:
     ports: !override
       - "$PORT:443"
     volumes: !override
-      - certs-vol:/etc/nginx/certs/
-      - keys-vol:/etc/nginx/keys/
+      - $(data_root)/tls/certs:/etc/nginx/certs/:ro
+      - $(data_root)/tls/keys:/etc/nginx/keys/:ro
       - $SNAP/nginx.conf:/etc/nginx/nginx.conf:ro
   openelis-analyzer-bridge:
     container_name: oesnap-bridge

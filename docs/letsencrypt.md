@@ -69,6 +69,8 @@ precedence).
 | `LETSENCRYPT_CERT_NAME` | No | `LETSENCRYPT_PRIMARY_DOMAIN` | Explicit lineage name under `configs/letsencrypt/live/` |
 | `LETSENCRYPT_DOMAIN` | Legacy | — | Backward-compatible single-domain fallback |
 | `LETSENCRYPT_STAGING` | No | `false` | First-time `certonly` only: use `--staging` (untrusted chain) |
+| `LETSENCRYPT_DIR` | No | `./configs/letsencrypt` | Certificate tree the proxy reads (`/etc/letsencrypt` when the host's certbot owns the certificate) |
+| `CERTBOT_WEBROOT` | No | `./configs/nginx/certbot` | ACME HTTP-01 webroot the proxy serves (the host certbot's webroot in that case) |
 
 There is no built-in hostname default. It used to fall back to another
 project's test host, so an unconfigured run requested a certificate for
@@ -120,3 +122,24 @@ invalid.
 
 Expect HTTP→HTTPS redirect, a trusted certificate chain in the browser (no `-k`), and a successful login
 response. On the same machine without public DNS, continue using `https://localhost/` with `-k`.
+
+## Using a certbot already installed on the host
+
+If the server's own certbot already issues and renews the certificate (for
+example with `--webroot -w /var/www/certbot`), don't run the script. Point
+the overlay at the host's files in `.env`:
+
+```dotenv
+LETSENCRYPT_CERT_NAME=lab.health.gov.pg
+LETSENCRYPT_DIR=/etc/letsencrypt
+CERTBOT_WEBROOT=/var/www/certbot
+COMPOSE_FILE=docker-compose.yml:docker-compose.analyzers.yml:compose.letsencrypt.yaml
+```
+
+and give certbot a deploy hook that restarts the proxy, so a renewed
+certificate is loaded:
+
+```bash
+echo 'docker restart openelisglobal-proxy' | sudo tee /etc/letsencrypt/renewal-hooks/deploy/restart-proxy.sh
+sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/restart-proxy.sh
+```

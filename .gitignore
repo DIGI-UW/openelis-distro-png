@@ -3,6 +3,8 @@
 .env.letsencrypt
 .env.local
 .env.*.local
+# Copies of an older .env kept while moving a site
+.env.pre-migration-*
 
 # Locally-built release tarballs (scripts/build-tarball.sh output).
 openelis-png-distro-*.tar.gz
@@ -12,11 +14,15 @@ openelis-png-distro-*.tar.gz
 # test-harness state with :local image pins and machine-specific
 # paths — never commit these.
 compose.yaml
+docker-compose.site.yml
 compose.override.yaml
 compose.override.yml
 docker-compose.override.yml
 
-# Bridge FileStateStore bind mount (SQLite runtime state, owned by UID 9257)
+# Runtime data (DATA_ROOT): database, bridge state, uploads, logs, TLS.
+/data/
+
+# Pre-data-root layout, kept ignored for older checkouts
 configs/bridge-state/
 
 # scripts/backup.sh output — database dumps and a copy of .env
@@ -61,3 +67,10 @@ test-artifacts/
 
 # HA state (scripts/ha): FENCED marker, standby-since
 configs/ha/
+
+# Local branch checkouts and Python test caches
+.worktrees/
+__pycache__/
+
+# Downloaded metadata installed by the pinned-package initializer.
+configs/configuration/backend/*/pkg--*

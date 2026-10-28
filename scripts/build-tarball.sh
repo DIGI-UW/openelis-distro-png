@@ -38,5 +38,6 @@ echo
 echo "Verify the artifact boots a healthy stack:"
 echo "  cd /tmp && tar xzf '${ROOT}/${TARBALL}'"
 echo "  cd /tmp/${WRAP_DIR}"
+echo "  cp .env.example .env  # configure the three unique site passwords"
 echo "  docker compose up -d"
 echo "  curl -k -sSf https://localhost/ -o /dev/null && echo OK"

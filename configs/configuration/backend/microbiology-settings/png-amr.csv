@@ -1,0 +1,3 @@
+name,value,domainName,valueType,description,instructionKey,group,encrypted,createOnly
+microbiologyDefaultBreakpointAuthority,CLSI,resultConfiguration,text,Default breakpoint authority (CLSI 2026),,0,false,false
+microbiologyDefaultBreakpointVersion,2026-2026.2,resultConfiguration,text,Default breakpoint edition,,0,false,false

@@ -17,7 +17,7 @@ need() { [ -n "${!1:-}" ] || die "$1 is not set in .env (see scripts/ha/README.m
 need HA_NODE; need HA_MEMBERS; need HA_REPLICATION_PASSWORD; need HA_PG_BIND_WG
 case ":${COMPOSE_FILE:-}:" in
   *compose.ha.yaml*) ;;
-  *) die "COMPOSE_FILE in .env must include compose.ha.yaml (e.g. COMPOSE_FILE=docker-compose.yml:compose.ha.yaml)";;
+  *) die "COMPOSE_FILE in .env must include compose.ha.yaml (e.g. COMPOSE_FILE=docker-compose.yml:docker-compose.analyzers.yml:compose.ha.yaml)";;
 esac
 
 DB=db.openelis.org
@@ -31,10 +31,9 @@ psql_su() { dc exec -T "$DB" psql -X -q -v ON_ERROR_STOP=1 -U postgres -d "${PGD
 q() { psql_su -At -c "$1"; }
 in_recovery() { q "SELECT pg_is_in_recovery()"; }
 
-data_dir() {
-  local d="${DB_VOLUME_MOUNT:-./configs/database/data}"
-  case "$d" in /*) echo "$d";; *) echo "$HA_ROOT/${d#./}";; esac
-}
+abs_path() { case "$1" in /*) echo "$1";; *) echo "$HA_ROOT/${1#./}";; esac; }
+data_root() { abs_path "${DATA_ROOT:-./data}"; }
+data_dir() { abs_path "${DB_VOLUME_MOUNT:-$(data_root)/db}"; }
 
 db_image() {
   docker compose config --format json | python3 -c 'import json,sys; print(json.load(sys.stdin)["services"]["db.openelis.org"]["image"])'
@@ -105,7 +104,7 @@ webapp_wait_healthy() {
 # Rebuild the Lucene search index (it lives in a Docker volume, not in the
 # database, so a promoted standby or a fresh snapshot starts without it).
 reindex() {
-  local c=${1:-$WEBAPP_CONTAINER} base=https://localhost:8443/OpenELIS-Global code
+  local c=${1:-$WEBAPP_CONTAINER} base=https://localhost:8443/api/OpenELIS-Global code
   docker exec "$c" sh -c "rm -f /tmp/ha.jar; curl -k -s -o /dev/null -c /tmp/ha.jar -X POST '$base/ValidateLogin?apiCall=true' \
       --data-urlencode loginName=admin --data-urlencode \"password=\$0\"" "$OE_ADMIN_PASSWORD"
   code=$(docker exec "$c" sh -c "curl -k -s -o /tmp/ha.out -w '%{http_code}' -b /tmp/ha.jar '$base/rest/reindex'; rm -f /tmp/ha.jar")

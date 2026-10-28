@@ -21,7 +21,7 @@ Never two writable servers: fence the old primary before promoting.
 Required in `.env` (identical passwords on every server):
 
 ```dotenv
-COMPOSE_FILE=docker-compose.yml:compose.ha.yaml
+COMPOSE_FILE=docker-compose.yml:docker-compose.analyzers.yml:compose.ha.yaml
 HA_NODE=site-a
 HA_MEMBERS="offsite=10.88.0.1 site-a=10.88.0.2,192.168.1.10 site-b=10.88.0.3,192.168.1.11"
 HA_PG_BIND_WG=10.88.0.2

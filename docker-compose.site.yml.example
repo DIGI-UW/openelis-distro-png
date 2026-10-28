@@ -1,0 +1,18 @@
+# This server's own compose overrides. Copy to docker-compose.site.yml
+# (gitignored) and append it to COMPOSE_FILE in .env, for example:
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.analyzers.yml:compose.letsencrypt.yaml:docker-compose.site.yml
+#
+# Use it only for what .env cannot express. Examples (uncomment as needed):
+
+services:
+    openelis-analyzer-bridge:
+        # A serial analyzer attached to this host:
+        # devices:
+        #     - /dev/ttyUSB0:/dev/ttyUSB0
+        # The shared HL7 MLLP listener, for HL7 analyzers:
+        # ports:
+        #     - "2575:2575"
+        # environment:
+        #     - ORG_ITECH_AHB_MLLP_ENABLED=true
+        labels:
+            org.openelis.site: "example"

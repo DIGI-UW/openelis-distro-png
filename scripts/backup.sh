@@ -1,23 +1,10 @@
 #!/usr/bin/env bash
-# Back up an OpenELIS PNG site: the clinlims database plus the on-disk
-# configuration tree.
-#
-# MUST RUN AS ROOT (sudo). configs/bridge-state is mode 750 owned by
-# UID 9257 (the analyzer bridge's `astm` account — see
-# scripts/init-bridge-state.sh), and configs/configuration is owned by
-# UID 8443 after scripts/fix-config-permissions.sh. A host-user `tar` over
-# configs/ therefore hits "Cannot open: Permission denied", exits 2, and
-# still leaves a tarball behind — an archive that looks fine and silently
-# omits the bridge's SQLite state. This script refuses to run unprivileged
-# rather than produce that.
-#
-# Usage:
-#   sudo ./scripts/backup.sh                 # -> ./backups/<timestamp>/
-#   sudo ./scripts/backup.sh /srv/oe-backups # explicit destination root
-#
-# Restore: see docs/backup-restore.md. Read it before restoring — restoring
-# as -U postgres will take the site down.
+# Back up the database, configuration, DATA_ROOT and credentials. Run as root.
+# Writers are stopped for the snapshot and the previously running services are
+# restarted even if an archive fails. No live PostgreSQL files are copied.
+# Usage: sudo ./scripts/backup.sh [destination-root]
 set -euo pipefail
+umask 077
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
@@ -29,76 +16,69 @@ DEST="${DEST_ROOT}/${STAMP}"
 
 if [ "$(id -u)" -ne 0 ]; then
     echo "ERROR: this script must run as root." >&2
-    echo "       configs/bridge-state is 750 9257:9257 and configs/configuration is" >&2
+    echo "       DATA_ROOT/bridge is 750 9257:9257 and configs/configuration is" >&2
     echo "       owned by UID 8443; an unprivileged tar skips them and still exits" >&2
     echo "       with an archive, so the backup would be quietly incomplete." >&2
     echo "  sudo $0 $*" >&2
     exit 1
 fi
 
-compose() { docker compose -f docker-compose.yml "$@"; }
+# COMPOSE_FILE and DATA_ROOT come from .env, as for every docker compose call.
+compose() { docker compose "$@"; }
+# Let Compose resolve .env quoting, defaults and environment overrides.
+DATA_ROOT="$(compose config --format json | python3 -c 'import json,sys; c=json.load(sys.stdin); print(next(v["source"] for v in c["services"]["init"]["volumes"] if v["target"] == "/data"))')"
+[ -d "$DATA_ROOT" ] || { echo "ERROR: data directory does not exist." >&2; exit 1; }
 
-if ! compose ps --status running --services 2>/dev/null | grep -qx "$DB_SERVICE"; then
+running="$(compose ps --status running --services)"
+if ! printf '%s\n' "$running" | grep -qx "$DB_SERVICE"; then
     echo "ERROR: ${DB_SERVICE} is not running; cannot dump the database." >&2
     exit 1
 fi
 
-mkdir -p "$DEST"
+mkdir -p "$DEST_ROOT"
+mkdir -m 0700 "$DEST"
 echo "[backup] destination: ${DEST}"
+# Back up all stores from the same quiesced application state.
+mapfile -t writers < <(printf '%s\n' "$running" | grep -vx "$DB_SERVICE" || true)
+resume() {
+    result=$?
+    trap - EXIT
+    if [ "${#writers[@]}" -gt 0 ]; then
+        compose start "${writers[@]}" || result=1
+    fi
+    exit "$result"
+}
+trap resume EXIT
+if [ "${#writers[@]}" -gt 0 ]; then
+    echo '[backup] stopping application writers for a consistent snapshot...'
+    compose stop "${writers[@]}"
+fi
+
 
 # --- database ------------------------------------------------------------
-# Custom format (-Fc) so the restore side can use pg_restore's --clean
-# --if-exists --no-owner. Dumped as clinlims, the role that owns the
-# application schema, which is also the role docs/backup-restore.md
-# restores as.
+# Preserve object ownership so a privileged restore can recreate legacy C
+# functions while returning application tables to the clinlims role.
 echo "[backup] pg_dump clinlims (custom format)..."
 compose exec -T "$DB_SERVICE" \
-    pg_dump -U clinlims -d clinlims -Fc --no-owner --no-acl \
+    pg_dump -U clinlims -d clinlims -Fc --no-acl \
     > "${DEST}/clinlims.dump"
 
-DUMP_BYTES="$(stat -c %s "${DEST}/clinlims.dump")"
+DUMP_BYTES="$(wc -c < "${DEST}/clinlims.dump")"
 if [ "$DUMP_BYTES" -lt 1024 ]; then
     echo "ERROR: clinlims.dump is only ${DUMP_BYTES} bytes — the dump failed." >&2
     exit 1
 fi
 echo "[backup]   clinlims.dump: $(numfmt --to=iec "$DUMP_BYTES" 2>/dev/null || echo "${DUMP_BYTES}B")"
 
-# --- configuration tree ---------------------------------------------------
-# Ownership and modes are preserved (--numeric-owner) because they are load
-# bearing: UID 8443 must own configs/configuration for the webapp to write
-# its checksum files, and UID 9257 must own configs/bridge-state for the
-# bridge's SQLite store to open. A restore that flattens them re-creates
-# the very faults fix-config-permissions.sh and init-bridge-state.sh exist
-# to prevent.
-#
-# configs/database/data is excluded deliberately: a file-level copy of a
-# live PostgreSQL data directory is not a consistent backup. clinlims.dump
-# above is the database backup.
-echo "[backup] tar configs/ (excluding the live postgres data directory)..."
-tar --numeric-owner \
-    --exclude='./configs/database/data' \
-    --exclude='./configs/logs' \
-    -czf "${DEST}/configs.tar.gz" \
-    ./configs
-
-# tar exits 2 on a read failure. `set -e` already aborted if that happened,
-# so reaching here means every member was read.
-echo "[backup]   configs.tar.gz: $(du -h "${DEST}/configs.tar.gz" | cut -f1)"
-
-# Confirm the root-only subtrees really made it in — these are exactly the
-# ones an unprivileged tar drops. Each is checked only if it exists on this
-# host (configs/bridge-state is created by scripts/init-bridge-state.sh).
-tar tzf "${DEST}/configs.tar.gz" > "${DEST}/.members"
-for required in configs/bridge-state configs/configuration/backend; do
-    [ -d "${ROOT}/${required}" ] || continue
-    if ! grep -q "^\./${required}/" "${DEST}/.members"; then
-        echo "ERROR: ${required}/ is missing from configs.tar.gz — incomplete backup." >&2
-        rm -f "${DEST}/.members"
-        exit 1
-    fi
-    echo "[backup]   verified: ${required}/ is in the archive"
-done
-rm -f "${DEST}/.members"
+# Separate archives make restore destinations explicit even for absolute DATA_ROOT.
+tar --numeric-owner --exclude='./configs/database/data' --exclude='./configs/logs' \
+    -czf "${DEST}/configs.tar.gz" ./configs
+tar --numeric-owner --exclude='./db' --exclude='./logs' \
+    -C "$DATA_ROOT" -czf "${DEST}/data.tar.gz" .
+printf '%s\n' "$DATA_ROOT" > "${DEST}/data-root.txt"
+# Validate archive readability before publishing completion checksums.
+tar tzf "${DEST}/configs.tar.gz" > /dev/null
+tar tzf "${DEST}/data.tar.gz" > /dev/null
 
 # --- .env ----------------------------------------------------------------
 # .env holds OE_DB_PASSWORD and OE_ADMIN_PASSWORD. It is copied because a
@@ -116,13 +96,19 @@ fi
     echo "taken:       ${STAMP} (UTC)"
     echo "distro ref:  $(git -C "$ROOT" describe --tags --always --dirty 2>/dev/null || echo unknown)"
     echo "images:"
-    grep -E '^[[:space:]]+image:' docker-compose.yml | sed 's/^[[:space:]]*/  /'
+    compose config --images 2>/dev/null | sed 's/^/  /'
+    echo "image ids:"
+    for cid in $(compose ps -a -q); do
+        docker inspect -f '{{.Config.Image}} {{.Image}}' "$cid" | sed 's/^/  /'
+    done
 } > "${DEST}/MANIFEST.txt"
 
-( cd "$DEST" && sha256sum ./* > SHA256SUMS 2>/dev/null || true )
+compose config --format json > "${DEST}/compose.backup.json"
+
+( cd "$DEST" && sha256sum clinlims.dump configs.tar.gz data.tar.gz data-root.txt env.backup MANIFEST.txt compose.backup.json > SHA256SUMS )
 
 chmod 0700 "$DEST"
 echo
 echo "[backup] done: ${DEST}"
 echo "[backup] This directory contains credentials — it is mode 0700. Keep it that way."
-echo "[backup] Restore procedure: docs/backup-restore.md"
+echo "[backup] Restore configs.tar.gz into the checkout and data.tar.gz into the DATA_ROOT recorded in data-root.txt."

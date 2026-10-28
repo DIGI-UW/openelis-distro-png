@@ -11,7 +11,7 @@ run OpenELIS servers. Developer and release notes are at the end.
 - [What you need](#what-you-need)
 - [Choosing a version](#choosing-a-version)
 - [Installing a server](#installing-a-server)
-- [Set the admin password (mandatory)](#set-the-admin-password-mandatory)
+- [Administrator initialization](#administrator-initialization)
 - [HTTPS with Let's Encrypt](#https-with-lets-encrypt)
 - [Day-to-day operation](#day-to-day-operation)
 - [Loading the PNG test catalog](#loading-the-png-test-catalog)
@@ -46,27 +46,21 @@ reachable by lab users; firewall the rest.
 | Port | Used by | Who needs it |
 |---|---|---|
 | 80, 443 | Web interface (HTTPS proxy); port 80 also answers Let's Encrypt checks | All users, and the internet for port 80 |
-| 12000 | Analyzer bridge, ASTM listener | Analyzers on the lab network only |
-| 8442 | Analyzer bridge API | Local only |
-| 8080, 8443 | Web application (behind the proxy) | Local only |
-| 8081, 8444 | FHIR API | Local only, or the consolidated server if connected |
+| 12000 | Analyzer bridge: the one shared ASTM listener every TCP analyzer connects to | Analyzers only |
+| 8442 | Analyzer bridge API | Bound to 127.0.0.1 |
+| 8080, 8443 | Web application (behind the proxy) | Bound to 127.0.0.1 |
+| 8081, 8444 | FHIR API | Bound to 127.0.0.1 (set `LOCAL_BIND` in `.env` if a consolidated server must reach it) |
 
 ## Choosing a version
 
-Always install from a **release tag**, not from `main`. The `main` branch
-follows the OpenELIS development build and changes every day; a tag is a
-fixed, tested snapshot that installs the same way every time.
+The Compose files pin exact image digests. Pulling again cannot silently change
+what a checkout installs. This branch is a candidate until its fresh-install
+validation and review are complete; there is no published PNG release yet.
 
-Find the current release on the
-[Releases page](https://github.com/DIGI-UW/openelis-distro-png/releases), or
-list tags from the command line:
-
-```bash
-git ls-remote --tags https://github.com/DIGI-UW/openelis-distro-png
-```
-
-In the commands below, replace `<release-tag>` with the tag you chose. Record
-which tag each server runs; you need it for upgrades and rollbacks.
+For a released installation, select a reviewed tag from the
+[Releases page](https://github.com/DIGI-UW/openelis-distro-png/releases).
+Record the tag or commit used by each server. The instructions below describe
+an **empty target**, not an in-place upgrade of an existing database.
 
 ## Installing a server
 
@@ -87,13 +81,14 @@ cp .env.example .env
 nano .env
 ```
 
-Set these three values for every real site:
+Set these four values for every real site:
 
 | Variable | What it is |
 |---|---|
 | `OE_DB_PASSWORD` | Database password for the OpenELIS schema |
 | `ADMIN_PASSWORD` | PostgreSQL superuser password (used at first start) |
 | `OE_ADMIN_PASSWORD` | Password for the OpenELIS `admin` login |
+| `ANALYZER_BRIDGE_PAIRING_CODE` | One-time code OpenELIS and the analyzer bridge pair with. Generate one: `openssl rand -hex 16` |
 
 `OE_ADMIN_PASSWORD` must meet the OpenELIS password policy: at least 8
 characters, only `A-Z a-z 0-9 _ % $ # !`, and at least three of lowercase,
@@ -112,11 +107,13 @@ Run it before the first start. It is safe to run again at any time.
 Skipping it makes OpenELIS log `Failed to save checksums file` and reload
 the whole catalog on every start.
 
-`configs/bridge-state` needs no manual step: the `bridge-state-init` service
-in `docker-compose.yml` claims it for UID 9257 on every `up`, before the
-analyzer bridge starts. `./scripts/init-bridge-state.sh` does the same thing
-by hand and is still the repair path after a restore (see
-[docs/backup-restore.md](docs/backup-restore.md)).
+Everything else is prepared automatically: the `init` service runs before
+the other services on every `up` and creates `./data` (see
+[Where the data lives](#where-the-data-lives)) with the right owners, and the
+first time it generates this site's private internal certificate, keystores
+and a separate random database-secret encryption key. Back up `data/tls` with
+the database. The initializer never adopts an old database key or replaces
+unknown TLS material; migration is a separate operation.
 
 ### 4. Start the stack
 
@@ -125,44 +122,36 @@ docker compose up -d
 docker compose ps
 ```
 
-Wait until `oe.openelis.org` shows `healthy`. The first start takes several
-minutes while the database is created and the catalog is loaded.
+Wait until `oe.openelis.org` shows `healthy`. The first start can take more than
+20 minutes on a slower host while the database is created and the full PNG catalog is loaded. The health check allows
+one hour for the first full standards import; do not restart a progressing import. OpenELIS
+pairs with the analyzer bridge by itself on that first start, using
+`ANALYZER_BRIDGE_PAIRING_CODE`.
 
-### 5. Set the admin password
+### 5. Confirm startup and set up HTTPS
 
-Run `./scripts/set-admin-password.sh`. See the next section; this step is
-required.
+`init-admin` applies the configured administrator password once. `verify-admin`
+must confirm that it works and that the published default is rejected before
+the proxy starts. Both services should show `Exited (0)` in `docker compose ps -a`.
 
-### 6. Set up HTTPS
+Follow [HTTPS with Let's Encrypt](#https-with-lets-encrypt). Until then the
+proxy uses the site's private self-signed certificate and browsers show a
+warning. Sign in at `https://<your-hostname>/` as `admin` with the password
+configured in `.env`.
 
-Follow [HTTPS with Let's Encrypt](#https-with-lets-encrypt) below. Until you
-do, the server uses a self-signed certificate and browsers show a warning.
+## Administrator initialization
 
-### 7. Log in
-
-Open `https://<your-hostname>/` and sign in as `admin` with the password you
-set.
-
-## Set the admin password (mandatory)
-
-Putting `OE_ADMIN_PASSWORD` in `.env` does **not** change the login password
-on its own. Every new site starts with the published default
-`admin` / `adminADMIN!` until you run:
-
-```bash
-./scripts/set-admin-password.sh
-```
-
-The script applies `OE_ADMIN_PASSWORD`, then confirms the new password works
-and the default no longer does. Check a site at any time with:
+Plain `docker compose up -d` initializes and verifies the administrator on a
+fresh target. Later starts retain its password. Check it at any time with:
 
 ```bash
 ./scripts/set-admin-password.sh --check
 ```
 
-If you later change the admin password in the application
-(Administration > Users), update `OE_ADMIN_PASSWORD` in `.env` to match. The
-analyzer bridge signs in with it.
+If you change the password in Administration > Users, update `OE_ADMIN_PASSWORD`
+in `.env` to match. To deliberately reset it to the configured value, run
+`./scripts/set-admin-password.sh`. The Bridge uses its paired identity and
+does not use the administrator's password.
 
 ## HTTPS with Let's Encrypt
 
@@ -190,8 +179,14 @@ LETSENCRYPT_DOMAINS=lab.health.gov.pg
 LETSENCRYPT_PRIMARY_DOMAIN=lab.health.gov.pg
 LETSENCRYPT_CERT_NAME=lab.health.gov.pg
 
-COMPOSE_FILE=docker-compose.yml:compose.letsencrypt.yaml
+COMPOSE_FILE=docker-compose.yml:docker-compose.analyzers.yml:compose.letsencrypt.yaml
 ```
+
+If a certbot already runs on the server itself and keeps a certificate under
+`/etc/letsencrypt`, point the overlay at it instead of requesting a new one:
+add `LETSENCRYPT_DIR=/etc/letsencrypt` and `CERTBOT_WEBROOT=` set to the
+certbot's webroot, skip steps 2 and 3, and make sure its deploy hook runs
+`docker restart openelisglobal-proxy`.
 
 Use a shared team mailbox for `LETSENCRYPT_EMAIL`; expiry warnings go there.
 To put more than one name on the certificate, list them in
@@ -264,7 +259,29 @@ docker compose stop        # stop, keeping all data
 docker compose up -d       # start again
 ```
 
-Do not run `docker compose down -v`. The `-v` deletes volumes.
+### Where the data lives
+
+Everything the site must keep is in `./data` (the `DATA_ROOT` setting in
+`.env`), not in Docker volumes:
+
+| Folder | Contents |
+|---|---|
+| `data/db` | PostgreSQL database |
+| `data/bridge` | Analyzer bridge: saved connections, profile revisions, undelivered results, pairing |
+| `data/webapp` | Uploaded logos and attachments, report exports, search index, effective settings |
+| `data/tls` | This site's internal certificate and keystores (browsers see the Let's Encrypt one) |
+| `data/logs` | Web application and Tomcat logs |
+
+Never delete `./data`. `docker compose down` (even with `-v`) leaves it alone.
+
+### Updating the pinned installation
+
+`./scripts/update.sh` fast-forwards the checkout when possible, backs up the
+database, pulls the committed image digests and restarts. It does not resolve
+new images behind moving tags. Review the target revision before updating.
+
+This fresh-target candidate refuses unrecognized older TLS directories.
+Do not use it as an automatic migration of a running installation.
 
 ### Backups
 
@@ -308,7 +325,8 @@ step 1.
 | Symptom | Fix |
 |---|---|
 | `Failed to save checksums file` in the log, catalog reloads every start | `./scripts/fix-config-permissions.sh`, then restart |
-| Analyzer bridge fails to open its state store | `docker compose up -d bridge-state-init`, then restart the bridge |
+| Analyzer bridge fails to open its state store | `docker compose up -d init`, then `docker compose restart openelis-analyzer-bridge` |
+| Analyzers page says OpenELIS is not paired | Enter `ANALYZER_BRIDGE_PAIRING_CODE` from `.env` on Admin > Analyzers |
 | `admin` / `adminADMIN!` still works | `./scripts/set-admin-password.sh` |
 | Browser shows a certificate warning after an upgrade | `COMPOSE_FILE` line missing from `.env`; add it, then `docker compose up -d --force-recreate proxy` |
 | Let's Encrypt dry run fails | Check the DNS record points at this server and port 80 is open from the internet |
@@ -378,6 +396,82 @@ workbook:
 >
 > `roles/png-lab-roles.csv` is empty; lab roles use the OpenELIS defaults.
 
+## External metadata packages
+
+The existing initializer can install independently released metadata from
+digest-pinned GHCR artifacts or checksum-pinned HTTPS packages. It verifies the release and places ordinary
+files into the existing configuration tree; OE2 uses its normal catalog loading
+and import reporting. The adapter is shared across metadata publishers and does
+not require an application ZIP loader. Verified archives are cached under
+`DATA_ROOT/webapp/reference-packages` for reuse on subsequent starts.
+
+See [the release-pin instructions](configs/configuration-packages/README.md) for
+the format and update procedure. The checked-in AMR 2026.2 pins cover human
+EUCAST and CLSI 2025/2026 metadata and download anonymously from public GHCR
+packages. Package loading and a local workflow acceptance
+run must be verified against the selected application image before UAT.
+
+The default image set includes AMR on top of the merged analyzer baseline.
+No separate AMR Compose overlay is needed. The first full standards import can
+exceed 30 minutes under amd64 emulation, so the application has a one-hour
+startup grace period. A successful health check ends that grace immediately.
+Subsequent starts skip unchanged configuration files. Imported standards remain inactive until an
+administrator activates the edition for testing in Microbiology reference data.
+The testing default is CLSI `2026-2026.2`, supplied by
+`configs/configuration/backend/microbiology-settings/png-amr.csv`. In **Admin →
+Microbiology reference data → Breakpoint standards**, activate that exact edition
+and use **Use as default** to change the preference later. Activation and default
+selection are separate; loading both publishers does not choose between them.
+The configuration file uses portable authority/version values and is reapplied
+only when its contents change; ordinary restarts preserve administrator changes.
+Existing tests retain their saved standard. This is a local testing policy, not
+a clinical PNG standard selection.
+Unsupported source rules remain explicitly unavailable for automatic interpretation.
+
+### Microbiology setup
+
+The distribution ships:
+
+| File | Contents |
+|---|---|
+| `microbiology-ast-panels/png-ast-panels.csv` | The 16 CPHL AST panels, one row per drug, with each disk drug's CLSI disk content and the organisms each panel is the default for |
+| `tests/zz-png-amr-workflow.csv` | A **Blood culture** test that opens a microbiology case and is collected in sets |
+| `dictionaries/png-amr-containers.csv` | Aerobic and anaerobic blood culture bottles as sample containers |
+
+A panel's default organisms are a species, a genus or an organism group; the
+most specific match wins, so *Staphylococcus aureus* gets "AST - STAPH S.aureus"
+and other staphylococci get "AST-Staph other". "AST-B.cepacia cx" and
+"AST-MDR GN" are not defaults for any organism and are added by hand.
+
+Do these once per laboratory, in the admin screens:
+
+1. **Breakpoints**: activate the CLSI 2026 edition (Admin → Microbiology
+   reference data → Breakpoint standards).
+2. **Media**: in Inventory, add each culture medium (for example the aerobic
+   and anaerobic blood culture bottles) as a Microbiology medium that tracks
+   lots, receive its lots, and link it to the Blood culture test in the Test
+   Catalog with its incubation defaults.
+3. **Gram stain**: choose the Gram stain test for the Microbiology lab unit
+   (Admin → Lab Units Editor).
+
+To check before go-live:
+
+- **Disk content.** A disk-specific zone breakpoint requires matching disk content.
+  A breakpoint without a disk constraint remains general. The panels use CLSI disk contents (for example
+  ceftriaxone 30 mcg). CPHL must confirm these match the disks in use.
+  Amoxicillin has no CLSI disk breakpoint, so its zone results show No
+  breakpoint.
+- **Package version.** The pinned 2026.2 packages include disk content and supported
+  zone breakpoints, and the combined application supports both. Unsupported
+  contexts still show No breakpoint. The default edition in
+  `microbiology-settings/png-amr.csv` matches the package: `2026-2026.2`.
+- **Organisms in two groups.** The reference package places some species,
+  such as *Streptococcus anginosus* and *S. sanguinis*, in both the
+  beta-haemolytic and the viridans groups. They get no default panel; the
+  technologist chooses one when starting AST.
+- **Culture tests.** Only Blood culture opens a microbiology case. The existing
+  "Microbiology Culture Result" test does not.
+
 ## PNG configuration included
 
 | Setting | Value | File |
@@ -391,57 +485,57 @@ Administration.
 
 ## Analyzers
 
-The analyzer bridge is included. It listens for ASTM connections on port
-12000 and picks up result files dropped into its watched import folder.
-Ready-made profiles for common analyzers are in `configs/analyzer-profiles/`
-(ASTM, HL7 and file formats). Connecting an analyzer is done with the DIGI
-analyzer team; ICT staff only need to make sure the analyzer can reach the
-server on the lab network.
+The released Bridge is included and pinned independently from OpenELIS.
+It reads analyzer messages, interprets values and controls, and sends an
+unambiguous FHIR bundle. OpenELIS owns local test/answer mapping, specimen
+placement, review and import. PNG adds no second parser or hash gate.
 
-`scripts/converters/` holds small tools that reshape some vendors' export
-files before the bridge reads them. See
-[scripts/converters/README.md](scripts/converters/README.md).
+TCP analyzers share port 12000. It is bound to loopback until the operator sets
+`ANALYZER_LISTEN_ADDRESS` to the server's analyzer-network address and
+`ANALYZER_ALLOWED_SOURCES` to the instruments' source IPs or CIDRs. A saved
+connection's host or sender name selects the instrument; it does not grant
+network access. Start with observed source addresses and confirm admission
+with a test message before connecting instruments for routine use.
+
+The shipped [PNG catalog](configs/analyzer-catalog/README.md) contains GeneXpert,
+BD EpiCenter and Bruker MALDI Biotyper types, with results upload only. Pair
+through the one-time `ANALYZER_BRIDGE_PAIRING_CODE`, or enter the Bridge's
+generated code in OpenELIS. Saved connections and the pairing identity remain
+under `data/bridge` across restarts.
+
+File-based analyzers are optional. For one, set `ANALYZER_HOST_MOUNT` to an
+existing absolute directory and append `compose.analyzer-files.yaml` to
+`COMPOSE_FILE`, then configure a FILE-capable profile and connection to read
+`/data/analyzer-drops`. The three shipped PNG profiles use TCP/IP. Only the
+Bridge sees this read-only directory. The ordinary TCP setup needs no `/mnt`
+sharing or host file-drop directory.
+
+Clinical mapping gaps and instrument acceptance remain explicit in the
+[catalog notes](configs/analyzer-catalog/README.md). Synthetic tests verify
+software behavior; they do not certify a physical instrument.
 
 ## For maintainers
 
 ### Versioning
 
-`main` tracks upstream `develop` images (`itechuw/openelis-global-2:develop`
-and related). Releases are cut from `main` by the **Release** GitHub Actions
-workflow, which pins every image to an exact `tag@sha256:<digest>` so that a
-release tag always installs the same bytes. Distro release numbers are
-independent of upstream OpenELIS version numbers.
-
-To cut a release: **Actions > Release > Run workflow**, then fill in:
-
-- `distro_version`: the new tag; must not already exist
-- `oe_version`, `bridge_version`: upstream image tags to pin
-- `base_ref` (optional): branch or commit to release from; default `main`
-- `allow_develop_pins` (optional): leave off for real releases; the workflow
-  fails if any pin is `:develop`, `:latest` or missing a digest
-- `draft` (default on) and `prerelease` (optional)
-
-The workflow refreshes digests with `scripts/pin-versions.sh`, checks them
-with `scripts/check-release-pins.sh`, commits the pinned
-`docker-compose.yml` on the tag only, builds the tarball with
-`scripts/build-tarball.sh`, and drafts a GitHub Release with notes from the
-upstream releases plus the distro commit log. Review the draft, then
-publish.
-
-To refresh pins by hand:
+Every default image reference includes its registry digest. The application
+and Bridge have independent versions. To move to a published Docker Hub release,
+resolve a proposed set before review (this replaces both combined candidate
+application images as well as the support-service pins):
 
 ```bash
-./scripts/pin-versions.sh <oe-tag|develop> <bridge-tag|develop>
-git diff docker-compose.yml
+./scripts/pin-versions.sh <oe-tag> <bridge-tag>
+./scripts/check-release-pins.sh
+git diff docker-compose.yml docker-compose.analyzers.yml
 ```
 
-### Why the admin password needs a script
+Update [image provenance](docs/image-provenance.md), validate the proposed set,
+and commit it. With no arguments, `pin-versions.sh` only checks existing pins.
 
-OpenELIS creates the `admin` account on first start from a password hash
-built into the web application image (`ARG DEFAULT_PW` at image build time).
-A distro that uses published images cannot change that, so
-`scripts/set-admin-password.sh` sets the real password after start-up and
-verifies it through the login endpoint.
+The Release workflow takes `distro_version`, `base_ref`, `draft` and
+`prerelease`. It validates and tags exactly that commit, builds its archive
+and prepares notes containing the exact images. It never refreshes pins or
+creates an unreviewed release-only commit.
 
 ### Catalog loading details
 
@@ -455,9 +549,20 @@ this distro does not use them.
 
 ### Development and testing
 
-Playwright end-to-end tests, a mock analyzer and development overlays live
-in the companion `openelis-png-test-harness` repository, which consumes this
-distro at a tag.
+Run the distro checks locally (Docker and Java 21 are required for runtime checks):
+
+```bash
+python3 -m unittest discover -s tests -p 'test_*.py' -v
+PNG_TEST_SECURITY=1 python3 -m unittest discover -s tests -p test_install_security.py -v
+./scripts/check-analyzer-profiles.sh
+./scripts/check-release-pins.sh
+```
+
+The profile check executes the exact pinned Bridge's catalog, parser and FHIR
+renderer against synthetic normal, control and failed-run messages. The
+security checks create isolated temporary Docker volumes and remove them
+afterward. Full fresh-install acceptance additionally requires startup,
+administrator verification, pairing, result delivery and restart retention.
 
 [docs/template-source-inventory.md](docs/template-source-inventory.md)
 classifies which files are generic and which are country-specific, for
