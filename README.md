@@ -406,9 +406,9 @@ not require an application ZIP loader. Verified archives are cached under
 `DATA_ROOT/webapp/reference-packages` for reuse on subsequent starts.
 
 See [the release-pin instructions](configs/configuration-packages/README.md) for
-the format and update procedure. The checked-in AMR 2026.2 pins cover human
-EUCAST and CLSI 2025/2026 metadata and download anonymously from public GHCR
-packages. Package loading and a local workflow acceptance
+the format and update procedure. The checked-in AMR pin selects package 2026.4,
+which carries WHONET's organism, antibiotic and breakpoint tables for CLSI and
+EUCAST 2024 to 2026, and downloads anonymously from public GHCR. Package loading and a local workflow acceptance
 run must be verified against the selected application image before UAT.
 
 The default image set includes AMR on top of the merged analyzer baseline.
@@ -417,7 +417,7 @@ exceed 30 minutes under amd64 emulation, so the application has a one-hour
 startup grace period. A successful health check ends that grace immediately.
 Subsequent starts skip unchanged configuration files. Imported standards remain inactive until an
 administrator activates the edition for testing in Microbiology reference data.
-The testing default is CLSI `2026-2026.2`, supplied by
+The testing default is CLSI `2026-2026.4`, supplied by
 `configs/configuration/backend/microbiology-settings/png-amr.csv`. In **Admin →
 Microbiology reference data → Breakpoint standards**, activate that exact edition
 and use **Use as default** to change the preference later. Activation and default
@@ -428,6 +428,9 @@ Existing tests retain their saved standard. This is a local testing policy, not
 a clinical PNG standard selection.
 Unsupported source rules remain explicitly unavailable for automatic interpretation.
 
+**Sites on the 2026.2 pins.** This release supports new installations only.
+Applying it to a site that already loaded the 2026.2 tables is not supported.
+
 ### Microbiology setup
 
 The distribution ships:
@@ -435,6 +438,7 @@ The distribution ships:
 | File | Contents |
 |---|---|
 | `microbiology-ast-panels/png-ast-panels.csv` | The 16 CPHL AST panels, one row per drug, with each disk drug's CLSI disk content and the organisms each panel is the default for |
+| `microbiology-organism-groups/png-organism-groups.csv` | The members of the organism groups that panels name as defaults |
 | `tests/zz-png-amr-workflow.csv` | A **Blood culture** test that opens a microbiology case and is collected in sets |
 | `dictionaries/png-amr-containers.csv` | Aerobic and anaerobic blood culture bottles as sample containers |
 
@@ -461,10 +465,10 @@ To check before go-live:
   ceftriaxone 30 mcg). CPHL must confirm these match the disks in use.
   Amoxicillin has no CLSI disk breakpoint, so its zone results show No
   breakpoint.
-- **Package version.** The pinned 2026.2 packages include disk content and supported
-  zone breakpoints, and the combined application supports both. Unsupported
-  contexts still show No breakpoint. The default edition in
-  `microbiology-settings/png-amr.csv` matches the package: `2026-2026.2`.
+- **Package version.** The pinned 2026.4 package carries WHONET's breakpoints
+  with their disk contents. Unsupported contexts still show No breakpoint. The
+  default edition in `microbiology-settings/png-amr.csv` matches the package:
+  `2026-2026.4`.
 - **Organisms in two groups.** The reference package places some species,
   such as *Streptococcus anginosus* and *S. sanguinis*, in both the
   beta-haemolytic and the viridans groups. They get no default panel; the
