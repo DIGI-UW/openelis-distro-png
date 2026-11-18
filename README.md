@@ -417,15 +417,16 @@ exceed 30 minutes under amd64 emulation, so the application has a one-hour
 startup grace period. A successful health check ends that grace immediately.
 Subsequent starts skip unchanged configuration files. Imported standards remain inactive until an
 administrator activates the edition for testing in Microbiology reference data.
-The testing default is CLSI `2026-2026.4`, supplied by
+The default is EUCAST `2026-2026.4`, the standard named in CPHL's AMR data
+management procedure (G_90_SOP_26), supplied by
 `configs/configuration/backend/microbiology-settings/png-amr.csv`. In **Admin →
 Microbiology reference data → Breakpoint standards**, activate that exact edition
 and use **Use as default** to change the preference later. Activation and default
 selection are separate; loading both publishers does not choose between them.
 The configuration file uses portable authority/version values and is reapplied
 only when its contents change; ordinary restarts preserve administrator changes.
-Existing tests retain their saved standard. This is a local testing policy, not
-a clinical PNG standard selection.
+Existing tests retain their saved standard. CPHL confirms the standard and its
+year before go-live.
 Unsupported source rules remain explicitly unavailable for automatic interpretation.
 
 **Sites on the 2026.2 pins.** This release supports new installations only.
@@ -437,7 +438,7 @@ The distribution ships:
 
 | File | Contents |
 |---|---|
-| `microbiology-ast-panels/png-ast-panels.csv` | The 16 CPHL AST panels, one row per drug, with each disk drug's CLSI disk content and the organisms each panel is the default for |
+| `microbiology-ast-panels/png-ast-panels.csv` | The 16 CPHL AST panels, one row per drug, with each disk drug's EUCAST disk content and the organisms each panel is the default for |
 | `microbiology-organism-groups/png-organism-groups.csv` | The members of the organism groups that panels name as defaults |
 | `tests/zz-png-amr-workflow.csv` | A **Blood culture** test that opens a microbiology case and is collected in sets |
 | `dictionaries/png-amr-containers.csv` | Aerobic and anaerobic blood culture bottles as sample containers |
@@ -449,8 +450,8 @@ and other staphylococci get "AST-Staph other". "AST-B.cepacia cx" and
 
 Do these once per laboratory, in the admin screens:
 
-1. **Breakpoints**: activate the CLSI 2026 edition (Admin → Microbiology
-   reference data → Breakpoint standards).
+1. **Breakpoints**: activate the EUCAST `2026-2026.4` edition (Admin →
+   Microbiology reference data → Breakpoint standards).
 2. **Media**: in Inventory, add each culture medium (for example the aerobic
    and anaerobic blood culture bottles) as a Microbiology medium that tracks
    lots, receive its lots, and link it to the Blood culture test in the Test
@@ -461,10 +462,27 @@ Do these once per laboratory, in the admin screens:
 To check before go-live:
 
 - **Disk content.** A disk-specific zone breakpoint requires matching disk content.
-  A breakpoint without a disk constraint remains general. The panels use CLSI disk contents (for example
-  ceftriaxone 30 mcg). CPHL must confirm these match the disks in use.
-  Amoxicillin has no CLSI disk breakpoint, so its zone results show No
-  breakpoint.
+  A breakpoint without a disk constraint remains general. The panels use EUCAST
+  disk contents: penicillin 1 unit, ceftazidime 10 mcg, piperacillin/tazobactam
+  30/6 mcg, vancomycin 5 mcg, nitrofurantoin 100 mcg, and ampicillin 2 mcg and
+  amoxicillin/clavulanic acid 2/1 mcg where EUCAST sets them (enterococci,
+  *H. influenzae*, viridans streptococci). CPHL must confirm it stocks these disks.
+  Amoxicillin has no disk content, so its zone results show No breakpoint.
+- **Clinical indication.** EUCAST splits some breakpoints into meningitis and
+  other indications: ceftriaxone, ciprofloxacin and meropenem for Enterobacterales
+  (including *Salmonella* and *Shigella*), meropenem for *Pseudomonas* and
+  *Acinetobacter*, and ceftriaxone and meropenem for *H. influenzae*. When a technician starts AST on anything but spinal fluid,
+  they choose **Indications other than meningitis** under **Clinical indication**;
+  left unspecified, these drugs show No breakpoint.
+- **Drugs without a EUCAST disk breakpoint.** These show No breakpoint whatever
+  is read: chloramphenicol for Enterobacterales, staphylococci and
+  *S. pneumoniae*; vancomycin disks for staphylococci; penicillin for
+  coagulase-negative staphylococci; ceftriaxone and the oxacillin screen for
+  *S. pneumoniae*; nitrofurantoin except for *E. coli* and enterococci in urine;
+  azithromycin for *Salmonella* and *Shigella*; gentamicin for *Pseudomonas*;
+  ceftazidime and piperacillin/tazobactam disks for *Acinetobacter*; every drug
+  on "AST-B.cepacia cx". CPHL decides whether to test these by MIC or change the
+  panels.
 - **Package version.** The pinned 2026.4 package carries WHONET's breakpoints
   with their disk contents. Unsupported contexts still show No breakpoint. The
   default edition in `microbiology-settings/png-amr.csv` matches the package:
