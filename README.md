@@ -443,7 +443,7 @@ The distribution ships:
 | `tests/zz-png-amr-workflow.csv` | A **Blood culture** test that opens a microbiology case and is collected in sets, and a **Urine culture** test on Urine, MSU and In/Out Urine that opens a microbiology case |
 | `dictionaries/png-amr-containers.csv` | Aerobic and anaerobic blood culture bottles as sample containers |
 | `sample-types/png-sample-types.csv` | The `whonetCode` column gives the WHONET specimen code: `bl` for Whole Blood and Blood Culture, `sf` for CSF, `ur` for In/Out Urine, MSU and Urine |
-| `program-reporting-tracks/png-program-reporting-tracks.csv` | Microbiology and Routine Testing orders show on microbiology cases; Microbiology keeps the Bacterial reporting track |
+| `program-reporting-tracks/png-program-reporting-tracks.csv` | Microbiology and Routine Testing orders show on microbiology cases and use the Bacterial reporting track, which the WHONET export takes |
 
 A panel's default organisms are a species, a genus or an organism group; the
 most specific match wins, so *Staphylococcus aureus* gets "AST - STAPH S.aureus"
