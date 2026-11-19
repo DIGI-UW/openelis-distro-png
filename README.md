@@ -468,12 +468,15 @@ To check before go-live:
   amoxicillin/clavulanic acid 2/1 mcg where EUCAST sets them (enterococci,
   *H. influenzae*, viridans streptococci). CPHL must confirm it stocks these disks.
   Amoxicillin has no disk content, so its zone results show No breakpoint.
-- **Clinical indication.** EUCAST splits some breakpoints into meningitis and
-  other indications: ceftriaxone, ciprofloxacin and meropenem for Enterobacterales
+- **Clinical indication.** When a technician starts an AST run, they choose the
+  indication from the request under **Clinical indication**: **Meningitis**,
+  **Endocarditis**, **Neither**, or **Not stated**. EUCAST sets different
+  breakpoints by indication for some panel drugs. With **Not stated**, these show
+  No breakpoint: ceftriaxone, ciprofloxacin and meropenem for Enterobacterales
   (including *Salmonella* and *Shigella*), meropenem for *Pseudomonas* and
-  *Acinetobacter*, and ceftriaxone and meropenem for *H. influenzae*. When a technician starts AST on anything but spinal fluid,
-  they choose **Indications other than meningitis** under **Clinical indication**;
-  left unspecified, these drugs show No breakpoint.
+  *Acinetobacter*, ampicillin and ceftriaxone for *H. influenzae*, and ampicillin
+  for viridans streptococci. Spinal fluid always uses the meningitis breakpoints.
+  The indication cannot be changed on a run; to correct it, start a new run.
 - **Drugs without a EUCAST disk breakpoint.** These show No breakpoint whatever
   is read: chloramphenicol for Enterobacterales, staphylococci and
   *S. pneumoniae*; vancomycin disks for staphylococci; penicillin for
