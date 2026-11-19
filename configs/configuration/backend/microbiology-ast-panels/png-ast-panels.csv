@@ -19,7 +19,7 @@ AST - Enterococcus,GENERAL,AMX,,Enterococcus
 AST - Enterococcus,GENERAL,AMP,2 mcg,
 AST - Enterococcus,GENERAL,NIT,100 mcg,
 AST - Enterococcus,GENERAL,VAN,5 mcg,
-AST-GN rods,GENERAL,AMK,30 mcg,Enterobacterales
+AST-GN rods,GENERAL,AMK,30 mcg,Enterobacterales; Escherichia; Klebsiella; Enterobacter; Citrobacter; Proteus; Serratia; Morganella; Providencia
 AST-GN rods,GENERAL,AMC,20/10 mcg,
 AST-GN rods,GENERAL,CAZ,10 mcg,
 AST-GN rods,GENERAL,CRO,30 mcg,

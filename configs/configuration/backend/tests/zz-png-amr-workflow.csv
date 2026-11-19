@@ -1,2 +1,3 @@
 testName,testSection,sampleType,localCode,opensMicrobiologyCase,microbiologyCaseRole,collectedInSets,isActive,isOrderable,localization:en
 Blood culture,Microbiology,Blood Culture,BCULT,Y,CULTURE,Y,Y,Y,Blood culture
+Urine culture,Microbiology,Urine|MSU|In/Out Urine,UCULT,Y,CULTURE,N,Y,Y,Urine culture
