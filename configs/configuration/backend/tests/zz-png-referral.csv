@@ -1,0 +1,2 @@
+testName,testSection,sampleType,localCode,opensMicrobiologyCase,microbiologyCaseRole,collectedInSets,isActive,isOrderable,localization:en
+Isolate referral,Microbiology,Isolate,IREF,N,,N,Y,Y,Isolate referral (confirmation and AST)
