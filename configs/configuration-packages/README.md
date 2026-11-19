@@ -1,9 +1,10 @@
 # Pinned metadata packages
 
 Metadata can be released independently of OpenELIS and selected by a deployment.
-Place one JSON pin per package here. The checked-in AMR pins select version
-2026.2 of the public EUCAST and CLSI packages, covering human 2025/2026
-reference data from AMR for R. The default Compose image set includes the
+Place one JSON pin per package here. The checked-in AMR pin selects version
+2026.4 of the public CLSI package, which carries WHONET's tables for CLSI and
+EUCAST 2024 to 2026. From 2026.4 the EUCAST package carries the same tables, so
+only one is pinned. The default Compose image set includes the
 receiving AMR application and merged analyzer baseline. These are testing candidates, not a clinical
 approval or an instruction to activate a standard.
 
@@ -36,9 +37,13 @@ The archive contains a root `manifest.json`:
 ```
 
 The illustration is a schema example, not a usable pin or valid release.
+`format` is `openelis-configuration/v1` or `openelis-configuration/v2`; a v2
+inventory entry also carries `rows`, which the installer does not check.
 Every payload must appear in the manifest inventory with its real size/hash.
 Configuration files use `configuration/backend/<domain>/<filename>`; existing
-CSV, JSON, XML or properties domains can be supplied. Additional provenance,
+CSV, JSON, XML, properties or TXT domains can be supplied. AMR packages from
+2026.4 use v2 and carry the six WHONET tables as `.txt` files, one per
+`microbiology-whonet-*` domain. Additional provenance,
 coverage and attribution files belong under `evidence/`. A package cannot add a
 new application domain by itself: select a compatible OE2 image containing its
 handler. Archive paths, duplicate entries and symlinks are checked before writes.
@@ -70,8 +75,7 @@ installing files does not mean records were imported. New AMR breakpoint edition
 load inactive; activation is a separate laboratory decision. Keep old referenced
 editions when upgrading. Removing a pin does not delete installed files or data.
 
-The independent AMR exporter targets EUCAST and CLSI 2025/2026 in separate
-packages. Both checked-in packages are publicly downloadable without registry
+The checked-in package is publicly downloadable without registry
 credentials. PR checks run the ordinary initializer with an empty cache and a
 clean environment to verify the exact pins. Each artifact reports
 its supported and blocked interpretation contexts.

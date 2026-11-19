@@ -18,7 +18,7 @@ import urllib.parse
 import urllib.request
 import zipfile
 
-FORMAT = "openelis-configuration/v1"
+FORMATS = {"openelis-configuration/v1", "openelis-configuration/v2"}
 # The two-edition package includes source evidence and interpretation vectors.
 MAX_BYTES = 128 * 1024 * 1024
 NAME = r"[A-Za-z0-9][A-Za-z0-9_.-]{0,79}"
@@ -64,7 +64,7 @@ def configuration_files(content, pin):
                     or stat.S_ISLNK(mode) or (stat.S_IFMT(mode) and not stat.S_ISREG(mode))):
                 raise ValueError("Unsafe archive entry: " + entry.filename)
         manifest = json.loads(archive.read("manifest.json"))
-        if (manifest.get("format") != FORMAT or manifest.get("packageId") != pin["id"]
+        if (manifest.get("format") not in FORMATS or manifest.get("packageId") != pin["id"]
                 or manifest.get("packageVersion") != pin["version"]):
             raise ValueError("Package manifest differs from pin")
         inventory = manifest.get("files", {})
@@ -80,7 +80,7 @@ def configuration_files(content, pin):
                 continue
             if (len(parts) != 4 or parts[:2] != ("configuration", "backend")
                     or not re.fullmatch(NAME, parts[2]) or not re.fullmatch(NAME, parts[3])
-                    or PurePosixPath(name).suffix not in {".csv", ".json", ".xml", ".properties"}):
+                    or PurePosixPath(name).suffix not in {".csv", ".json", ".xml", ".properties", ".txt"}):
                 raise ValueError("Unsupported configuration path: " + name)
             # A reserved filename prefix prevents overwriting site files and keeps
             # old editions available without teaching OE2 about release archives.
