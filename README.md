@@ -440,8 +440,10 @@ The distribution ships:
 |---|---|
 | `microbiology-ast-panels/png-ast-panels.csv` | The 16 CPHL AST panels, one row per drug, with each disk drug's EUCAST disk content and the organisms each panel is the default for |
 | `microbiology-organism-groups/png-organism-groups.csv` | The members of the organism groups that panels name as defaults |
-| `tests/zz-png-amr-workflow.csv` | A **Blood culture** test that opens a microbiology case and is collected in sets |
+| `tests/zz-png-amr-workflow.csv` | A **Blood culture** test that opens a microbiology case and is collected in sets, and a **Urine culture** test on Urine, MSU and In/Out Urine that opens a microbiology case |
 | `dictionaries/png-amr-containers.csv` | Aerobic and anaerobic blood culture bottles as sample containers |
+| `sample-types/png-sample-types.csv` | The `whonetCode` column gives the WHONET specimen code: `bl` for Whole Blood and Blood Culture, `sf` for CSF, `ur` for In/Out Urine, MSU and Urine |
+| `program-reporting-tracks/png-program-reporting-tracks.csv` | Microbiology and Routine Testing orders show on microbiology cases; Microbiology keeps the Bacterial reporting track |
 
 A panel's default organisms are a species, a genus or an organism group; the
 most specific match wins, so *Staphylococcus aureus* gets "AST - STAPH S.aureus"
@@ -454,8 +456,8 @@ Do these once per laboratory, in the admin screens:
    Microbiology reference data → Breakpoint standards).
 2. **Media**: in Inventory, add each culture medium (for example the aerobic
    and anaerobic blood culture bottles) as a Microbiology medium that tracks
-   lots, receive its lots, and link it to the Blood culture test in the Test
-   Catalog with its incubation defaults.
+   lots, receive its lots, and link it to the Blood culture and Urine culture
+   tests in the Test Catalog with its incubation defaults.
 3. **Gram stain**: choose the Gram stain test for the Microbiology lab unit
    (Admin → Lab Units Editor).
 
@@ -490,12 +492,13 @@ To check before go-live:
   with their disk contents. Unsupported contexts still show No breakpoint. The
   default edition in `microbiology-settings/png-amr.csv` matches the package:
   `2026-2026.4`.
-- **Organisms in two groups.** The reference package places some species,
-  such as *Streptococcus anginosus* and *S. sanguinis*, in both the
-  beta-haemolytic and the viridans groups. They get no default panel; the
-  technologist chooses one when starting AST.
-- **Culture tests.** Only Blood culture opens a microbiology case. The existing
-  "Microbiology Culture Result" test does not.
+- **Streptococcus groups.** `png-organism-groups.csv` lists 12 of WHONET's 32
+  viridans streptococci and 8 of its 20 beta-haemolytic streptococci. The
+  others, such as *S. vestibularis* and beta-haemolytic groups E and F, get no
+  default panel; the technologist chooses one when starting AST. CPHL confirms
+  these lists, the AST-GN rods genera and the urine culture test (OGC-1670).
+- **Culture tests.** Blood culture and Urine culture open a microbiology case.
+  The existing "Microbiology Culture Result" test does not.
 
 ## PNG configuration included
 
