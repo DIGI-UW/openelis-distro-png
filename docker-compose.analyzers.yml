@@ -22,6 +22,7 @@ services:
             - "${LOCAL_BIND:-127.0.0.1}:8442:8443" # HTTPS API, this host only
             - "${ANALYZER_LISTEN_ADDRESS:-127.0.0.1}:${ANALYZER_ASTM_PORT:-12000}:12001" # shared ASTM LIS1-A listener
         volumes:
+            - bridge-public:/data/bridge-public
             # Durable state: delivery outbox (results OpenELIS has not accepted
             # yet), saved connections, profile revisions, the Bridge's own key
             # pair and pairing record. Owned by UID 9257 (init sees to it).
@@ -36,6 +37,7 @@ services:
             - TZ=${TZ:-Pacific/Port_Moresby}
             # OpenELIS pairs with this code. Without one, the Bridge logs a
             # generated code for a Global Admin to enter on the Analyzers page.
+            - BRIDGE_PAIRING_CERTIFICATE_FILE=/data/bridge-public/bridge.crt
             - BRIDGE_PAIRING_CODE=${ANALYZER_BRIDGE_PAIRING_CODE:-}
             - BRIDGE_FILE_ENABLED=${ANALYZER_FILES_ENABLED:-false}
             - BRIDGE_LISTENERS_ALLOWED_SOURCES=${ANALYZER_ALLOWED_SOURCES:-127.0.0.1/32}
@@ -67,9 +69,15 @@ services:
         restart: unless-stopped
 
     oe.openelis.org:
+        volumes:
+            - bridge-public:/data/bridge-public:ro
         depends_on:
             openelis-analyzer-bridge:
                 condition: service_started
         environment:
             - ANALYZER_BRIDGE_URL=https://bridge.openelis.org:8443
+            - ANALYZER_BRIDGE_PAIRING_CERTIFICATE_FILE=/data/bridge-public/bridge.crt
             - ANALYZER_BRIDGE_PAIRING_CODE=${ANALYZER_BRIDGE_PAIRING_CODE:-}
+
+volumes:
+    bridge-public:

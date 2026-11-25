@@ -21,6 +21,18 @@ def compose(*extra):
 
 
 class AnalyzerTargetTest(unittest.TestCase):
+    def test_bundle_supplies_the_bridge_public_certificate(self):
+        services = compose()
+        for name, setting, read_only in (
+            ("openelis-analyzer-bridge", "BRIDGE_PAIRING_CERTIFICATE_FILE", False),
+            ("oe.openelis.org", "ANALYZER_BRIDGE_PAIRING_CERTIFICATE_FILE", True),
+        ):
+            service = services[name]
+            self.assertEqual("/data/bridge-public/bridge.crt", service["environment"][setting])
+            mount = next(v for v in service["volumes"] if v["target"] == "/data/bridge-public")
+            self.assertEqual("bridge-public", mount["source"])
+            self.assertEqual(read_only, mount.get("read_only", False))
+
     def test_tcp_target_has_no_host_drop_mount_or_file_watcher(self):
         services = compose()
         bridge = services["openelis-analyzer-bridge"]
