@@ -501,7 +501,10 @@ The shipped [PNG catalog](configs/analyzer-catalog/README.md) contains GeneXpert
 BD EpiCenter and Bruker MALDI Biotyper types, with results upload only. Pair
 through the one-time `ANALYZER_BRIDGE_PAIRING_CODE`, or enter the Bridge's
 generated code in OpenELIS. Saved connections and the pairing identity remain
-under `data/bridge` across restarts.
+under `data/bridge` across restarts. With images that support verified
+pairing, OpenELIS reads the bundled Bridge's public certificate from the
+read-only `bridge-public` volume before sending the code. After a certificate
+replacement, a Global Admin must confirm the replacement and pair again.
 
 File-based analyzers are optional. For one, set `ANALYZER_HOST_MOUNT` to an
 existing absolute directory and append `compose.analyzer-files.yaml` to
