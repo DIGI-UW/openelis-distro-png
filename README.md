@@ -442,8 +442,10 @@ The distribution ships:
 | `microbiology-organism-groups/png-organism-groups.csv` | The members of the organism groups that panels name as defaults |
 | `tests/zz-png-amr-workflow.csv` | A **Blood culture** test that opens a microbiology case and is collected in sets, and a **Urine culture** test on Urine, MSU and In/Out Urine that opens a microbiology case |
 | `dictionaries/png-amr-containers.csv` | Aerobic and anaerobic blood culture bottles as sample containers |
-| `sample-types/png-sample-types.csv` | The `whonetCode` column gives the WHONET specimen code: `bl` for Whole Blood and Blood Culture, `sf` for CSF, `ur` for In/Out Urine, MSU and Urine |
+| `sample-types/png-sample-types.csv` | The `whonetCode` column gives the WHONET specimen code: `bl` for Whole Blood and Blood Culture, `sf` for CSF, `ur` for In/Out Urine, MSU and Urine. The `microbiologyIsolate` column marks Isolate as the sample type an isolate is referred out as |
 | `program-reporting-tracks/png-program-reporting-tracks.csv` | Microbiology and Routine Testing orders show on microbiology cases and use the Bacterial reporting track, which the WHONET export takes |
+| `organizations/png-organizations.csv` | **Queensland Pathology** as the reference laboratory (organization type `referralLab`), offered when a specimen or an isolate is referred out from a microbiology case |
+| `tests/zz-png-referral.csv` and `test-results/zz-png-referral-test-results.csv` | An **Isolate referral** test on the Isolate sample type, the request sent with an isolate to the reference laboratory, with a text result for the reference laboratory's report |
 
 A panel's default organisms are a species, a genus or an organism group; the
 most specific match wins, so *Staphylococcus aureus* gets "AST - STAPH S.aureus"
