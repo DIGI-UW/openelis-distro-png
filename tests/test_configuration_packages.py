@@ -30,10 +30,12 @@ class ConfigurationPackageTest(unittest.TestCase):
         self.set_package()
         self.fetch = Mock(side_effect=lambda url, path: path.write_bytes(self.content))
 
-    def set_package(self, identity="lab-vocabulary", version="1.0", entries=None):
+    def set_package(self, identity="lab-vocabulary", version="1.0", entries=None,
+                    format="openelis-configuration/v1", inventory_extras=None):
         entries = entries or self.payload
-        manifest = {"format": packages.FORMAT, "packageId": identity, "packageVersion": version,
-                    "files": {name: {"sha256": packages.digest(data), "bytes": len(data)}
+        manifest = {"format": format, "packageId": identity, "packageVersion": version,
+                    "files": {name: {"sha256": packages.digest(data), "bytes": len(data),
+                                     **(inventory_extras or {})}
                               for name, data in entries.items()}}
         output = io.BytesIO()
         with zipfile.ZipFile(output, "w") as archive:
@@ -97,6 +99,24 @@ class ConfigurationPackageTest(unittest.TestCase):
         self.assertEqual("pkg--lab-vocabulary--1.0--catalog.csv", targets[0].name)
         self.assertFalse((self.configuration / "evidence").exists())
         self.assertEqual(1, len(list(self.cache.glob("*.zip"))))
+
+    def test_v2_package_installs_whonet_text_tables(self):
+        organisms = b"ORG_CODE\tORGANISM\neco\tEscherichia coli\n"
+        self.set_package(identity="amr-reference-clsi", version="2026.4",
+                         format="openelis-configuration/v2", inventory_extras={"rows": 1},
+                         entries={"configuration/backend/microbiology-whonet-organisms/Organisms.txt": organisms,
+                                  "evidence/NOTICE.txt": b"Synthetic notice"})
+        targets = self.prepare()
+        self.assertEqual([self.configuration / "backend/microbiology-whonet-organisms"
+                          / "pkg--amr-reference-clsi--2026.4--Organisms.txt"], targets)
+        self.assertEqual(organisms, targets[0].read_bytes())
+        self.assertFalse((self.configuration / "evidence").exists())
+
+    def test_unknown_manifest_format_is_rejected(self):
+        self.set_package(format="openelis-configuration/v3")
+        with self.assertRaisesRegex(ValueError, "manifest differs"):
+            self.prepare()
+        self.assertFalse(self.configuration.exists())
 
     def test_restart_reuses_verified_cache_without_network(self):
         targets = self.prepare()

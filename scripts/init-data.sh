@@ -54,6 +54,18 @@ chown -R "$WEBAPP_UID" "$D/webapp/reference-packages"
 # Package-created directories must allow OE2 to persist its usual checksum files.
 chown -R "$WEBAPP_UID" /opt/openelis/configuration/backend
 
+# --- first-start administrator password ---------------------------------------
+# OpenELIS refuses to start on a database without an admin unless it can read
+# this file. The first start after verify-admin writes the marker removes it.
+install -d -m 700 -o "$WEBAPP_UID" "$D/webapp/admin-bootstrap"
+if [ -f "$D/installation/admin-initialized" ]; then
+    rm -f "$D/webapp/admin-bootstrap/initial-admin-password"
+else
+    (umask 077 && printf '%s' "$OE_ADMIN_PASSWORD" > "$D/webapp/admin-bootstrap/initial-admin-password")
+    chown "$WEBAPP_UID" "$D/webapp/admin-bootstrap/initial-admin-password"
+    chmod 400 "$D/webapp/admin-bootstrap/initial-admin-password"
+fi
+
 # --- private installation identity ------------------------------------------
 export PNG_DATA_ROOT="$D"
 /scripts/init-security.sh
