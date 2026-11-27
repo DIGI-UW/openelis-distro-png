@@ -1,13 +1,12 @@
 # PNG candidate image provenance
 
-The default Compose files select immutable digests. The application contains
-AMR on top of the merged analyzer baseline; no separate AMR overlay is needed.
-This is a testing candidate, not an upstream OpenELIS release.
+The default Compose files select immutable digests. The OpenELIS images are
+upstream `develop` builds, not a tagged OpenELIS release.
 
 | Component | Source evidence |
 |---|---|
-| OpenELIS backend and frontend | Combined AMR/analyzer commit `908d3ce33567fe8dd55f4d35ffa69502d6a502be`; [PR #4819](https://github.com/DIGI-UW/OpenELIS-Global-2/pull/4819); [build 40208167298](https://github.com/DIGI-UW/OpenELIS-Global-2/actions/runs/40208167298). The build's merge tree `3940362b8d4ee14800a437a8ba0c25926fd5cf48` exactly matches the pushed source tree. |
-| Database, FHIR and proxy | Merged analyzer baseline `4b28fb46801fd7e76db87085aab765613e8c40a4`; [build 40164194759](https://github.com/DIGI-UW/OpenELIS-Global-2/actions/runs/40164194759). Their source directories are unchanged by the AMR stack. Each Docker Hub digest matches this build's image map. |
+| OpenELIS backend, frontend, database and FHIR | `develop` commit `49e419777d7bc41b21fd6967cef44cad44fc52a2`; [publish run 45161913559](https://github.com/DIGI-UW/OpenELIS-Global-2/actions/runs/45161913559), which runs only after that commit's E2E checkpoint passes. Each digest matches the run's `published-image-*` artifacts. |
+| Proxy | nginx with the merged analyzer baseline's configuration, `4b28fb46801fd7e76db87085aab765613e8c40a4`; [build 40164194759](https://github.com/DIGI-UW/OpenELIS-Global-2/actions/runs/40164194759). The proxy source is unchanged on `develop` since then. |
 | Analyzer Bridge 3.5.0 | Released commit `82682a27be04ae387af1b349bc7d669f914d94cc`; [upstream release](https://github.com/DIGI-UW/openelis-analyzer-bridge/releases/tag/3.5.0). PNG profile checks execute classes extracted from the pinned image. |
 | certgen and autoheal | Registry digests captured on 2026-10-25. certgen supplies tools only; its bundled stores are never mounted or copied. PNG generates private material under the installation's data directory. |
 
@@ -21,17 +20,14 @@ The AMR reference package versions and digests remain in
 standards edition or establish clinical acceptance. Lab-approved mappings and
 physical-instrument acceptance remain separate from synthetic software tests.
 
-## Published candidate
+## Published images
 
-The backend and frontend were copied to durable public packages without changing
-their manifest digests, then pulled using an empty Docker credential directory:
+Each Docker Hub tag `sha-49e419777d7bc41b21fd6967cef44cad44fc52a2-45161913559` resolves to the pinned digest:
 
-- Backend: `ghcr.io/digi-uw/openelis-global-2:png-amr-908d3ce335@sha256:68a690ee056da168cd84780c86abe38a293aaa1ab513f43bbf30a9416522fdf7`
-- Frontend: `ghcr.io/digi-uw/openelis-global-2-frontend:png-amr-908d3ce335@sha256:c5a0e1627aa64d22ffea2a23f9dea21a1cf8340682ee6de55186cd793fdef843`
-
-All sixteen local CI jobs passed on the source revision above. All twelve PRs
-in stack #4674 have the backend, frontend, end-to-end and submodule-pin checks
-passing. These images remain a testing candidate until the upstream release.
+- Backend: `itechuw/openelis-global-2@sha256:20fbf2ea897c5530314be5cd0eeaf5feb4e42cc04591133eb6779d9a84e14209`
+- Frontend: `itechuw/openelis-global-2-frontend@sha256:efc143443013300833ab5b986fc7691778966f0351627144aa4bd0048cdcd528`
+- Database: `itechuw/openelis-global-2-database@sha256:c965f6e975057460a97b436b6efec48ff30542bfa0a1d8a07de045cbf840e59c`
+- FHIR: `itechuw/openelis-global-2-fhir@sha256:d702b80cf8dfb48097f77cbd7f855604da86b0f496b29f204f1732c4939cf2bf`
 
 ## Reference package validation
 
